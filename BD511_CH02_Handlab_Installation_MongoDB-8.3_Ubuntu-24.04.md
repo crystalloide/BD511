@@ -1153,6 +1153,11 @@ Version: 1.53.0
 Compass est une application Electron (moteur Chromium). Ubuntu 24.04 restreint par AppArmor la création d'espaces de noms utilisateur, que Chromium utilise pour isoler ses processus ; Compass se replie alors sur l'utilitaire `chrome-sandbox`, qui doit appartenir à `root` et porter le bit **setuid** (`s` dans `-rwsr-xr-x`). Le paquet le configure ainsi ; si ces droits sont modifiés, Compass ne démarre plus (voir l'annexe A).
 
 ---
+#### Pour windows (si on a installé le serveur sur WSL2 par exemple) :
+
+```bash
+https://downloads.mongodb.com/compass/mongodb-compass-1.53.0-win32-x64.zip
+```bash
 
 ## Partie 5 – Premiers tests de connexion avec Compass
 
