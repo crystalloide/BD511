@@ -1222,7 +1222,7 @@ Résultats attendus : `24`, puis `8.3.13`. Ce shell est la même application mon
    { "_id": "TEST-COMPASS", "titre": "Document créé depuis Compass", "domaine": "Test" }
    ```
 
-2. Dans le terminal, relisez ce document avec mongosh, puis supprimez-le :
+2. Dans le terminal Linux , relisez ce document avec mongosh, puis supprimez-le :
 
    ```bash
    mongosh --quiet --eval 'db.getSiblingDB("bd511").formations.findOne({ _id: "TEST-COMPASS" })'
@@ -1238,6 +1238,13 @@ Résultats attendus : `24`, puis `8.3.13`. Ce shell est la même application mon
      domaine: 'Test'
    }
    { acknowledged: true, deletedCount: 1 }
+   ```
+
+Remarque : dans le terminal de Compass, on est dans le shell mongosh : les commandes dans ce cas auraient été : 
+
+   ```bash
+db.getSiblingDB("bd511").formations.findOne({ _id: "TEST-COMPASS" })
+db.getSiblingDB("bd511").formations.deleteOne({ _id: "TEST-COMPASS" })
    ```
 
 3. Dans Compass, cliquez sur **Find** (ou sur l'icône d'actualisation) : la collection compte de nouveau 24 documents.
