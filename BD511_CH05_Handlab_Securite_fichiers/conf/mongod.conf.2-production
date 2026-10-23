@@ -1,0 +1,25 @@
+# /etc/mongod.conf — BD511 TP chapitre 5 — étape 2 : configuration de PRODUCTION
+# YAML : indentation par 2 espaces, jamais de tabulation.
+
+storage:
+  dbPath: /var/lib/mongodb
+
+systemLog:
+  destination: file
+  logAppend: true
+  path: /var/log/mongodb/mongod.log
+
+net:
+  port: 27017
+  bindIp: 127.0.0.1            # écoute locale uniquement (Compass est installé sur la VM)
+
+processManagement:
+  timeZoneInfo: /usr/share/zoneinfo
+
+security:
+  authorization: enabled       # authentification obligatoire + contrôle d'accès par rôles
+  javascriptEnabled: false     # durcissement : pas d'exécution de JavaScript côté serveur
+
+setParameter:
+  authenticationMechanisms: SCRAM-SHA-256   # SCRAM-SHA-1 n'est plus accepté
+  enableLocalhostAuthBypass: false          # exception localhost fermée définitivement
