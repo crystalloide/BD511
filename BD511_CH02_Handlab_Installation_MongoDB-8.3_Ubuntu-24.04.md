@@ -269,7 +269,7 @@ curl -fsSL https://pgp.mongodb.com/server-8.0.asc | \
   sudo gpg --yes -o /usr/share/keyrings/mongodb-server-8.0.gpg --dearmor
 ```
 
-Vérifiez son empreinte, qui doit être `E162F504A20CDF15827F718D4B7C549A058F8B6B` :
+Vérifiez son empreinte, qui doit être `4B0752C1BCA238C0B4EE14DC41DE058A4E7DCA05` :
 
 ```bash
 gpg --show-keys --with-colons /usr/share/keyrings/mongodb-server-8.0.gpg | awk -F: '/^fpr/ {print $10; exit}'
@@ -278,7 +278,7 @@ gpg --show-keys --with-colons /usr/share/keyrings/mongodb-server-8.0.gpg | awk -
 Résultat attendu :
 
 ```text
-E162F504A20CDF15827F718D4B7C549A058F8B6B
+4B0752C1BCA238C0B4EE14DC41DE058A4E7DCA05
 ```
 
 ### 1.2 Déclarer le dépôt MongoDB 8.3
