@@ -1,0 +1,293 @@
+# docker-compose.yml - BD511 : cluster MongoDB 8.3 décrit dans architecture.tsv (chapitres 6 et 7)
+#   - services sans profil        : replica set RS1 (rs11, rs12, rs1arb)                 -> chapitre 6
+#   - profil « sharding »         : RS2, RS3, serveurs de configuration RSCFG, mongos    -> chapitre 7
+# Usage : cd ~/bd511/cluster && sudo docker compose up -d --wait
+name: bd511
+
+# Réglages communs à tous les processus MongoDB (ancre YAML reprise par chaque service)
+x-mongodb: &mongodb
+  image: mongo:8.3.13              # version figée : jamais « latest » en production
+  restart: unless-stopped          # redémarrage automatique (après un plantage, au démarrage de la VM)
+  stop_grace_period: 1m            # temps laissé à mongod pour s'arrêter proprement (10 s par défaut)
+  mem_limit: 1g                    # plafond mémoire du conteneur
+  ulimits:                         # limites recommandées par les notes de production MongoDB
+    nofile: { soft: 64000, hard: 64000 }
+    nproc: { soft: 64000, hard: 64000 }
+
+services:
+  # ---------- Replica set RS1 (futur shard 1) - chapitre 6 ----------
+  rs11:
+    <<: *mongodb
+    container_name: rs11
+    hostname: rs11
+    command: ["--config", "/etc/mongo/mongod.conf", "--port", "27011", "--bind_ip", "localhost,192.168.100.111",
+              "--replSet", "RS1", "--shardsvr"]
+    networks:
+      bd511: { ipv4_address: 192.168.100.111 }
+    volumes:
+      - /srv/bd511/rs11:/data/db
+      - ./conf/mongod.conf:/etc/mongo/mongod.conf:ro
+      - ./secrets/keyfile:/etc/mongo/keyfile:ro
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--port", "27011", "--quiet", "--norc", "--eval", "db.adminCommand('ping')"]
+      start_period: 1m
+      start_interval: 2s
+
+  rs12:
+    <<: *mongodb
+    container_name: rs12
+    hostname: rs12
+    command: ["--config", "/etc/mongo/mongod.conf", "--port", "27012", "--bind_ip", "localhost,192.168.100.112",
+              "--replSet", "RS1", "--shardsvr"]
+    networks:
+      bd511: { ipv4_address: 192.168.100.112 }
+    volumes:
+      - /srv/bd511/rs12:/data/db
+      - ./conf/mongod.conf:/etc/mongo/mongod.conf:ro
+      - ./secrets/keyfile:/etc/mongo/keyfile:ro
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--port", "27012", "--quiet", "--norc", "--eval", "db.adminCommand('ping')"]
+      start_period: 1m
+      start_interval: 2s
+
+  rs1arb:
+    <<: *mongodb
+    container_name: rs1arb
+    hostname: rs1arb
+    mem_limit: 512m                # un arbitre ne stocke pas de données
+    command: ["--config", "/etc/mongo/mongod.conf", "--port", "27013", "--bind_ip", "localhost,192.168.100.113",
+              "--replSet", "RS1", "--shardsvr"]
+    networks:
+      bd511: { ipv4_address: 192.168.100.113 }
+    volumes:
+      - /srv/bd511/rs1arb:/data/db
+      - ./conf/mongod.conf:/etc/mongo/mongod.conf:ro
+      - ./secrets/keyfile:/etc/mongo/keyfile:ro
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--port", "27013", "--quiet", "--norc", "--eval", "db.adminCommand('ping')"]
+      start_period: 1m
+      start_interval: 2s
+
+  # ---------- Replica set RS2 (shard 2) - chapitre 7 ----------
+  rs21:
+    <<: *mongodb
+    profiles: ["sharding"]
+    container_name: rs21
+    hostname: rs21
+    command: ["--config", "/etc/mongo/mongod.conf", "--port", "27021", "--bind_ip", "localhost,192.168.100.121",
+              "--replSet", "RS2", "--shardsvr"]
+    networks:
+      bd511: { ipv4_address: 192.168.100.121 }
+    volumes:
+      - /srv/bd511/rs21:/data/db
+      - ./conf/mongod.conf:/etc/mongo/mongod.conf:ro
+      - ./secrets/keyfile:/etc/mongo/keyfile:ro
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--port", "27021", "--quiet", "--norc", "--eval", "db.adminCommand('ping')"]
+      start_period: 1m
+      start_interval: 2s
+
+  rs22:
+    <<: *mongodb
+    profiles: ["sharding"]
+    container_name: rs22
+    hostname: rs22
+    command: ["--config", "/etc/mongo/mongod.conf", "--port", "27022", "--bind_ip", "localhost,192.168.100.122",
+              "--replSet", "RS2", "--shardsvr"]
+    networks:
+      bd511: { ipv4_address: 192.168.100.122 }
+    volumes:
+      - /srv/bd511/rs22:/data/db
+      - ./conf/mongod.conf:/etc/mongo/mongod.conf:ro
+      - ./secrets/keyfile:/etc/mongo/keyfile:ro
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--port", "27022", "--quiet", "--norc", "--eval", "db.adminCommand('ping')"]
+      start_period: 1m
+      start_interval: 2s
+
+  rs2arb:
+    <<: *mongodb
+    profiles: ["sharding"]
+    container_name: rs2arb
+    hostname: rs2arb
+    mem_limit: 512m                # un arbitre ne stocke pas de données
+    command: ["--config", "/etc/mongo/mongod.conf", "--port", "27023", "--bind_ip", "localhost,192.168.100.123",
+              "--replSet", "RS2", "--shardsvr"]
+    networks:
+      bd511: { ipv4_address: 192.168.100.123 }
+    volumes:
+      - /srv/bd511/rs2arb:/data/db
+      - ./conf/mongod.conf:/etc/mongo/mongod.conf:ro
+      - ./secrets/keyfile:/etc/mongo/keyfile:ro
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--port", "27023", "--quiet", "--norc", "--eval", "db.adminCommand('ping')"]
+      start_period: 1m
+      start_interval: 2s
+
+  # ---------- Replica set RS3 (shard 3) - chapitre 7 ----------
+  rs31:
+    <<: *mongodb
+    profiles: ["sharding"]
+    container_name: rs31
+    hostname: rs31
+    command: ["--config", "/etc/mongo/mongod.conf", "--port", "27031", "--bind_ip", "localhost,192.168.100.131",
+              "--replSet", "RS3", "--shardsvr"]
+    networks:
+      bd511: { ipv4_address: 192.168.100.131 }
+    volumes:
+      - /srv/bd511/rs31:/data/db
+      - ./conf/mongod.conf:/etc/mongo/mongod.conf:ro
+      - ./secrets/keyfile:/etc/mongo/keyfile:ro
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--port", "27031", "--quiet", "--norc", "--eval", "db.adminCommand('ping')"]
+      start_period: 1m
+      start_interval: 2s
+
+  rs32:
+    <<: *mongodb
+    profiles: ["sharding"]
+    container_name: rs32
+    hostname: rs32
+    command: ["--config", "/etc/mongo/mongod.conf", "--port", "27032", "--bind_ip", "localhost,192.168.100.132",
+              "--replSet", "RS3", "--shardsvr"]
+    networks:
+      bd511: { ipv4_address: 192.168.100.132 }
+    volumes:
+      - /srv/bd511/rs32:/data/db
+      - ./conf/mongod.conf:/etc/mongo/mongod.conf:ro
+      - ./secrets/keyfile:/etc/mongo/keyfile:ro
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--port", "27032", "--quiet", "--norc", "--eval", "db.adminCommand('ping')"]
+      start_period: 1m
+      start_interval: 2s
+
+  rs3arb:
+    <<: *mongodb
+    profiles: ["sharding"]
+    container_name: rs3arb
+    hostname: rs3arb
+    mem_limit: 512m                # un arbitre ne stocke pas de données
+    command: ["--config", "/etc/mongo/mongod.conf", "--port", "27033", "--bind_ip", "localhost,192.168.100.133",
+              "--replSet", "RS3", "--shardsvr"]
+    networks:
+      bd511: { ipv4_address: 192.168.100.133 }
+    volumes:
+      - /srv/bd511/rs3arb:/data/db
+      - ./conf/mongod.conf:/etc/mongo/mongod.conf:ro
+      - ./secrets/keyfile:/etc/mongo/keyfile:ro
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--port", "27033", "--quiet", "--norc", "--eval", "db.adminCommand('ping')"]
+      start_period: 1m
+      start_interval: 2s
+
+  # ---------- Serveurs de configuration, replica set RSCFG - chapitre 7 ----------
+  config1:
+    <<: *mongodb
+    profiles: ["sharding"]
+    container_name: config1
+    hostname: config1
+    command: ["--config", "/etc/mongo/mongod.conf", "--port", "27041", "--bind_ip", "localhost,192.168.100.101",
+              "--replSet", "RSCFG", "--configsvr"]
+    networks:
+      bd511: { ipv4_address: 192.168.100.101 }
+    volumes:
+      - /srv/bd511/config1:/data/db
+      - ./conf/mongod.conf:/etc/mongo/mongod.conf:ro
+      - ./secrets/keyfile:/etc/mongo/keyfile:ro
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--port", "27041", "--quiet", "--norc", "--eval", "db.adminCommand('ping')"]
+      start_period: 1m
+      start_interval: 2s
+
+  config2:
+    <<: *mongodb
+    profiles: ["sharding"]
+    container_name: config2
+    hostname: config2
+    command: ["--config", "/etc/mongo/mongod.conf", "--port", "27042", "--bind_ip", "localhost,192.168.100.102",
+              "--replSet", "RSCFG", "--configsvr"]
+    networks:
+      bd511: { ipv4_address: 192.168.100.102 }
+    volumes:
+      - /srv/bd511/config2:/data/db
+      - ./conf/mongod.conf:/etc/mongo/mongod.conf:ro
+      - ./secrets/keyfile:/etc/mongo/keyfile:ro
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--port", "27042", "--quiet", "--norc", "--eval", "db.adminCommand('ping')"]
+      start_period: 1m
+      start_interval: 2s
+
+  config3:
+    <<: *mongodb
+    profiles: ["sharding"]
+    container_name: config3
+    hostname: config3
+    command: ["--config", "/etc/mongo/mongod.conf", "--port", "27043", "--bind_ip", "localhost,192.168.100.103",
+              "--replSet", "RSCFG", "--configsvr"]
+    networks:
+      bd511: { ipv4_address: 192.168.100.103 }
+    volumes:
+      - /srv/bd511/config3:/data/db
+      - ./conf/mongod.conf:/etc/mongo/mongod.conf:ro
+      - ./secrets/keyfile:/etc/mongo/keyfile:ro
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--port", "27043", "--quiet", "--norc", "--eval", "db.adminCommand('ping')"]
+      start_period: 1m
+      start_interval: 2s
+
+  # ---------- Routeurs de requêtes mongos - chapitre 7 ----------
+  mongos1:
+    <<: *mongodb
+    profiles: ["sharding"]
+    container_name: mongos1
+    hostname: mongos1
+    command: ["mongos", "--keyFile", "/etc/mongo/keyfile", "--port", "27017", "--bind_ip", "localhost,192.168.100.141",
+              "--configdb", "RSCFG/config1:27041,config2:27042,config3:27043"]
+    networks:
+      bd511: { ipv4_address: 192.168.100.141 }
+    volumes:
+      - ./secrets/keyfile:/etc/mongo/keyfile:ro
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--port", "27017", "--quiet", "--norc", "--eval", "db.adminCommand('ping')"]
+      start_period: 1m
+      start_interval: 2s
+
+  mongos2:
+    <<: *mongodb
+    profiles: ["sharding"]
+    container_name: mongos2
+    hostname: mongos2
+    command: ["mongos", "--keyFile", "/etc/mongo/keyfile", "--port", "27018", "--bind_ip", "localhost,192.168.100.142",
+              "--configdb", "RSCFG/config1:27041,config2:27042,config3:27043"]
+    networks:
+      bd511: { ipv4_address: 192.168.100.142 }
+    volumes:
+      - ./secrets/keyfile:/etc/mongo/keyfile:ro
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--port", "27018", "--quiet", "--norc", "--eval", "db.adminCommand('ping')"]
+      start_period: 1m
+      start_interval: 2s
+
+networks:
+  bd511:
+    name: bd511
+    driver_opts:
+      com.docker.network.bridge.name: bd511   # nom de l'interface réseau sur la VM (ip addr show bd511)
+    ipam:
+      config:
+        - subnet: 192.168.100.0/24
+          gateway: 192.168.100.1         # adresse de la VM sur ce réseau
