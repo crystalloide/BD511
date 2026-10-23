@@ -220,7 +220,7 @@ sudo tee /etc/docker/daemon.json > /dev/null <<'EOF'
   "live-restore": true
 }
 EOF
-sudo dockerd --validate --config-file /etc/docker/daemon.json
+dockerd --validate --config-file /etc/docker/daemon.json
 sudo systemctl restart docker
 sudo systemctl is-enabled docker
 ```
@@ -235,10 +235,10 @@ enabled
 ### 1.3 Vérifier l'installation
 
 ```bash
-sudo docker version --format 'Docker Engine {{.Server.Version}}'
-sudo docker compose version
-sudo docker info --format 'journaux={{.LoggingDriver}} live-restore={{.LiveRestoreEnabled}} cgroup=v{{.CgroupVersion}}'
-sudo docker run --rm hello-world | grep 'Hello from Docker'
+docker version --format 'Docker Engine {{.Server.Version}}'
+docker compose version
+docker info --format 'journaux={{.LoggingDriver}} live-restore={{.LiveRestoreEnabled}} cgroup=v{{.CgroupVersion}}'
+docker run --rm hello-world | grep 'Hello from Docker'
 ```
 
 Résultat attendu (versions du 23/10/2026, ou plus récentes) :
@@ -255,10 +255,10 @@ Hello from Docker!
 L'image officielle `mongo` est construite par Docker à partir des paquets `mongodb-org` du dépôt MongoDB, sur une base Ubuntu 24.04 (*noble*). On la désigne par sa **version exacte** : le tag `latest` changerait de version majeure sans prévenir (il pointe aujourd'hui sur la 9.0).
 
 ```bash
-sudo docker pull -q mongo:8.3.13
-sudo docker run --rm mongo:8.3.13 mongod --version | head -n 1
-sudo docker run --rm mongo:8.3.13 id mongodb
-sudo docker image inspect mongo:8.3.13 --format '{{range .Config.Env}}{{println .}}{{end}}' | grep GLIBC
+docker pull -q mongo:8.3.13
+docker run --rm mongo:8.3.13 mongod --version | head -n 1
+docker run --rm mongo:8.3.13 id mongodb
+docker image inspect mongo:8.3.13 --format '{{range .Config.Env}}{{println .}}{{end}}' | grep GLIBC
 ```
 
 Résultat attendu :
@@ -541,7 +541,7 @@ cat > ~/bd511/cluster/docker-compose.yml <<'EOF'
 # docker-compose.yml - BD511 : cluster MongoDB 8.3 décrit dans architecture.tsv (chapitres 6 et 7)
 #   - services sans profil        : replica set RS1 (rs11, rs12, rs1arb)                 -> chapitre 6
 #   - profil « sharding »         : RS2, RS3, serveurs de configuration RSCFG, mongos    -> chapitre 7
-# Usage : cd ~/bd511/cluster && sudo docker compose up -d --wait
+# Usage : cd ~/bd511/cluster && docker compose up -d --wait
 name: bd511
 
 # Réglages communs à tous les processus MongoDB (ancre YAML reprise par chaque service)
@@ -833,9 +833,9 @@ networks:
           gateway: 192.168.100.1         # adresse de la VM sur ce réseau
 EOF
 cd ~/bd511/cluster
-sudo docker compose config --quiet && echo "docker-compose.yml valide"
-sudo docker compose config --services
-sudo docker compose --profile sharding config --services | wc -l
+docker compose config --quiet && echo "docker-compose.yml valide"
+docker compose config --services
+docker compose --profile sharding config --services | wc -l
 ```
 
 Résultat attendu :
@@ -861,8 +861,8 @@ Points à remarquer dans le service `rs11` :
 
 ```bash
 cd ~/bd511/cluster
-sudo docker compose up -d --wait
-sudo docker compose ps --format 'table {{.Name}}\t{{.Image}}\t{{.Status}}'
+docker compose up -d --wait
+docker compose ps --format 'table {{.Name}}\t{{.Image}}\t{{.Status}}'
 ip -4 -br addr show bd511
 ```
 
@@ -885,9 +885,9 @@ Vérifiez dans le journal de `rs11` les options réellement appliquées (fichier
 
 ```bash
 cd ~/bd511/cluster
-sudo docker compose logs --no-log-prefix rs11 | jq -c 'select(.msg == "Options set by command line") | .attr.options'
-sudo docker compose logs --no-log-prefix rs11 | jq -r 'select(.tags != null) | .msg'
-sudo docker compose logs --no-log-prefix rs11 | jq -r 'select(.id == 22074) | .msg'
+docker compose logs --no-log-prefix rs11 | jq -c 'select(.msg == "Options set by command line") | .attr.options'
+docker compose logs --no-log-prefix rs11 | jq -r 'select(.tags != null) | .msg'
+docker compose logs --no-log-prefix rs11 | jq -r 'select(.id == 22074) | .msg'
 ```
 
 Résultat attendu :
@@ -929,7 +929,7 @@ Le script suivant décrit les trois membres, puis attend l'élection du primaire
 cat > ~/bd511/ch06/init-rs1.js <<'EOF'
 // init-rs1.js - BD511 ch.6 : initialise le replica set RS1
 // Exécuté dans le conteneur rs11, par l'interface locale (exception localhost : aucun utilisateur n'existe encore).
-// Usage : cd ~/bd511/cluster && sudo docker compose exec -T rs11 mongosh --port 27011 --quiet --file /dev/stdin < ~/bd511/ch06/init-rs1.js
+// Usage : cd ~/bd511/cluster && docker compose exec -T rs11 mongosh --port 27011 --quiet --file /dev/stdin < ~/bd511/ch06/init-rs1.js
 const config = {
   _id: "RS1",
   members: [
@@ -945,7 +945,7 @@ for (let i = 0; i < 60 && !db.hello().isWritablePrimary; i++) sleep(1000);
 for (const m of rs.status().members) print(`${m.name.padEnd(13)} ${m.stateStr}`);
 EOF
 cd ~/bd511/cluster
-sudo docker compose exec -T rs11 mongosh --port 27011 --quiet --file /dev/stdin < ~/bd511/ch06/init-rs1.js
+docker compose exec -T rs11 mongosh --port 27011 --quiet --file /dev/stdin < ~/bd511/ch06/init-rs1.js
 ```
 
 Résultat attendu (après une dizaine de secondes) :
@@ -972,7 +972,7 @@ Les mots de passe sont lus dans les fichiers de la partie 2.4 et transmis par l'
 
 ```bash
 cd ~/bd511/cluster
-sudo docker compose exec -T rs11 mongosh --port 27011 --quiet --file /dev/stdin <<EOF
+docker compose exec -T rs11 mongosh --port 27011 --quiet --file /dev/stdin <<EOF
 const admin = db.getSiblingDB("admin");
 const wc = { w: "majority", wtimeout: 10000 };
 admin.createUser({ user: "admin", pwd: "$(cat secrets/admin.pwd)", roles: [ "root" ] }, wc);
@@ -980,7 +980,7 @@ admin.auth("admin", "$(cat secrets/admin.pwd)");
 admin.createUser({ user: "appli", pwd: "$(cat secrets/appli.pwd)", roles: [ { role: "readWrite", db: "bd511" } ] }, wc);
 for (const u of admin.getUsers().users) print(u.user.padEnd(6), EJSON.stringify(u.roles));
 EOF
-sudo docker compose exec -T rs11 mongosh --port 27011 --quiet --eval 'db.adminCommand({ listDatabases: 1 })'
+docker compose exec -T rs11 mongosh --port 27011 --quiet --eval 'db.adminCommand({ listDatabases: 1 })'
 ```
 
 Résultat attendu :
@@ -993,7 +993,7 @@ MongoServerError: Command listDatabases requires authentication
 
 La dernière commande le confirme : l'exception localhost est refermée, même depuis l'intérieur du conteneur.
 
-> L'arbitre ne stocke aucune donnée, donc aucun utilisateur : on ne peut l'interroger que par l'exception localhost, qui y reste ouverte pour les commandes d'état du replica set. C'est sans risque tant que son interface locale n'est accessible qu'aux administrateurs de la machine (ici, par `sudo docker compose exec`).
+> L'arbitre ne stocke aucune donnée, donc aucun utilisateur : on ne peut l'interroger que par l'exception localhost, qui y reste ouverte pour les commandes d'état du replica set. C'est sans risque tant que son interface locale n'est accessible qu'aux administrateurs de la machine (ici, par `docker compose exec`).
 
 ### 3.4 Se connecter au replica set depuis la VM
 
@@ -1257,7 +1257,7 @@ Une dizaine de secondes plus tard, dans le **terminal 1**, « débranchez » le 
 
 ```bash
 cd ~/bd511/cluster
-sudo docker compose kill rs11
+docker compose kill rs11
 ```
 
 Résultat attendu dans le terminal 1 :
@@ -1303,7 +1303,7 @@ Le journal du nouveau primaire raconte l'élection (terminal 1) :
 
 ```bash
 cd ~/bd511/cluster
-sudo docker compose logs --no-log-prefix rs12 | jq -c 'select(.id == 21216 or .c == "ELECTION" or .id == 21358 or .id == 21331)
+docker compose logs --no-log-prefix rs12 | jq -c 'select(.id == 21216 or .c == "ELECTION" or .id == 21358 or .id == 21331)
   | {heure: .t["$date"][11:23], msg, membre: .attr.hostAndPort, de: .attr.from, vote: .attr.vote, terme: (.attr.term // .attr.newTerm), etat: .attr.newState}
   | with_entries(select(.value != null))'
 ```
@@ -1364,7 +1364,7 @@ Côté votant, sur l'arbitre (par l'exception localhost, la seule façon de s'y 
 
 ```bash
 cd ~/bd511/cluster
-sudo docker compose exec -T rs1arb mongosh --port 27013 --quiet --eval '
+docker compose exec -T rs1arb mongosh --port 27013 --quiet --eval '
   const m = rs.status().electionParticipantMetrics;
   printjson({ aVote: m.votedForCandidate, terme: m.electionTerm, candidat: m.electionCandidateMemberId })'
 ```
@@ -1387,7 +1387,7 @@ Redémarrez `rs11` (terminal 1) :
 
 ```bash
 cd ~/bd511/cluster
-sudo docker compose start rs11
+docker compose start rs11
 ```
 
 Résultat attendu :
@@ -1603,7 +1603,7 @@ Arrêtez proprement le secondaire `rs12` (environ 15 secondes : `mongod` attend 
 
 ```bash
 cd ~/bd511/cluster
-sudo docker compose stop rs12
+docker compose stop rs12
 ~/bd511/ch06/mongosh-rs1 --compte appli --quiet ~/bd511/ch06/tester-wc.js
 ```
 
@@ -1672,8 +1672,8 @@ Le primaire tombe en panne avant d'avoir pu répliquer ces écritures, puis `rs1
 
 ```bash
 cd ~/bd511/cluster
-sudo docker compose kill rs11
-sudo docker compose start rs12
+docker compose kill rs11
+docker compose start rs12
 bash ~/bd511/ch06/attendre-primaire.sh
 ```
 
@@ -1705,7 +1705,7 @@ Remettez `rs11` en service, attendez qu'il ait repris le rôle de primaire, puis
 
 ```bash
 cd ~/bd511/cluster
-sudo docker compose start rs11
+docker compose start rs11
 bash ~/bd511/ch06/attendre-primaire.sh rs11:27011
 ~/bd511/ch06/mongosh-rs1 --compte appli --quiet --eval 'print(db.commandes.find().sort({ _id: 1 }).toArray().map(c => c._id).join(" "))'
 ```
@@ -1723,7 +1723,7 @@ Les commandes A1 à A5, **confirmées** à l'application, ont disparu. À son re
 
 ```bash
 cd ~/bd511/cluster
-sudo docker compose logs --no-log-prefix rs11 | jq -c 'select(.c == "ROLLBACK" and (.id == 21593 or .id == 6984700 or .id == 21609 or .id == 21592))
+docker compose logs --no-log-prefix rs11 | jq -c 'select(.c == "ROLLBACK" and (.id == 21593 or .id == 6984700 or .id == 21609 or .id == 21592))
   | {msg, collection: .attr.namespace, fichier: .attr.file, annulees: .attr.insert}
   | with_entries(select(.value != null))'
 ```
@@ -1744,8 +1744,8 @@ Les documents annulés ne sont pas perdus pour tout le monde : `mongod` les a en
 
 ```bash
 cd ~/bd511/cluster
-f=$(sudo docker compose logs --no-log-prefix rs11 | jq -r 'select(.id == 21609 and .attr.namespace == "bd511.commandes") | .attr.file' | tail -n 1)
-sudo docker compose exec -T rs11 bsondump --quiet "$f" | sort
+f=$(docker compose logs --no-log-prefix rs11 | jq -r 'select(.id == 21609 and .attr.namespace == "bd511.commandes") | .attr.file' | tail -n 1)
+docker compose exec -T rs11 bsondump --quiet "$f" | sort
 ```
 
 Résultat attendu :
@@ -1797,10 +1797,10 @@ ok=0; ko=0
 res() { if [[ $1 == 0 ]]; then printf '  [OK] %s\n' "$2"; ok=$((ok + 1)); else printf '  [KO] %s\n' "$2"; ko=$((ko + 1)); fi; }
 
 echo "== Docker et système"
-etats=$(sudo docker compose ps --format '{{.Name}}:{{.Health}}' | sort | tr '\n' ' ')
+etats=$(docker compose ps --format '{{.Name}}:{{.Health}}' | sort | tr '\n' ' ')
 [[ $etats == "rs11:healthy rs12:healthy rs1arb:healthy " ]]; res $? "Conteneurs RS1 en bonne santé : $etats"
-[[ $(sudo docker info --format '{{.LiveRestoreEnabled}}') == true ]]; res $? "Démon Docker : live-restore actif"
-[[ $(sudo docker inspect rs11 --format '{{.HostConfig.LogConfig.Config}}') == *"max-size:50m"* ]]; res $? "Rotation des journaux Docker (max-size 50m)"
+[[ $(docker info --format '{{.LiveRestoreEnabled}}') == true ]]; res $? "Démon Docker : live-restore actif"
+[[ $(docker inspect rs11 --format '{{.HostConfig.LogConfig.Config}}') == *"max-size:50m"* ]]; res $? "Rotation des journaux Docker (max-size 50m)"
 findmnt -n -t xfs -O noatime /srv/bd511 >/dev/null; res $? "Données sur volume XFS monté en noatime : /srv/bd511"
 [[ $(stat -c '%a %u' secrets/keyfile) == "400 999" ]]; res $? "Fichier de clé : mode 400, propriétaire uid 999"
 
@@ -1881,12 +1881,12 @@ Le replica set RS1 reste en place pour le chapitre 7, qui le transformera en sha
 | `00-prerequis.sh` : espace disque insuffisant | disque de la VM trop petit | agrandissez le disque virtuel dans l'hyperviseur, puis la partition et le système de fichiers (`sudo growpart /dev/sda 2 && sudo resize2fs /dev/sda2`, selon votre partitionnement) |
 | `00-prerequis.sh` : plage 192.168.100.0/24 déjà utilisée | un réseau de la VM (ou de l'hyperviseur) utilise déjà cette plage | changez le réseau de la VM, ou adaptez la plage dans `architecture.tsv`, `docker-compose.yml` et `/etc/hosts` |
 | `docker compose up` : `Pool overlaps with other one on this address space` | idem | idem |
-| Un conteneur redémarre en boucle ; journal : `permissions on /etc/mongo/keyfile are too open` | fichier de clé lisible par le groupe ou les autres | `chmod 400 secrets/keyfile && sudo chown 999:999 secrets/keyfile`, puis `sudo docker compose up -d` |
+| Un conteneur redémarre en boucle ; journal : `permissions on /etc/mongo/keyfile are too open` | fichier de clé lisible par le groupe ou les autres | `chmod 400 secrets/keyfile && sudo chown 999:999 secrets/keyfile`, puis `docker compose up -d` |
 | Journal : `Unable to acquire security key[s]` ou `Error reading file /etc/mongo/keyfile` | fichier de clé absent ou illisible par l'uid 999 | refaites la partie 2.4 |
 | Journal : `Unable to create/open the lock file` ou `Permission denied` sur `/data/db` | répertoire de données qui n'appartient pas à l'uid 999 | `sudo chown -R 999:999 /srv/bd511/<membre>` |
 | Les conteneurs ne démarrent pas après un redémarrage de la VM | volume `/srv/bd511` non monté (le démon Docker attend le montage) | `sudo mount /srv/bd511 && sudo systemctl start docker` ; vérifiez la ligne de `/etc/fstab` |
 | mongosh : `getaddrinfo ENOTFOUND rs11` | noms des membres absents de `/etc/hosts` | relancez `03-hosts.sh` (partie 2.3) |
-| mongosh : `MongoServerSelectionError` | aucun membre joignable ou aucun primaire | `sudo docker compose ps`, puis `bash ~/bd511/ch06/attendre-primaire.sh` |
+| mongosh : `MongoServerSelectionError` | aucun membre joignable ou aucun primaire | `docker compose ps`, puis `bash ~/bd511/ch06/attendre-primaire.sh` |
 | `init-rs1.js` : `already initialized` | replica set déjà initialisé | rien à faire ; vérifiez avec `rs.status()` |
 | Création des comptes : `command createUser requires authentication` | un utilisateur existe déjà : l'exception localhost est refermée | connectez-vous avec le compte `admin` (`mongosh-rs1`) |
 | `MongoServerError: Authentication failed` | mot de passe ou base d'authentification incorrects | les comptes sont dans la base `admin` (`authSource=admin`) ; comparez avec `secrets/*.pwd` |
@@ -1926,20 +1926,20 @@ Toutes ces commandes s'exécutent dans `~/bd511/cluster`.
 
 | Action | Commande |
 | --- | --- |
-| État des conteneurs | `sudo docker compose ps` |
-| Journal d'un membre (JSON) | `sudo docker compose logs --no-log-prefix rs11 \| jq -c '{t: .t["$date"], msg}'` |
-| Arrêter RS1 proprement | `sudo docker compose stop` |
-| Redémarrer RS1 | `sudo docker compose start` |
-| Supprimer les conteneurs (les données restent dans `/srv/bd511`) | `sudo docker compose down` |
-| Recréer les conteneurs après une modification du fichier Compose | `sudo docker compose up -d --wait` |
+| État des conteneurs | `docker compose ps` |
+| Journal d'un membre (JSON) | `docker compose logs --no-log-prefix rs11 \| jq -c '{t: .t["$date"], msg}'` |
+| Arrêter RS1 proprement | `docker compose stop` |
+| Redémarrer RS1 | `docker compose start` |
+| Supprimer les conteneurs (les données restent dans `/srv/bd511`) | `docker compose down` |
+| Recréer les conteneurs après une modification du fichier Compose | `docker compose up -d --wait` |
 
 **Remettre RS1 à zéro** (conteneurs et données supprimés, fichiers et comptes de la partie 2 conservés), puis reprendre à la partie 3.2 :
 
 ```bash
 cd ~/bd511/cluster
-sudo docker compose down
+docker compose down
 sudo find /srv/bd511/rs11 /srv/bd511/rs12 /srv/bd511/rs1arb -mindepth 1 -delete
-sudo docker compose up -d --wait
+docker compose up -d --wait
 ```
 
 ## Annexe D – Références
