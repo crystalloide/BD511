@@ -49,7 +49,9 @@ Juste après le démarrage d'Ubuntu Desktop, les mises à jour automatiques (`un
 
 ```bash
 su - user
+```
 
+```bash
 mkdir -p ~/bd511/ch02 && cd ~/bd511/ch02
 echo 'DPkg::Lock::Timeout "600";' | sudo tee /etc/apt/apt.conf.d/90-bd511-lock-timeout
 ```
