@@ -742,8 +742,8 @@ sudo cat /proc/$(pidof mongod)/environ | tr '\0' '\n' | grep GLIBC_TUNABLES
 Résultat attendu :
 
 ```text
-State                        Recv-Q                       Send-Q                                             Local Address:Port                                              Peer Address:Port                      Process
-LISTEN                       0                            4096                                                   127.0.0.1:27017                                                  0.0.0.0:*                          users:(("mongod",pid=9010,fd=9))
+State  Recv-Q Send-Q Local Address:Port  Peer Address:Port Process
+LISTEN 0      4096       127.0.0.1:27017      0.0.0.0:*     users:(("mongod",pid=4242,fd=14))
 Max processes             64000                64000                processes
 Max open files            64000                64000                files
 GLIBC_TUNABLES=glibc.pthread.rseq=0
