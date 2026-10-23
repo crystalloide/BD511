@@ -855,9 +855,15 @@ exit $(( nb_ko > 0 ))
 EOF
 ```
 
+```bash
+sudo bash ~/bd511/ch02/check-mongodb.sh
+```
+
 Le seul avertissement de démarrage toléré à ce stade est « Access control is not enabled for the database » : l'authentification sera activée au chapitre 5.
 
 ---
+
+
 
 ## Partie 3 – Premiers tests de connexion avec mongosh
 
