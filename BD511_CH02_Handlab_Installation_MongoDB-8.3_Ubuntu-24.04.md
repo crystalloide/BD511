@@ -48,6 +48,8 @@
 Juste après le démarrage d'Ubuntu Desktop, les mises à jour automatiques (`unattended-upgrades`) occupent souvent le gestionnaire de paquets, et `apt-get` échoue alors avec « Could not get lock ». Le petit fichier de configuration ci-dessous fait patienter `apt-get` jusqu'à 10 minutes au lieu d'échouer.
 
 ```bash
+su - user
+
 mkdir -p ~/bd511/ch02 && cd ~/bd511/ch02
 echo 'DPkg::Lock::Timeout "600";' | sudo tee /etc/apt/apt.conf.d/90-bd511-lock-timeout
 ```
@@ -1136,7 +1138,7 @@ sudo apt-get install -y "./mongodb-compass_${COMPASS_VERSION}_amd64.deb"
 Vérifiez l'installation :
 
 ```bash
-mongodb-compass --version
+mongodb-compass --version --no-sandbox
 dpkg -s mongodb-compass | grep -E '^(Status|Version)'
 ls -l /usr/lib/mongodb-compass/chrome-sandbox
 ```
