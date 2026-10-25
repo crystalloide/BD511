@@ -118,18 +118,18 @@ rm -f mongodb-compass_1.53.0_amd64.deb
 
 ### 0.3 Créer les fichiers du TP
 
-Tous les fichiers sont générés dans `~/tp05-securite` : `conf/` (configurations `mongod`), `donnees/` (jeu de données) et `scripts/`. Collez les blocs suivants dans l'ordre.
+Tous les fichiers sont générés dans `~~/BD511/ch05` : `conf/` (configurations `mongod`), `donnees/` (jeu de données) et `scripts/`. Collez les blocs suivants dans l'ordre.
 
 **Arborescence :**
 
 ```bash
-mkdir -p ~/tp05-securite/conf ~/tp05-securite/donnees ~/tp05-securite/scripts
+mkdir -p ~~/BD511/ch05/conf ~~/BD511/ch05/donnees ~~/BD511/ch05/scripts
 ```
 
 **Configurations `mongod`** — trois étapes successives du durcissement, étudiées au TP1 :
 
 ```bash
-cat > ~/tp05-securite/conf/mongod.conf.0-reference <<'FIN_FICHIER'
+cat > ~~/BD511/ch05/conf/mongod.conf.0-reference <<'FIN_FICHIER'
 # /etc/mongod.conf — BD511 TP chapitre 5 — étape 0 : référence SANS authentification
 # YAML : indentation par 2 espaces, jamais de tabulation.
 
@@ -149,7 +149,7 @@ processManagement:
   timeZoneInfo: /usr/share/zoneinfo
 FIN_FICHIER
 
-cat > ~/tp05-securite/conf/mongod.conf.1-authentification <<'FIN_FICHIER'
+cat > ~~/BD511/ch05/conf/mongod.conf.1-authentification <<'FIN_FICHIER'
 # /etc/mongod.conf — BD511 TP chapitre 5 — étape 1 : authentification ACTIVÉE
 # YAML : indentation par 2 espaces, jamais de tabulation.
 
@@ -176,7 +176,7 @@ setParameter:
   authenticationMechanisms: SCRAM-SHA-256   # SCRAM-SHA-1 n'est plus accepté
 FIN_FICHIER
 
-cat > ~/tp05-securite/conf/mongod.conf.2-production <<'FIN_FICHIER'
+cat > ~~/BD511/ch05/conf/mongod.conf.2-production <<'FIN_FICHIER'
 # /etc/mongod.conf — BD511 TP chapitre 5 — étape 2 : configuration de PRODUCTION
 # YAML : indentation par 2 espaces, jamais de tabulation.
 
@@ -208,7 +208,7 @@ FIN_FICHIER
 **Jeu de données** — format JSON étendu (Extended JSON v2), un document par ligne. Les adresses e-mail utilisent le domaine réservé `example.com` et les numéros de téléphone la plage réservée par l'ARCEP aux œuvres de fiction :
 
 ```bash
-cat > ~/tp05-securite/donnees/produits.json <<'FIN_FICHIER'
+cat > ~~/BD511/ch05/donnees/produits.json <<'FIN_FICHIER'
 {"_id": "P001", "nom": "Clavier mécanique AZERTY", "categorie": "informatique", "prix": {"$numberDecimal": "89.90"}, "stock": 42, "actif": true}
 {"_id": "P002", "nom": "Souris sans fil ergonomique", "categorie": "informatique", "prix": {"$numberDecimal": "39.90"}, "stock": 120, "actif": true}
 {"_id": "P003", "nom": "Écran 27 pouces QHD", "categorie": "informatique", "prix": {"$numberDecimal": "279.00"}, "stock": 18, "actif": true}
@@ -223,7 +223,7 @@ cat > ~/tp05-securite/donnees/produits.json <<'FIN_FICHIER'
 {"_id": "P012", "nom": "Station d'accueil double écran", "categorie": "accessoires", "prix": {"$numberDecimal": "189.00"}, "stock": 0, "actif": false}
 FIN_FICHIER
 
-cat > ~/tp05-securite/donnees/clients.json <<'FIN_FICHIER'
+cat > ~~/BD511/ch05/donnees/clients.json <<'FIN_FICHIER'
 {"_id": "C001", "nom": "Martin", "prenom": "Camille", "email": "camille.martin@example.com", "telephone": "+33 6 39 98 10 20", "adresse": {"ville": "Lyon", "code_postal": "69003"}, "segment": "particulier", "date_inscription": {"$date": "2025-03-01T09:00:00Z"}, "consentement_marketing": true}
 {"_id": "C002", "nom": "Bernard", "prenom": "Lucas", "email": "lucas.bernard@example.com", "telephone": "+33 6 39 98 17 23", "adresse": {"ville": "Bordeaux", "code_postal": "33000"}, "segment": "particulier", "date_inscription": {"$date": "2025-04-07T09:00:00Z"}, "consentement_marketing": true}
 {"_id": "C003", "nom": "Dubois", "prenom": "Léa", "email": "lea.dubois@example.com", "telephone": "+33 6 39 98 24 26", "adresse": {"ville": "Limoges", "code_postal": "87000"}, "segment": "particulier", "date_inscription": {"$date": "2025-05-14T09:00:00Z"}, "consentement_marketing": false}
@@ -236,7 +236,7 @@ cat > ~/tp05-securite/donnees/clients.json <<'FIN_FICHIER'
 {"_id": "C010", "nom": "Moreau", "prenom": "Gabriel", "email": "gabriel.moreau@example.com", "telephone": "+33 6 39 98 73 47", "adresse": {"ville": "Strasbourg", "code_postal": "67000"}, "segment": "particulier", "date_inscription": {"$date": "2026-01-28T09:00:00Z"}, "consentement_marketing": true}
 FIN_FICHIER
 
-cat > ~/tp05-securite/donnees/commandes.json <<'FIN_FICHIER'
+cat > ~~/BD511/ch05/donnees/commandes.json <<'FIN_FICHIER'
 {"_id": "CMD-2026-0001", "client_id": "C002", "date": {"$date": "2026-09-03T11:46:00Z"}, "statut": "livree", "lignes": [{"produit_id": "P002", "quantite": 1, "prix_unitaire": {"$numberDecimal": "39.90"}}, {"produit_id": "P003", "quantite": 2, "prix_unitaire": {"$numberDecimal": "279.00"}}], "total": {"$numberDecimal": "597.90"}}
 {"_id": "CMD-2026-0002", "client_id": "C010", "date": {"$date": "2026-09-05T16:58:00Z"}, "statut": "livree", "lignes": [{"produit_id": "P003", "quantite": 3, "prix_unitaire": {"$numberDecimal": "279.00"}}], "total": {"$numberDecimal": "837.00"}}
 {"_id": "CMD-2026-0003", "client_id": "C005", "date": {"$date": "2026-09-07T14:32:00Z"}, "statut": "livree", "lignes": [{"produit_id": "P002", "quantite": 1, "prix_unitaire": {"$numberDecimal": "39.90"}}], "total": {"$numberDecimal": "39.90"}}
@@ -263,12 +263,12 @@ FIN_FICHIER
 **Scripts système** — contrôle des réglages de production et attente du démarrage de `mongod` :
 
 ```bash
-cat > ~/tp05-securite/scripts/00_prepa_systeme.sh <<'FIN_FICHIER'
+cat > ~~/BD511/ch05/scripts/00_prepa_systeme.sh <<'FIN_FICHIER'
 #!/usr/bin/env bash
 # BD511 – TP chapitre 5 – Étape 0.4 : contrôle et application des réglages système de production
 # Cible : Ubuntu 24.04 LTS + MongoDB 8.3 Community installé depuis le dépôt officiel (chapitre 2).
 # Idempotent : peut être relancé sans risque.
-# Usage : sudo bash ~/tp05-securite/scripts/00_prepa_systeme.sh
+# Usage : sudo bash ~~/BD511/ch05/scripts/00_prepa_systeme.sh
 set -euo pipefail
 
 if [[ $EUID -ne 0 ]]; then echo "Lancer ce script avec sudo." >&2; exit 1; fi
@@ -406,10 +406,10 @@ if [[ $ERREURS -gt 0 ]]; then echo "BILAN : $ERREURS point(s) bloquant(s) à cor
 echo "BILAN : environnement prêt pour le TP."
 FIN_FICHIER
 
-cat > ~/tp05-securite/scripts/attendre_mongod.sh <<'FIN_FICHIER'
+cat > ~~/BD511/ch05/scripts/attendre_mongod.sh <<'FIN_FICHIER'
 #!/usr/bin/env bash
 # BD511 – TP chapitre 5 – attend que mongod réponde sur 127.0.0.1:27017 (60 s maximum)
-# Usage : bash ~/tp05-securite/scripts/attendre_mongod.sh
+# Usage : bash ~~/BD511/ch05/scripts/attendre_mongod.sh
 for _ in $(seq 1 60); do
   if mongosh --quiet "mongodb://127.0.0.1:27017" --eval 'db.runCommand({ ping: 1 }).ok' > /dev/null 2>&1; then
     echo "mongod prêt."
@@ -426,7 +426,7 @@ FIN_FICHIER
 **Contrôle :** comparez le nombre de lignes de chaque fichier avec le tableau ; un écart signale un copier-coller incomplet (recréez alors le fichier concerné).
 
 ```bash
-cd ~/tp05-securite && wc -l conf/* donnees/* scripts/*
+cd ~~/BD511/ch05 && wc -l conf/* donnees/* scripts/*
 ```
 
 | Fichier | Lignes attendues |
@@ -446,7 +446,7 @@ cd ~/tp05-securite && wc -l conf/* donnees/* scripts/*
 Le script `00_prepa_systeme.sh` contrôle et, si besoin, corrige les réglages recommandés par les *Production Notes* de MongoDB 8.3. Il est rejouable sans risque.
 
 ```bash
-sudo bash ~/tp05-securite/scripts/00_prepa_systeme.sh
+sudo bash ~~/BD511/ch05/scripts/00_prepa_systeme.sh
 ```
 
 | Réglage | Valeur appliquée | Pourquoi |
@@ -499,14 +499,14 @@ La configuration d'origine est sauvegardée une seule fois, puis remplacée par 
 
 ```bash
 [ -f /etc/mongod.conf.avant-tp05 ] || sudo cp /etc/mongod.conf /etc/mongod.conf.avant-tp05
-sudo install -o root -g root -m 644 ~/tp05-securite/conf/mongod.conf.0-reference /etc/mongod.conf
-sudo systemctl restart mongod && bash ~/tp05-securite/scripts/attendre_mongod.sh
+sudo install -o root -g root -m 644 ~~/BD511/ch05/conf/mongod.conf.0-reference /etc/mongod.conf
+sudo systemctl restart mongod && bash ~~/BD511/ch05/scripts/attendre_mongod.sh
 ```
 
 Import des trois collections (l'option `--drop` rend l'import rejouable) :
 
 ```bash
-cd ~/tp05-securite/donnees
+cd ~~/BD511/ch05/donnees
 for c in produits clients commandes; do
   mongoimport --uri "mongodb://127.0.0.1:27017/boutique" --collection "$c" --drop --file "$c.json"
 done
@@ -571,7 +571,7 @@ LISTEN 0      4096       127.0.0.1:27017      0.0.0.0:*    users:(("mongod",pid=
 ### 1.1 Lire la configuration cible
 
 ```bash
-diff ~/tp05-securite/conf/mongod.conf.0-reference ~/tp05-securite/conf/mongod.conf.1-authentification
+diff ~~/BD511/ch05/conf/mongod.conf.0-reference ~~/BD511/ch05/conf/mongod.conf.1-authentification
 ```
 
 ```text
@@ -598,8 +598,8 @@ diff ~/tp05-securite/conf/mongod.conf.0-reference ~/tp05-securite/conf/mongod.co
 ### 1.2 Activer l'authentification
 
 ```bash
-sudo install -o root -g root -m 644 ~/tp05-securite/conf/mongod.conf.1-authentification /etc/mongod.conf
-sudo systemctl restart mongod && bash ~/tp05-securite/scripts/attendre_mongod.sh
+sudo install -o root -g root -m 644 ~~/BD511/ch05/conf/mongod.conf.1-authentification /etc/mongod.conf
+sudo systemctl restart mongod && bash ~~/BD511/ch05/scripts/attendre_mongod.sh
 sudo grep -o '"security":{[^}]*}' /var/log/mongodb/mongod.log | tail -n 1
 ```
 
@@ -632,9 +632,9 @@ Aucun utilisateur n'existe encore : MongoDB ouvre alors l'**exception localhost*
 Créez le script :
 
 ```bash
-cat > ~/tp05-securite/scripts/tp1_premier_admin.js <<'FIN_FICHIER'
+cat > ~~/BD511/ch05/scripts/tp1_premier_admin.js <<'FIN_FICHIER'
 // BD511 – TP chapitre 5 – Étape 1.4 : premier administrateur créé grâce à l'exception localhost
-// Lancement : mongosh --quiet "mongodb://127.0.0.1:27017/admin" --file ~/tp05-securite/scripts/tp1_premier_admin.js
+// Lancement : mongosh --quiet "mongodb://127.0.0.1:27017/admin" --file ~~/BD511/ch05/scripts/tp1_premier_admin.js
 // Rôle userAdminAnyDatabase : gère utilisateurs et rôles de toutes les bases, sans accès aux données.
 
 const admin = db.getSiblingDB("admin");
@@ -655,7 +655,7 @@ FIN_FICHIER
 Exécutez-le **sans vous authentifier**, depuis la VM :
 
 ```bash
-mongosh --quiet "mongodb://127.0.0.1:27017/admin" --file ~/tp05-securite/scripts/tp1_premier_admin.js
+mongosh --quiet "mongodb://127.0.0.1:27017/admin" --file ~~/BD511/ch05/scripts/tp1_premier_admin.js
 ```
 
 ```text
@@ -702,9 +702,9 @@ exit
 L'exception se referme dès qu'un utilisateur existe, mais elle se rouvrirait si tous les comptes étaient supprimés. En production, on la désactive explicitement :
 
 ```bash
-diff ~/tp05-securite/conf/mongod.conf.1-authentification ~/tp05-securite/conf/mongod.conf.2-production
-sudo install -o root -g root -m 644 ~/tp05-securite/conf/mongod.conf.2-production /etc/mongod.conf
-sudo systemctl restart mongod && bash ~/tp05-securite/scripts/attendre_mongod.sh
+diff ~~/BD511/ch05/conf/mongod.conf.1-authentification ~~/BD511/ch05/conf/mongod.conf.2-production
+sudo install -o root -g root -m 644 ~~/BD511/ch05/conf/mongod.conf.2-production /etc/mongod.conf
+sudo systemctl restart mongod && bash ~~/BD511/ch05/scripts/attendre_mongod.sh
 sudo grep -o '"setParameter":{[^}]*}' /var/log/mongodb/mongod.log | tail -n 1
 ```
 
@@ -802,10 +802,10 @@ Un rôle personnalisé associe des **privilèges** (une *ressource* + des *actio
 Créez le script :
 
 ```bash
-cat > ~/tp05-securite/scripts/tp2_roles.js <<'FIN_FICHIER'
+cat > ~~/BD511/ch05/scripts/tp2_roles.js <<'FIN_FICHIER'
 // BD511 – TP chapitre 5 – Étape 2.3 : rôles personnalisés (principe du moindre privilège)
 // Lancement (en tant qu'admin_secu) :
-//   mongosh --quiet "mongodb://127.0.0.1:27017/admin" -u admin_secu --file ~/tp05-securite/scripts/tp2_roles.js
+//   mongosh --quiet "mongodb://127.0.0.1:27017/admin" -u admin_secu --file ~~/BD511/ch05/scripts/tp2_roles.js
 // Script rejouable : un rôle existant est mis à jour au lieu d'être recréé.
 
 function definirRole(base, nom, privileges, rolesHerites) {
@@ -860,7 +860,7 @@ FIN_FICHIER
 Exécutez-le en tant qu'`admin_secu` (mot de passe `Secu-Lab-2026`) :
 
 ```bash
-mongosh --quiet "mongodb://127.0.0.1:27017/admin" -u admin_secu --file ~/tp05-securite/scripts/tp2_roles.js
+mongosh --quiet "mongodb://127.0.0.1:27017/admin" -u admin_secu --file ~~/BD511/ch05/scripts/tp2_roles.js
 ```
 
 ```text
@@ -901,10 +901,10 @@ Les comptes métier sont créés **dans la base `boutique`** : c'est leur *base 
 Créez le script :
 
 ```bash
-cat > ~/tp05-securite/scripts/tp2_utilisateurs.js <<'FIN_FICHIER'
+cat > ~~/BD511/ch05/scripts/tp2_utilisateurs.js <<'FIN_FICHIER'
 // BD511 – TP chapitre 5 – Étape 2.4 : comptes applicatifs et métiers
 // Lancement (en tant qu'admin_secu) :
-//   mongosh --quiet "mongodb://127.0.0.1:27017/admin" -u admin_secu --file ~/tp05-securite/scripts/tp2_utilisateurs.js
+//   mongosh --quiet "mongodb://127.0.0.1:27017/admin" -u admin_secu --file ~~/BD511/ch05/scripts/tp2_utilisateurs.js
 // Script rejouable : un compte existant est mis à jour (mot de passe et rôles).
 // Mots de passe de LABORATOIRE uniquement ; en production : pwd: passwordPrompt() ou coffre-fort de secrets.
 
@@ -947,7 +947,7 @@ FIN_FICHIER
 ```
 
 ```bash
-mongosh --quiet "mongodb://127.0.0.1:27017/admin" -u admin_secu --file ~/tp05-securite/scripts/tp2_utilisateurs.js
+mongosh --quiet "mongodb://127.0.0.1:27017/admin" -u admin_secu --file ~~/BD511/ch05/scripts/tp2_utilisateurs.js
 ```
 
 ```text
@@ -1123,10 +1123,10 @@ Le script suivant se connecte successivement avec chaque compte, tente onze opé
 Créez le script :
 
 ```bash
-cat > ~/tp05-securite/scripts/tp3_matrice_droits.js <<'FIN_FICHIER'
+cat > ~~/BD511/ch05/scripts/tp3_matrice_droits.js <<'FIN_FICHIER'
 // BD511 – TP chapitre 5 – Étape 3.4 : matrice des droits effectifs
 // Lancement (aucune authentification préalable : le script ouvre une connexion par compte) :
-//   mongosh --quiet --nodb --file ~/tp05-securite/scripts/tp3_matrice_droits.js
+//   mongosh --quiet --nodb --file ~~/BD511/ch05/scripts/tp3_matrice_droits.js
 // Pour chaque compte, le script tente 11 opérations et compare le résultat à la matrice attendue.
 // Les écritures de test sont neutres (filtre sur un _id inexistant) sauf « créer commande »,
 // dont les documents de test sont supprimés en fin de script.
@@ -1226,7 +1226,7 @@ FIN_FICHIER
 ```
 
 ```bash
-mongosh --quiet --nodb --file ~/tp05-securite/scripts/tp3_matrice_droits.js
+mongosh --quiet --nodb --file ~~/BD511/ch05/scripts/tp3_matrice_droits.js
 ```
 
 ```text
@@ -1258,10 +1258,10 @@ Questions :
 Chaque authentification réussie (id `5286306`) ou échouée (id `5286307`) est journalisée par le composant `ACCESS`. Créez le script d'extraction :
 
 ```bash
-cat > ~/tp05-securite/scripts/tp3_journal_auth.py <<'FIN_FICHIER'
+cat > ~~/BD511/ch05/scripts/tp3_journal_auth.py <<'FIN_FICHIER'
 #!/usr/bin/env python3
 # BD511 – TP chapitre 5 – Étape 3.5 : synthèse des authentifications du journal mongod
-# Usage : sudo python3 ~/tp05-securite/scripts/tp3_journal_auth.py [--echecs] [nombre_de_lignes]
+# Usage : sudo python3 ~~/BD511/ch05/scripts/tp3_journal_auth.py [--echecs] [nombre_de_lignes]
 #   --echecs : n'affiche que les authentifications refusées
 # Seules les entrées du composant ACCESS « Successfully authenticated » (id 5286306)
 # et « Failed to authenticate » (id 5286307) du journal JSON sont prises en compte.
@@ -1304,7 +1304,7 @@ FIN_FICHIER
 ```
 
 ```bash
-sudo python3 ~/tp05-securite/scripts/tp3_journal_auth.py --echecs
+sudo python3 ~~/BD511/ch05/scripts/tp3_journal_auth.py --echecs
 ```
 
 ```text
@@ -1315,7 +1315,7 @@ Journal : … authentification(s) réussie(s), 4 refusée(s). 4 dernière(s) lig
 2026-10-23 11:01:07  ÉCHEC   vendeur       db=admin     SCRAM-SHA-256  127.0.0.1:47214  UserNotFound: Could not find user "vendeur" for db "admin"
 ```
 
-Le client ne reçoit que `Authentication failed.` ; le serveur, lui, enregistre la cause (`UserNotFound`, `MechanismUnavailable`), le mécanisme et l'adresse du client. Chaque tentative refusée apparaît deux fois : les drivers tentent d'abord une authentification *spéculative* dès le `hello` initial (économie d'un aller-retour), puis recommencent de façon explicite. Pour le refus SCRAM-SHA-1, le nom d'utilisateur n'a même pas été lu (`—`). Sans l'option `--echecs`, le script affiche aussi les succès (`sudo python3 ~/tp05-securite/scripts/tp3_journal_auth.py 20`) : une session mongosh ouvre plusieurs connexions, d'où plusieurs lignes par session.
+Le client ne reçoit que `Authentication failed.` ; le serveur, lui, enregistre la cause (`UserNotFound`, `MechanismUnavailable`), le mécanisme et l'adresse du client. Chaque tentative refusée apparaît deux fois : les drivers tentent d'abord une authentification *spéculative* dès le `hello` initial (économie d'un aller-retour), puis recommencent de façon explicite. Pour le refus SCRAM-SHA-1, le nom d'utilisateur n'a même pas été lu (`—`). Sans l'option `--echecs`, le script affiche aussi les succès (`sudo python3 ~~/BD511/ch05/scripts/tp3_journal_auth.py 20`) : une session mongosh ouvre plusieurs connexions, d'où plusieurs lignes par session.
 
 > En production, ces événements sont envoyés à un SIEM ; une rafale d'échecs depuis une même adresse doit déclencher une alerte. Le journal d'audit détaillé (`auditLog`) est réservé à l'édition Enterprise.
 
@@ -1439,7 +1439,7 @@ sudo update-grub
 sudo reboot
 ```
 
-Après redémarrage, `uname -r` affiche `6.8.0-xx-generic` ; relancez `sudo bash ~/tp05-securite/scripts/00_prepa_systeme.sh` : il retire le contournement et réactive les caches par CPU. Après une future mise à jour de MongoDB intégrant la correction pour les noyaux Ubuntu, réévaluez ce choix.
+Après redémarrage, `uname -r` affiche `6.8.0-xx-generic` ; relancez `sudo bash ~~/BD511/ch05/scripts/00_prepa_systeme.sh` : il retire le contournement et réactive les caches par CPU. Après une future mise à jour de MongoDB intégrant la correction pour les noyaux Ubuntu, réévaluez ce choix.
 
 ---
 
@@ -1448,13 +1448,13 @@ Après redémarrage, `uname -r` affiche `6.8.0-xx-generic` ; relancez `sudo bash
 Ce script remet l'instance dans l'état « avant TP » : configuration sans authentification, suppression des comptes et rôles créés par le TP, puis de la base `boutique`. Les autres comptes éventuels ne sont pas touchés (s'il en reste, l'exception localhost ne sera pas disponible au TP1).
 
 ```bash
-cat > ~/tp05-securite/scripts/zz_reinitialiser_tp05.sh <<'FIN_FICHIER'
+cat > ~~/BD511/ch05/scripts/zz_reinitialiser_tp05.sh <<'FIN_FICHIER'
 #!/usr/bin/env bash
 # BD511 – TP chapitre 5 – Annexe B : remise de l'instance dans l'état « avant TP »
 #  - configuration de référence SANS authentification ;
 #  - suppression des comptes et rôles créés par le TP, puis de la base boutique.
 # Les autres comptes éventuels de l'instance ne sont pas touchés.
-# Usage : bash ~/tp05-securite/scripts/zz_reinitialiser_tp05.sh   (sudo sera demandé)
+# Usage : bash ~~/BD511/ch05/scripts/zz_reinitialiser_tp05.sh   (sudo sera demandé)
 set -euo pipefail
 DIR_TP="$(cd "$(dirname "$0")/.." && pwd)"
 
@@ -1486,7 +1486,7 @@ FIN_FICHIER
 ```
 
 ```bash
-bash ~/tp05-securite/scripts/zz_reinitialiser_tp05.sh
+bash ~~/BD511/ch05/scripts/zz_reinitialiser_tp05.sh
 ```
 
 ```text
@@ -1509,7 +1509,7 @@ Pour revenir à la configuration d'avant le TP : `sudo cp /etc/mongod.conf.avant
 
 | Symptôme | Cause probable | Solution |
 | --- | --- | --- |
-| `mongod prêt.` n'apparaît pas, `ÉCHEC : mongod ne répond pas` | erreur dans `/etc/mongod.conf` (tabulation, indentation YAML) ou noyau incompatible | `sudo systemctl status mongod --no-pager` ; `sudo tail -n 20 /var/log/mongodb/mongod.log` ; réinstaller le fichier de `~/tp05-securite/conf` ; [annexe A](#annexe-a--noyau-hwe-70-dubuntu-2404-et-mongodb-83) |
+| `mongod prêt.` n'apparaît pas, `ÉCHEC : mongod ne répond pas` | erreur dans `/etc/mongod.conf` (tabulation, indentation YAML) ou noyau incompatible | `sudo systemctl status mongod --no-pager` ; `sudo tail -n 20 /var/log/mongodb/mongod.log` ; réinstaller le fichier de `~~/BD511/ch05/conf` ; [annexe A](#annexe-a--noyau-hwe-70-dubuntu-2404-et-mongodb-83) |
 | `MongoServerError: Authentication failed.` | mauvais mot de passe, ou mauvaise base d'authentification | vérifier le tableau des comptes ; ajouter `?authSource=boutique` ou `?authSource=admin` |
 | `Command createUser requires authentication` à l'étape 1.4 | un utilisateur existe déjà (TP déjà joué, autre chapitre) | [annexe B](#annexe-b--réinitialiser-le-tp) |
 | `Received authentication for mechanism SCRAM-SHA-1 which is not enabled` | client forcé en SCRAM-SHA-1 | utiliser `authMechanism=SCRAM-SHA-256` ou le mécanisme par défaut |
