@@ -488,7 +488,13 @@ Près d'une demi-seconde pour afficher dix lignes, à chaque affichage : la rép
 
 ### 2.2 Retrouver la requête dans le journal de `mongod`
 
-Toute opération qui dure plus de **`slowms` = 100 ms** (valeur par défaut) est écrite dans le journal JSON du serveur, avec le message `Slow query`, même lorsque le profiler est désactivé. C'est souvent ainsi qu'un administrateur découvre une requête lente. Vérifiez le réglage dans le terminal 2 :
+Toute opération qui dure plus de **`slowms` = 100 ms** (valeur par défaut) est écrite dans le journal JSON du serveur, avec le message `Slow query`, même lorsque le profiler est désactivé. C'est souvent ainsi qu'un administrateur découvre une requête lente. 
+
+Vérifiez le réglage dans le terminal 2 :
+
+```javascript
+mongosh --quiet "mongodb://127.0.0.1:27017/BD511?appName=BD511-appli"
+```
 
 ```javascript
 db.getProfilingStatus()
