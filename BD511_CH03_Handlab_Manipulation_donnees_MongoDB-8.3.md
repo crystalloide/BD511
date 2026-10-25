@@ -31,12 +31,12 @@
 ## Conventions
 
 - Les commandes **bash** s'exécutent dans un terminal de la VM (`Ctrl` + `Alt` + `T`) avec votre compte habituel ; `sudo` est indiqué quand des droits d'administration sont nécessaires.
-- Les commandes **mongosh** se tapent à l'invite `bd511>` ; tapez-les une par une (ou collez un bloc entier : mongosh les exécute dans l'ordre).
+- Les commandes **mongosh** se tapent à l'invite `BD511>` ; tapez-les une par une (ou collez un bloc entier : mongosh les exécute dans l'ordre).
 - Les blocs qui créent un fichier (`cat > fichier <<'EOF'` ou `sudo tee fichier <<'EOF'`) se copient **en entier**, de la première ligne jusqu'à la ligne `EOF` incluse.
 - Les blocs « Résultat attendu » montrent la sortie à obtenir. Le jeu de données est généré de façon déterministe : les nombres de documents, les montants et les identifiants sont **identiques** sur toutes les VM. Seuls varient les horodatages, les identifiants de connexion et les `ObjectId` créés pendant le TP.
-- Tous les fichiers du TP sont générés dans `~/bd511/ch03` ; l'annexe B en donne la liste.
+- Tous les fichiers du TP sont générés dans `~/BD511/ch03` ; l'annexe B en donne la liste.
 
-> **Note formateur.** Le script `importer.sh` (partie 1.8) remet la base `bd511` dans son état initial en quelques secondes. Les parties 3 et 4 commencent par lui : un stagiaire en retard peut ainsi les aborder même s'il n'a pas terminé la partie précédente.
+> **Note formateur.** Le script `importer.sh` (partie 1.8) remet la base `BD511` dans son état initial en quelques secondes. Les parties 3 et 4 commencent par lui : un stagiaire en retard peut ainsi les aborder même s'il n'a pas terminé la partie précédente.
 
 ---
 
@@ -47,7 +47,7 @@
 La partie 4 utilise un environnement virtuel Python. Sur Ubuntu, le module `venv` est fourni par un paquet séparé, absent de l'installation par défaut :
 
 ```bash
-mkdir -p ~/bd511/ch03/donnees ~/bd511/ch03/python
+mkdir -p ~/BD511/ch03/donnees ~/BD511/ch03/python
 sudo apt-get update
 sudo apt-get install -y python3-venv jq
 ```
@@ -57,7 +57,7 @@ sudo apt-get install -y python3-venv jq
 Relancez d'abord le contrôle des réglages de production réalisé à la fin du chapitre 2 :
 
 ```bash
-sudo bash ~/bd511/ch02/check-mongodb.sh | tail -n 1
+sudo bash ~/BD511/ch02/check-mongodb.sh | tail -n 1
 ```
 
 Résultat attendu :
@@ -71,10 +71,10 @@ Si le script est absent ou signale des points KO, reprenez le handlab du chapitr
 Générez ensuite le contrôle propre à ce chapitre (outils clients, Python, accès au dépôt PyPI) et exécutez-le :
 
 ```bash
-cat > ~/bd511/ch03/00-prerequis.sh <<'EOF'
+cat > ~/BD511/ch03/00-prerequis.sh <<'EOF'
 #!/usr/bin/env bash
 # 00-prerequis.sh - BD511 ch.3 : vérifie l'environnement avant le TP
-# Usage : bash ~/bd511/ch03/00-prerequis.sh
+# Usage : bash ~/BD511/ch03/00-prerequis.sh
 set -u
 ko=0
 ok()  { printf '  [OK] %s\n' "$*"; }
@@ -84,7 +84,7 @@ echo "== Serveur et outils MongoDB"
 v=$(mongod --version 2>/dev/null | awk 'NR == 1 {print $3}')
 if [[ $v == v8.3.* ]]; then ok "Serveur MongoDB $v"; else nok "Serveur MongoDB 8.3 attendu (trouvé : ${v:-absent})"; fi
 if systemctl is-active --quiet mongod; then ok "Service mongod actif"; else nok "Service mongod arrêté : sudo systemctl start mongod"; fi
-if mongosh --quiet "mongodb://127.0.0.1:27017/?appName=bd511-prerequis" --eval 'db.runCommand({ ping: 1 }).ok' >/dev/null 2>&1
+if mongosh --quiet "mongodb://127.0.0.1:27017/?appName=BD511-prerequis" --eval 'db.runCommand({ ping: 1 }).ok' >/dev/null 2>&1
 then ok "Connexion à mongodb://127.0.0.1:27017"; else nok "Connexion impossible à mongodb://127.0.0.1:27017"; fi
 v=$(mongosh --version 2>/dev/null)
 if [[ -n $v ]]; then ok "mongosh $v"; else nok "mongosh absent (chapitre 2, partie 1)"; fi
@@ -106,7 +106,7 @@ echo
 if (( ko == 0 )); then echo "Résultat : environnement prêt pour le TP."; else echo "Résultat : ${ko} point(s) à corriger."; fi
 exit $(( ko > 0 ))
 EOF
-bash ~/bd511/ch03/00-prerequis.sh
+bash ~/BD511/ch03/00-prerequis.sh
 ```
 
 Résultat attendu :
@@ -176,7 +176,7 @@ false 2000 remove-redact
 
 ### 1.1 Générer les fichiers de données
 
-Le jeu de données du TP décrit l'activité **fictive** d'un organisme de formation, dans la base `bd511` :
+Le jeu de données du TP décrit l'activité **fictive** d'un organisme de formation, dans la base `BD511` :
 
 | Collection | Contenu | Format source | Particularités |
 | --- | --- | --- | --- |
@@ -187,7 +187,7 @@ Le jeu de données du TP décrit l'activité **fictive** d'un organisme de forma
 Les fichiers sont produits par un script Python qui n'utilise que la bibliothèque standard. Son générateur pseudo-aléatoire est déterministe : tout le monde obtient exactement les mêmes données, ce que la somme de contrôle de l'étape suivante vérifie.
 
 ```bash
-cat > ~/bd511/ch03/generer_donnees.py <<'EOF'
+cat > ~/BD511/ch03/generer_donnees.py <<'EOF'
 #!/usr/bin/env python3
 """generer_donnees.py - BD511 ch.3 : génère le jeu de données du TP (bibliothèque standard uniquement).
 
@@ -455,7 +455,7 @@ def main():
 if __name__ == "__main__":
     main()
 EOF
-cd ~/bd511/ch03/donnees
+cd ~/BD511/ch03/donnees
 python3 ../generer_donnees.py
 ```
 
@@ -470,13 +470,13 @@ inscriptions.json : 1202 inscriptions
 Vérifiez que vos fichiers sont identiques aux fichiers de référence :
 
 ```bash
-cat > ~/bd511/ch03/donnees/SHA256SUMS <<'EOF'
+cat > ~/BD511/ch03/donnees/SHA256SUMS <<'EOF'
 cafeaac3d6e29a87de27a9076c171ff43f363405a24eb0726b2a15e5685a0362  formations.json
 74b753a7440ea0c29efe3c28180ff1c8f9e45d7e064e0531410f064f8bc555a5  inscriptions.json
 cec5f4a1804665934d5bc771899a46fdd600ce44848fa22a9aafa9c2be61027e  stagiaires.csv
 1f7828c0aeb0995a15f4dc392e2ae3863e9a141c982279706ab1bb87cffb2d1a  stagiaires.fields
 EOF
-sha256sum --check ~/bd511/ch03/donnees/SHA256SUMS
+sha256sum --check ~/BD511/ch03/donnees/SHA256SUMS
 ```
 
 Résultat attendu :
@@ -493,7 +493,7 @@ Un `FAILED` signale une erreur de copie du script : recopiez le bloc `generer_do
 ### 1.2 Examiner les fichiers
 
 ```bash
-cd ~/bd511/ch03/donnees
+cd ~/BD511/ch03/donnees
 head -n 3 stagiaires.csv
 cat stagiaires.fields
 head -n 1 inscriptions.json
@@ -538,16 +538,16 @@ Observations :
 Le fichier `formations.json` contient un **tableau** JSON ; l'option `--jsonArray` l'indique à `mongoimport`. L'option `--drop` vide la collection avant l'import (elle remplace ici la collection créée au chapitre 2 par un contenu identique), et `appName` identifie l'outil dans le journal du serveur.
 
 ```bash
-cd ~/bd511/ch03/donnees
-URI="mongodb://127.0.0.1:27017/?appName=bd511-import"
-mongoimport --uri "$URI" --db bd511 --collection formations --drop --jsonArray --file formations.json
+cd ~/BD511/ch03/donnees
+URI="mongodb://127.0.0.1:27017/?appName=BD511-import"
+mongoimport --uri "$URI" --db BD511 --collection formations --drop --jsonArray --file formations.json
 ```
 
 Résultat attendu (les horodatages varient) :
 
 ```text
-2026-10-22T16:32:50.389+0200	connected to: mongodb://127.0.0.1:27017/?appName=bd511-import
-2026-10-22T16:32:50.390+0200	dropping: `bd511.formations`
+2026-10-22T16:32:50.389+0200	connected to: mongodb://127.0.0.1:27017/?appName=BD511-import
+2026-10-22T16:32:50.390+0200	dropping: `BD511.formations`
 2026-10-22T16:32:50.399+0200	24 document(s) imported successfully. 0 document(s) failed to import.
 ```
 
@@ -556,14 +556,14 @@ Résultat attendu (les horodatages varient) :
 Sans `--jsonArray`, `mongoimport` attend un document par ligne. Le *write concern* `majority` (valeur par défaut des Database Tools, précisée ici explicitement) n'acquitte chaque lot qu'une fois écrit sur la majorité des membres d'un replica set. Sur notre instance autonome, il se comporte comme un acquittement simple ; le garder explicite rend le script valable tel quel après le passage en replica set (chapitre 6).
 
 ```bash
-mongoimport --uri "$URI" --db bd511 --collection inscriptions --drop --writeConcern '{w: "majority"}' --file inscriptions.json
+mongoimport --uri "$URI" --db BD511 --collection inscriptions --drop --writeConcern '{w: "majority"}' --file inscriptions.json
 ```
 
 Résultat attendu :
 
 ```text
-… connected to: mongodb://127.0.0.1:27017/?appName=bd511-import
-… dropping: `bd511.inscriptions`
+… connected to: mongodb://127.0.0.1:27017/?appName=BD511-import
+… dropping: `BD511.inscriptions`
 … 1202 document(s) imported successfully. 0 document(s) failed to import.
 ```
 
@@ -572,15 +572,15 @@ Résultat attendu :
 Importez d'abord le CSV « naïvement », en vous contentant de la ligne d'en-tête :
 
 ```bash
-mongoimport --uri "$URI" --db bd511 --collection stagiaires_brut --drop --type csv --headerline --file stagiaires.csv
-mongosh --quiet "mongodb://127.0.0.1:27017/bd511" --eval 'db.stagiaires_brut.findOne({ _id: "STG0002" })'
+mongoimport --uri "$URI" --db BD511 --collection stagiaires_brut --drop --type csv --headerline --file stagiaires.csv
+mongosh --quiet "mongodb://127.0.0.1:27017/BD511" --eval 'db.stagiaires_brut.findOne({ _id: "STG0002" })'
 ```
 
 Résultat attendu :
 
 ```text
-… connected to: mongodb://127.0.0.1:27017/?appName=bd511-import
-… dropping: `bd511.stagiaires_brut`
+… connected to: mongodb://127.0.0.1:27017/?appName=BD511-import
+… dropping: `BD511.stagiaires_brut`
 … 300 document(s) imported successfully. 0 document(s) failed to import.
 {
   _id: 'STG0002',
@@ -611,16 +611,16 @@ Vous mesurerez l'effet de ces erreurs de type dans la partie 2.8.
 En production, on décrit le type de chaque colonne. Le fichier `stagiaires.fields` associe un type à chaque colonne (`string()`, `boolean()`, `int32()`, `date(2006-01-02)` où `2006-01-02` est le modèle de date au format du langage Go). Comme il remplace la ligne d'en-tête, on retire celle-ci du CSV avec `tail -n +2` et on transmet les lignes à `mongoimport` par l'entrée standard :
 
 ```bash
-tail -n +2 stagiaires.csv | mongoimport --uri "$URI" --db bd511 --collection stagiaires --drop --type csv \
+tail -n +2 stagiaires.csv | mongoimport --uri "$URI" --db BD511 --collection stagiaires --drop --type csv \
   --columnsHaveTypes --fieldFile stagiaires.fields --ignoreBlanks --parseGrace stop
-mongosh --quiet "mongodb://127.0.0.1:27017/bd511" --eval 'db.stagiaires.findOne({ _id: "STG0002" })'
+mongosh --quiet "mongodb://127.0.0.1:27017/BD511" --eval 'db.stagiaires.findOne({ _id: "STG0002" })'
 ```
 
 Résultat attendu :
 
 ```text
-… connected to: mongodb://127.0.0.1:27017/?appName=bd511-import
-… dropping: `bd511.stagiaires`
+… connected to: mongodb://127.0.0.1:27017/?appName=BD511-import
+… dropping: `BD511.stagiaires`
 … 300 document(s) imported successfully. 0 document(s) failed to import.
 {
   _id: 'STG0002',
@@ -654,7 +654,7 @@ Les options utilisées sont celles que l'on retient pour un import de production
 Exportez au format CSV les stagiaires de l'entreprise *Acme Data*, triés par identifiant. Pour un export CSV, la liste des champs est obligatoire ; la notation pointée désigne un champ imbriqué :
 
 ```bash
-mongoexport --uri "$URI" --db bd511 --collection stagiaires --type csv \
+mongoexport --uri "$URI" --db BD511 --collection stagiaires --type csv \
   --fields _id,nom,prenom,entreprise,adresse.ville,adresse.code_postal \
   --query '{"entreprise": "Acme Data"}' --sort '{"_id": 1}' --out acme-data.csv
 head -n 4 acme-data.csv
@@ -663,7 +663,7 @@ head -n 4 acme-data.csv
 Résultat attendu :
 
 ```text
-… connected to: mongodb://127.0.0.1:27017/?appName=bd511-import
+… connected to: mongodb://127.0.0.1:27017/?appName=BD511-import
 … exported 23 records
 _id,nom,prenom,entreprise,adresse.ville,adresse.code_postal
 STG0013,Simon,Stéphanie,Acme Data,Annecy,74000
@@ -674,9 +674,9 @@ STG0045,Muller,Lucas,Acme Data,Bordeaux,33000
 Exportez ensuite une inscription au format JSON, d'abord dans le format par défaut (*relaxed*), puis dans le format *canonical*, qui conserve le type exact de chaque nombre et de chaque date :
 
 ```bash
-mongoexport --uri "$URI" --db bd511 --collection inscriptions --quiet --limit 1 \
+mongoexport --uri "$URI" --db BD511 --collection inscriptions --quiet --limit 1 \
   --query '{"stagiaire_id": "STG0002", "statut": "terminée"}' --sort '{"_id": 1}'
-mongoexport --uri "$URI" --db bd511 --collection inscriptions --quiet --limit 1 \
+mongoexport --uri "$URI" --db BD511 --collection inscriptions --quiet --limit 1 \
   --query '{"stagiaire_id": "STG0002", "statut": "terminée"}' --sort '{"_id": 1}' --jsonFormat canonical
 ```
 
@@ -694,20 +694,20 @@ Résultat attendu :
 Le script `importer.sh` regroupe les imports précédents. Il vérifie d'abord la somme de contrôle des fichiers, puis remet les quatre collections dans leur état initial. Vous l'utiliserez au début des parties 3 et 4.
 
 ```bash
-cat > ~/bd511/ch03/importer.sh <<'EOF'
+cat > ~/BD511/ch03/importer.sh <<'EOF'
 #!/usr/bin/env bash
-# importer.sh - BD511 ch.3 : (ré)importe le jeu de données du TP dans la base bd511
-# Usage : bash ~/bd511/ch03/importer.sh
+# importer.sh - BD511 ch.3 : (ré)importe le jeu de données du TP dans la base BD511
+# Usage : bash ~/BD511/ch03/importer.sh
 set -euo pipefail
 
-DONNEES="$HOME/bd511/ch03/donnees"
-URI="mongodb://127.0.0.1:27017/?appName=bd511-import"
+DONNEES="$HOME/BD511/ch03/donnees"
+URI="mongodb://127.0.0.1:27017/?appName=BD511-import"
 
 cd "$DONNEES"
 sha256sum --quiet --check SHA256SUMS || { echo "Fichiers de données différents de la référence : relancez la partie 1.1." >&2; exit 1; }
 
 # Options communes : écriture confirmée par la majorité, arrêt à la première erreur, collection vidée avant import.
-commun=(--uri "$URI" --db bd511 --drop --writeConcern '{w: "majority"}' --stopOnError --quiet)
+commun=(--uri "$URI" --db BD511 --drop --writeConcern '{w: "majority"}' --stopOnError --quiet)
 
 mongoimport "${commun[@]}" --collection formations --jsonArray --file formations.json
 mongoimport "${commun[@]}" --collection inscriptions --file inscriptions.json
@@ -715,12 +715,12 @@ mongoimport "${commun[@]}" --collection stagiaires_brut --type csv --headerline 
 tail -n +2 stagiaires.csv | mongoimport "${commun[@]}" --collection stagiaires --type csv \
   --columnsHaveTypes --fieldFile stagiaires.fields --ignoreBlanks --parseGrace stop
 
-mongosh --quiet "mongodb://127.0.0.1:27017/bd511?appName=bd511-import" --eval '
+mongosh --quiet "mongodb://127.0.0.1:27017/BD511?appName=BD511-import" --eval '
   for (const nom of ["formations", "inscriptions", "stagiaires", "stagiaires_brut"]) {
     print(nom.padEnd(16) + ": " + db.getCollection(nom).countDocuments() + " documents");
   }'
 EOF
-bash ~/bd511/ch03/importer.sh
+bash ~/BD511/ch03/importer.sh
 ```
 
 Résultat attendu :
@@ -741,16 +741,16 @@ stagiaires_brut : 300 documents
 Une chaîne de connexion (URI) décrit en une ligne le serveur, la base par défaut et les options du client :
 
 ```text
-mongodb://127.0.0.1:27017/bd511?appName=bd511-tp3
+mongodb://127.0.0.1:27017/BD511?appName=BD511-tp3
 └────┬───┘└──────┬──────┘ └─┬─┘ └───────┬───────┘
   schéma     hôte:port    base       options
 ```
 
 ```bash
-mongosh "mongodb://127.0.0.1:27017/bd511?appName=bd511-tp3"
+mongosh "mongodb://127.0.0.1:27017/BD511?appName=BD511-tp3"
 ```
 
-L'invite `bd511>` indique la base courante. mongosh a complété l'URI avec ses options par défaut :
+L'invite `BD511>` indique la base courante. mongosh a complété l'URI avec ses options par défaut :
 
 ```javascript
 db
@@ -760,14 +760,14 @@ db.getMongo()
 Résultat attendu :
 
 ```text
-bd511
-mongodb://127.0.0.1:27017/bd511?appName=bd511-tp3&directConnection=true&serverSelectionTimeoutMS=2000
+BD511
+mongodb://127.0.0.1:27017/BD511?appName=BD511-tp3&directConnection=true&serverSelectionTimeoutMS=2000
 ```
 
 L'option `appName` est précieuse en exploitation : le nom de l'application apparaît dans le journal du serveur et dans les opérations en cours. Dans un **second terminal** (`Ctrl` + `Maj` + `T`), retrouvez votre connexion dans le journal JSON de `mongod` :
 
 ```bash
-sudo jq -c 'select(.msg == "client metadata" and .attr.doc.application.name == "bd511-tp3")
+sudo jq -c 'select(.msg == "client metadata" and .attr.doc.application.name == "BD511-tp3")
   | {date: .t["$date"], client: .attr.remote, app: .attr.doc.application.name, driver: .attr.doc.driver.name}' \
   /var/log/mongodb/mongod.log | tail -n 1
 ```
@@ -775,7 +775,7 @@ sudo jq -c 'select(.msg == "client metadata" and .attr.doc.application.name == "
 Résultat attendu (date et port client variables) :
 
 ```text
-{"date":"2026-10-22T16:32:18.660+02:00","client":"127.0.0.1:51584","app":"bd511-tp3","driver":"nodejs|mongosh"}
+{"date":"2026-10-22T16:32:18.660+02:00","client":"127.0.0.1:51584","app":"BD511-tp3","driver":"nodejs|mongosh"}
 ```
 
 ### 2.2 Naviguer et utiliser l'aide intégrée
@@ -785,14 +785,14 @@ show dbs
 show collections
 use admin
 show collections
-use bd511
+use BD511
 ```
 
 Résultat attendu (tailles variables) :
 
 ```text
 admin    40.00 KiB
-bd511    32.00 KiB
+BD511    32.00 KiB
 config  108.00 KiB
 local    72.00 KiB
 formations
@@ -801,7 +801,7 @@ stagiaires
 stagiaires_brut
 switched to db admin
 system.version
-switched to db bd511
+switched to db BD511
 ```
 
 L'aide est contextuelle. Tapez successivement les commandes suivantes et parcourez les listes affichées :
@@ -822,7 +822,7 @@ db.version()
 db.inscriptions.countDocuments()
 db.inscriptions.estimatedDocumentCount()
 db.inscriptions.dataSize()
-db.currentOp({ appName: "bd511-tp3" }).inprog.map(op => ({ opid: op.opid, op: op.op, client: op.client, appName: op.appName }))
+db.currentOp({ appName: "BD511-tp3" }).inprog.map(op => ({ opid: op.opid, op: op.op, client: op.client, appName: op.appName }))
 ```
 
 Résultat attendu (`opid` et port client variables, la liste peut contenir une ou deux opérations) :
@@ -837,7 +837,7 @@ Résultat attendu (`opid` et port client variables, la liste peut contenir une o
     opid: 87051,
     op: 'command',
     client: '127.0.0.1:51566',
-    appName: 'bd511-tp3'
+    appName: 'BD511-tp3'
   }
 ]
 ```
@@ -948,18 +948,18 @@ Result: BulkWriteResult {
 7
 ```
 
-Le premier lot s'est arrêté au doublon (`5` n'a pas été inséré) ; le second, non ordonné, a inséré `5` et `6` malgré l'erreur. Supprimez la base de test et revenez sur `bd511` :
+Le premier lot s'est arrêté au doublon (`5` n'a pas été inséré) ; le second, non ordonné, a inséré `5` et `6` malgré l'erreur. Supprimez la base de test et revenez sur `BD511` :
 
 ```javascript
 db.dropDatabase()
-use bd511
+use BD511
 ```
 
 Résultat attendu :
 
 ```text
 { ok: 1, dropped: 'bac_a_sable' }
-switched to db bd511
+switched to db BD511
 ```
 
 ### 2.6 Lire des documents : `find`, opérateurs, projection, tri
@@ -1750,7 +1750,7 @@ exit
 Remettez la base dans son état initial : vous pourrez ainsi comparer chaque résultat de Compass avec celui obtenu dans mongosh en partie 2.
 
 ```bash
-bash ~/bd511/ch03/importer.sh
+bash ~/BD511/ch03/importer.sh
 ```
 
 Résultat attendu :
@@ -1766,7 +1766,7 @@ Lancez Compass (menu des applications ▸ **MongoDB Compass**, ou `nohup mongodb
 
 > Si la connexion n'existe plus, recréez-la : **Add new connection**, champ **URI** `mongodb://127.0.0.1:27017/?directConnection=true`. Compass remplit alors automatiquement le champ **Name** avec `127.0.0.1:27017` : remplacez ce nom par `BD511 - local`, puis cliquez sur **Save & Connect**.
 
-Dépliez la base **bd511** et cliquez sur la collection **inscriptions** : elle s'ouvre dans un onglet, avec les onglets **Documents**, **Aggregations**, **Schema**, **Indexes** et **Validation**. Chaque collection ouverte depuis le volet de gauche ajoute un onglet en haut de la fenêtre.
+Dépliez la base **BD511** et cliquez sur la collection **inscriptions** : elle s'ouvre dans un onglet, avec les onglets **Documents**, **Aggregations**, **Schema**, **Indexes** et **Validation**. Chaque collection ouverte depuis le volet de gauche ajoute un onglet en haut de la fenêtre.
 
 ### 3.2 Interroger les collections
 
@@ -1789,7 +1789,7 @@ Reproduisez les requêtes suivantes et vérifiez que vous retrouvez les résulta
 Quelques repères :
 
 - Les icônes à droite de la barre d'outils basculent l'affichage des résultats en **liste**, en **JSON** (`{}`) ou en **tableau**.
-- L'icône d'horloge, à gauche de la barre de requête, ouvre la fenêtre **Queries in bd511.inscriptions** : l'onglet **Recents** rappelle les dernières requêtes, l'onglet **Favorites** celles que vous avez enregistrées.
+- L'icône d'horloge, à gauche de la barre de requête, ouvre la fenêtre **Queries in BD511.inscriptions** : l'onglet **Recents** rappelle les dernières requêtes, l'onglet **Favorites** celles que vous avez enregistrées.
 - Le champ **Max Time MS** vaut 60000 par défaut : Compass interrompt côté serveur toute requête de plus de 60 secondes, la même protection que `maxTimeMS()` en partie 2.9.
 
 **Les curseurs dans Compass.** Compass affiche les documents par pages de 25 (liste déroulante à gauche du compteur : 25, 50, 75 ou 100). Les flèches **<** et **>** passent d'une page à l'autre : Compass relance alors la requête avec `skip` et `limit`, comme vous l'avez fait en partie 2.6. Avec le filtre de la requête 2, observez le compteur `1 – 25 of 41`, puis `26 – 41 of 41` sur la page suivante.
@@ -1877,7 +1877,7 @@ Le total des évaluations (692) inclut les 110 notes converties en 3.4. Avant ce
 
 ### 3.6 Utiliser le shell intégré
 
-Cliquez sur **Open MongoDB shell** (en haut à droite de l'onglet de la collection) : un onglet `mongosh: BD511 - local` s'ouvre, déjà positionné sur la base `bd511`. La ligne de saisie est préremplie avec `db["inscriptions"].find()` : effacez-la, puis exécutez :
+Cliquez sur **Open MongoDB shell** (en haut à droite de l'onglet de la collection) : un onglet `mongosh: BD511 - local` s'ouvre, déjà positionné sur la base `BD511`. La ligne de saisie est préremplie avec `db["inscriptions"].find()` : effacez-la, puis exécutez :
 
 ```javascript
 db.inscriptions.countDocuments()
@@ -1902,7 +1902,7 @@ Les modifications faites dans l'interface graphique sont bien visibles en ligne 
 ### 4.1 Repartir du jeu de données initial
 
 ```bash
-bash ~/bd511/ch03/importer.sh
+bash ~/BD511/ch03/importer.sh
 ```
 
 ### 4.2 Créer l'environnement Python
@@ -1910,7 +1910,7 @@ bash ~/bd511/ch03/importer.sh
 Ubuntu 24.04 interdit d'installer des paquets Python dans le Python du système (`pip install` y échoue avec l'erreur `externally-managed-environment`) : on crée un **environnement virtuel** propre au projet, et on fige les versions des dépendances dans un fichier `requirements.txt` pour que l'installation soit reproductible sur tous les postes.
 
 ```bash
-cd ~/bd511/ch03/python
+cd ~/BD511/ch03/python
 python3 -m venv .venv
 cat > requirements.txt <<'EOF'
 # Versions figées : installation reproductible (même résultat sur tous les postes)
@@ -1928,25 +1928,25 @@ Résultat attendu (fin de la sortie ; l'invite du terminal est préfixée par `(
 
 ```text
 Successfully installed dnspython-2.9.0 pymongo-4.19.0
-pip 26.2.2 from /home/<votre-compte>/bd511/ch03/python/.venv/lib/python3.12/site-packages/pip (python 3.12)
+pip 26.2.2 from /home/<votre-compte>/BD511/ch03/python/.venv/lib/python3.12/site-packages/pip (python 3.12)
 dnspython==2.9.0
 pymongo==4.19.0
 ```
 
 ### 4.3 Paramétrer la connexion
 
-La chaîne de connexion n'est jamais écrite dans le code : elle est lue dans la variable d'environnement `MONGODB_URI`. Le même programme peut ainsi viser la VM du TP, un serveur de recette ou la production, sans modification ; au chapitre 5, il suffira d'y ajouter des identifiants. Le fichier `bd511.env` définit cette variable, et la dernière commande la fait charger automatiquement à chaque activation de l'environnement virtuel :
+La chaîne de connexion n'est jamais écrite dans le code : elle est lue dans la variable d'environnement `MONGODB_URI`. Le même programme peut ainsi viser la VM du TP, un serveur de recette ou la production, sans modification ; au chapitre 5, il suffira d'y ajouter des identifiants. Le fichier `BD511.env` définit cette variable, et la dernière commande la fait charger automatiquement à chaque activation de l'environnement virtuel :
 
 ```bash
-cat > bd511.env <<'EOF'
-# bd511.env - paramètres de connexion des scripts Python (à charger avec : source bd511.env)
+cat > BD511.env <<'EOF'
+# BD511.env - paramètres de connexion des scripts Python (à charger avec : source BD511.env)
 #   appName           nom de l'application, visible dans le journal de mongod et dans currentOp
 #   directConnection  connexion directe à une instance autonome (pas de découverte de replica set)
 #   timeoutMS         délai maximal de chaque opération, recherche du serveur comprise (10 s)
 #   w=majority        écriture confirmée par la majorité des membres (valeur sûre, explicite)
-export MONGODB_URI="mongodb://127.0.0.1:27017/?appName=bd511-python&directConnection=true&timeoutMS=10000&w=majority"
+export MONGODB_URI="mongodb://127.0.0.1:27017/?appName=BD511-python&directConnection=true&timeoutMS=10000&w=majority"
 EOF
-echo 'source "$HOME/bd511/ch03/python/bd511.env"' >> .venv/bin/activate
+echo 'source "$HOME/BD511/ch03/python/BD511.env"' >> .venv/bin/activate
 deactivate
 source .venv/bin/activate
 echo "$MONGODB_URI"
@@ -1955,7 +1955,7 @@ echo "$MONGODB_URI"
 Résultat attendu :
 
 ```text
-mongodb://127.0.0.1:27017/?appName=bd511-python&directConnection=true&timeoutMS=10000&w=majority
+mongodb://127.0.0.1:27017/?appName=BD511-python&directConnection=true&timeoutMS=10000&w=majority
 ```
 
 Le module `connexion.py` crée le client. Il s'arrête avec un message explicite si la variable est absente, au lieu de se connecter avec une valeur par défaut :
@@ -1973,7 +1973,7 @@ def get_client() -> MongoClient:
     """Crée le client à partir de MONGODB_URI (un seul client par processus : il gère son pool de connexions)."""
     uri = os.environ.get("MONGODB_URI")
     if not uri:
-        sys.exit("MONGODB_URI n'est pas définie : exécutez « source ~/bd511/ch03/python/bd511.env ».")
+        sys.exit("MONGODB_URI n'est pas définie : exécutez « source ~/BD511/ch03/python/BD511.env ».")
     # tz_aware=True : les dates lues sont des datetime avec fuseau (UTC), jamais des dates « naïves »
     return MongoClient(uri, tz_aware=True)
 EOF
@@ -1985,7 +1985,7 @@ Les bonnes pratiques de production appliquées par ce paramétrage :
 | --- | --- |
 | Un seul `MongoClient` par processus | le client gère lui-même un **pool** de connexions (100 au plus par défaut) ; en créer un par requête multiplie les connexions et dégrade les performances du serveur |
 | Configuration hors du code | URI dans `MONGODB_URI`, arrêt immédiat si elle manque |
-| Application identifiable | `appName=bd511-python`, visible dans le journal et dans `currentOp` |
+| Application identifiable | `appName=BD511-python`, visible dans le journal et dans `currentOp` |
 | Délais bornés | `timeoutMS=10000` : aucune opération, recherche du serveur comprise, ne bloque plus de 10 s |
 | Écritures durables | `w=majority` explicite |
 | Dates sans ambiguïté | `tz_aware=True` : les dates lues sont en UTC avec fuseau ; on écrit des `datetime` en UTC |
@@ -2019,9 +2019,9 @@ with get_client() as client:
     print("Délai des opérations   :", options.timeout, "s")
     print("Write concern          :", client.write_concern.document)
 
-    db = client["bd511"]
+    db = client["BD511"]
     for nom in sorted(db.list_collection_names()):
-        print(f"bd511.{nom:<16}: {db[nom].count_documents({})} documents")
+        print(f"BD511.{nom:<16}: {db[nom].count_documents({})} documents")
 EOF
 python p1_connexion.py
 ```
@@ -2031,14 +2031,14 @@ Résultat attendu :
 ```text
 PyMongo                : 4.19.0
 Serveur MongoDB        : 8.3.13
-Bases                  : admin, bd511, config, local
+Bases                  : admin, BD511, config, local
 Pool de connexions max : 100
 Délai des opérations   : 10.0 s
 Write concern          : {'w': 'majority'}
-bd511.formations      : 24 documents
-bd511.inscriptions    : 1202 documents
-bd511.stagiaires      : 300 documents
-bd511.stagiaires_brut : 300 documents
+BD511.formations      : 24 documents
+BD511.inscriptions    : 1202 documents
+BD511.stagiaires      : 300 documents
+BD511.stagiaires_brut : 300 documents
 ```
 
 ### 4.5 Créer et manipuler des documents (CRUD)
@@ -2064,7 +2064,7 @@ def titre(texte):
 
 
 with get_client() as client:
-    db = client["bd511"]
+    db = client["BD511"]
     stagiaires, inscriptions = db["stagiaires"], db["inscriptions"]
 
     # Le script peut être relancé : on supprime d'abord les données d'une exécution précédente.
@@ -2221,7 +2221,7 @@ cat > p3_agregation.py <<'EOF'
 from connexion import get_client
 
 with get_client() as client:
-    inscriptions = client["bd511"]["inscriptions"]
+    inscriptions = client["BD511"]["inscriptions"]
 
     # Préalable : notes migrées en texte -> entiers (mise à jour par pipeline, sans effet si déjà faite)
     r = inscriptions.update_many({"evaluation.note": {"$type": "string"}},
@@ -2288,7 +2288,7 @@ Les résultats sont identiques à ceux de Compass (3.5) et de mongosh (2.12).
 Grâce à `appName`, l'administrateur identifie l'application et la version de son driver dans le journal du serveur :
 
 ```bash
-sudo jq -c 'select(.msg == "client metadata" and .attr.doc.application.name == "bd511-python")
+sudo jq -c 'select(.msg == "client metadata" and .attr.doc.application.name == "BD511-python")
   | {date: .t["$date"], client: .attr.remote, app: .attr.doc.application.name, driver: .attr.doc.driver}' \
   /var/log/mongodb/mongod.log | tail -n 1
 ```
@@ -2296,7 +2296,7 @@ sudo jq -c 'select(.msg == "client metadata" and .attr.doc.application.name == "
 Résultat attendu (date et port variables) :
 
 ```text
-{"date":"2026-10-22T16:29:53.700+02:00","client":"127.0.0.1:41064","app":"bd511-python","driver":{"name":"PyMongo|c","version":"4.19.0|"}}
+{"date":"2026-10-22T16:29:53.700+02:00","client":"127.0.0.1:41064","app":"BD511-python","driver":{"name":"PyMongo|c","version":"4.19.0|"}}
 ```
 
 Vérifiez enfin le comportement en cas d'erreur de configuration, puis de serveur arrêté :
@@ -2311,7 +2311,7 @@ sudo systemctl start mongod
 Résultat attendu (extraits ; `time` affiche la durée avec une virgule ou un point selon la langue du système) :
 
 ```text
-MONGODB_URI n'est pas définie : exécutez « source ~/bd511/ch03/python/bd511.env ».
+MONGODB_URI n'est pas définie : exécutez « source ~/BD511/ch03/python/BD511.env ».
 Serveur injoignable : 127.0.0.1:27017: [Errno 111] Connection refused (…), Timeout: 9.99…s, …
 
 real	0m10,7…s
@@ -2326,8 +2326,8 @@ Sans serveur, le script échoue proprement au bout de 10 secondes (`timeoutMS`),
 ### 5.1 Contrôle final
 
 ```bash
-sudo bash ~/bd511/ch02/check-mongodb.sh | tail -n 1
-bash ~/bd511/ch03/importer.sh
+sudo bash ~/BD511/ch02/check-mongodb.sh | tail -n 1
+bash ~/BD511/ch03/importer.sh
 ```
 
 Résultat attendu :
@@ -2340,7 +2340,7 @@ stagiaires      : 300 documents
 stagiaires_brut : 300 documents
 ```
 
-L'instance a conservé ses réglages de production, et la base `bd511` est revenue dans son état initial : elle sert de point de départ au chapitre 4 (modélisation et indexation).
+L'instance a conservé ses réglages de production, et la base `BD511` est revenue dans son état initial : elle sert de point de départ au chapitre 4 (modélisation et indexation).
 
 ### 5.2 Ce qu'il faut retenir
 
@@ -2376,13 +2376,13 @@ L'instance a conservé ses réglages de production, et la base `bd511` est reven
 | --- | --- | --- |
 | `sha256sum` affiche `FAILED` | Script `generer_donnees.py` incomplet ou modifié lors de la copie | Recopiez le bloc de la partie 1.1 en entier, relancez la génération puis le contrôle. |
 | `mongoimport` : `Failed: type coercion failure in document #… for column …` | Une valeur du CSV ne correspond pas au type déclaré (`--parseGrace stop`) | Vérifiez `stagiaires.fields` et la ligne indiquée du CSV. |
-| `mongoimport` : `E11000 duplicate key error` | Import répété sans `--drop` | Ajoutez `--drop`, ou utilisez `bash ~/bd511/ch03/importer.sh`. |
+| `mongoimport` : `E11000 duplicate key error` | Import répété sans `--drop` | Ajoutez `--drop`, ou utilisez `bash ~/BD511/ch03/importer.sh`. |
 | `mongosh` : `MongoNetworkError: connect ECONNREFUSED 127.0.0.1:27017` | `mongod` arrêté | `sudo systemctl start mongod`, puis `systemctl status mongod`. |
-| Vos nombres diffèrent de ceux du handlab | Base modifiée par une partie précédente, ou commandes exécutées dans un autre ordre | `bash ~/bd511/ch03/importer.sh`, puis reprenez la partie depuis son début. |
+| Vos nombres diffèrent de ceux du handlab | Base modifiée par une partie précédente, ou commandes exécutées dans un autre ordre | `bash ~/BD511/ch03/importer.sh`, puis reprenez la partie depuis son début. |
 | `it` répond `no cursor` | La commande précédente n'était pas un `find`, ou le curseur est épuisé | Relancez le `find`, puis `it`. |
 | `python3 -m venv` : `ensurepip is not available` | Paquet `python3-venv` absent | `sudo apt-get install -y python3-venv`, puis `rm -rf .venv` et recréez l'environnement. |
-| `pip install` : `externally-managed-environment` | Environnement virtuel non activé | `source ~/bd511/ch03/python/.venv/bin/activate` |
-| Python : `MONGODB_URI n'est pas définie` | Environnement non chargé dans ce terminal | `source ~/bd511/ch03/python/.venv/bin/activate` (qui charge `bd511.env`). |
+| `pip install` : `externally-managed-environment` | Environnement virtuel non activé | `source ~/BD511/ch03/python/.venv/bin/activate` |
+| Python : `MONGODB_URI n'est pas définie` | Environnement non chargé dans ce terminal | `source ~/BD511/ch03/python/.venv/bin/activate` (qui charge `BD511.env`). |
 | Python : `ModuleNotFoundError: No module named 'pymongo'` | Script lancé avec le Python du système | Activez l'environnement virtuel ; l'invite doit commencer par `(.venv)`. |
 | Python : `ServerSelectionTimeoutError … Connection refused` au bout de 10 s | `mongod` arrêté | `sudo systemctl start mongod` |
 | Compass : la connexion **BD511 - local** a disparu | Connexion non enregistrée au chapitre 2 | Recréez-la (partie 3.1) ; remplacez le nom proposé automatiquement. |
@@ -2395,22 +2395,22 @@ L'instance a conservé ses réglages de production, et la base `bd511` est reven
 | Fichier | Rôle | Partie |
 | --- | --- | --- |
 | `/etc/mongosh.conf` | Configuration globale de mongosh | 0.3 |
-| `~/bd511/ch03/00-prerequis.sh` | Contrôle de l'environnement | 0.2 |
-| `~/bd511/ch03/generer_donnees.py` | Générateur déterministe du jeu de données | 1.1 |
-| `~/bd511/ch03/donnees/formations.json` | 24 formations (tableau Extended JSON) | 1.1 |
-| `~/bd511/ch03/donnees/stagiaires.csv` | 300 stagiaires (CSV) | 1.1 |
-| `~/bd511/ch03/donnees/stagiaires.fields` | Types des colonnes du CSV | 1.1 |
-| `~/bd511/ch03/donnees/inscriptions.json` | 1 202 inscriptions (Extended JSON, une par ligne) | 1.1 |
-| `~/bd511/ch03/donnees/SHA256SUMS` | Sommes de contrôle de référence | 1.1 |
-| `~/bd511/ch03/donnees/acme-data.csv` | Export CSV d'exemple | 1.7 |
-| `~/bd511/ch03/importer.sh` | (Ré)import des quatre collections | 1.8 |
-| `~/bd511/ch03/python/requirements.txt` | Dépendances Python figées | 4.2 |
-| `~/bd511/ch03/python/.venv/` | Environnement virtuel Python | 4.2 |
-| `~/bd511/ch03/python/bd511.env` | Chaîne de connexion (`MONGODB_URI`) | 4.3 |
-| `~/bd511/ch03/python/connexion.py` | Création du client MongoDB | 4.3 |
-| `~/bd511/ch03/python/p1_connexion.py` | Test de connexion | 4.4 |
-| `~/bd511/ch03/python/p2_crud.py` | Opérations CRUD | 4.5 |
-| `~/bd511/ch03/python/p3_agregation.py` | Pipelines d'agrégation | 4.6 |
+| `~/BD511/ch03/00-prerequis.sh` | Contrôle de l'environnement | 0.2 |
+| `~/BD511/ch03/generer_donnees.py` | Générateur déterministe du jeu de données | 1.1 |
+| `~/BD511/ch03/donnees/formations.json` | 24 formations (tableau Extended JSON) | 1.1 |
+| `~/BD511/ch03/donnees/stagiaires.csv` | 300 stagiaires (CSV) | 1.1 |
+| `~/BD511/ch03/donnees/stagiaires.fields` | Types des colonnes du CSV | 1.1 |
+| `~/BD511/ch03/donnees/inscriptions.json` | 1 202 inscriptions (Extended JSON, une par ligne) | 1.1 |
+| `~/BD511/ch03/donnees/SHA256SUMS` | Sommes de contrôle de référence | 1.1 |
+| `~/BD511/ch03/donnees/acme-data.csv` | Export CSV d'exemple | 1.7 |
+| `~/BD511/ch03/importer.sh` | (Ré)import des quatre collections | 1.8 |
+| `~/BD511/ch03/python/requirements.txt` | Dépendances Python figées | 4.2 |
+| `~/BD511/ch03/python/.venv/` | Environnement virtuel Python | 4.2 |
+| `~/BD511/ch03/python/BD511.env` | Chaîne de connexion (`MONGODB_URI`) | 4.3 |
+| `~/BD511/ch03/python/connexion.py` | Création du client MongoDB | 4.3 |
+| `~/BD511/ch03/python/p1_connexion.py` | Test de connexion | 4.4 |
+| `~/BD511/ch03/python/p2_crud.py` | Opérations CRUD | 4.5 |
+| `~/BD511/ch03/python/p3_agregation.py` | Pipelines d'agrégation | 4.6 |
 
 ## Annexe C – Références
 

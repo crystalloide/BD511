@@ -20,7 +20,7 @@
 
 ## Le scénario
 
-La plate-forme e-learning de l'organisme de formation enregistre chaque activité des stagiaires (vidéo regardée, lecture, quiz, lab) dans la collection `bd511.activites` : un million de documents. Les formateurs se plaignent de la page **« Derniers quiz réussis »** de leur tableau de bord, qui affiche les 10 quiz les plus récents réussis (score ≥ 80) dans une formation : elle met une demi-seconde à s'afficher, et ce temps augmente avec le volume de la collection.
+La plate-forme e-learning de l'organisme de formation enregistre chaque activité des stagiaires (vidéo regardée, lecture, quiz, lab) dans la collection `BD511.activites` : un million de documents. Les formateurs se plaignent de la page **« Derniers quiz réussis »** de leur tableau de bord, qui affiche les 10 quiz les plus récents réussis (score ≥ 80) dans une formation : elle met une demi-seconde à s'afficher, et ce temps augmente avec le volume de la collection.
 
 Votre mission : mesurer le problème, l'expliquer, le corriger par un index adapté, prouver le gain, puis laisser la collection dans un état propre (pas d'index inutile).
 
@@ -40,10 +40,10 @@ Votre mission : mesurer le problème, l'expliquer, le corriger par un index adap
 
 - Le TP utilise **deux terminaux** (`Ctrl` + `Alt` + `T`, puis `Ctrl` + `Maj` + `T` pour un onglet) :
   - **terminal 1 (bash)** : commandes **bash**, exécutées avec votre compte habituel ; `sudo` est indiqué quand des droits d'administration sont nécessaires ;
-  - **terminal 2 (mongosh)** : une session mongosh ouverte à la partie 1.5 et conservée jusqu'à la fin ; les blocs **javascript** se tapent à l'invite `bd511>` (ou se collent en entier : mongosh exécute les lignes dans l'ordre).
+  - **terminal 2 (mongosh)** : une session mongosh ouverte à la partie 1.5 et conservée jusqu'à la fin ; les blocs **javascript** se tapent à l'invite `BD511>` (ou se collent en entier : mongosh exécute les lignes dans l'ordre).
 - Les blocs qui créent un fichier (`cat > fichier <<'EOF'`) se copient **en entier**, de la première ligne jusqu'à la ligne `EOF` incluse.
 - Les blocs « Résultat attendu » montrent la sortie à obtenir. Le jeu de données est généré de façon déterministe : nombres de documents, résultats des requêtes, plans d'exécution, clés et documents examinés sont **identiques** sur toutes les VM. Varient seulement les **durées** (elles dépendent de la puissance de la VM ; seuls les ordres de grandeur comptent), les horodatages, les tailles sur disque et les compteurs d'utilisation.
-- Tous les fichiers du TP sont générés dans `~/bd511/ch04` ; l'annexe B en donne la liste.
+- Tous les fichiers du TP sont générés dans `~/BD511/ch04` ; l'annexe B en donne la liste.
 
 > **Note formateur.** Le script `importer-activites.sh` (partie 1.4) remet la collection `activites` dans son état initial en une minute environ. L'annexe C donne les commandes de rattrapage pour démarrer directement la partie 4 ou la partie 5.
 
@@ -56,8 +56,8 @@ Votre mission : mesurer le problème, l'expliquer, le corriger par un index adap
 Dans le terminal 1 :
 
 ```bash
-mkdir -p ~/bd511/ch04/donnees
-cd ~/bd511/ch04
+mkdir -p ~/BD511/ch04/donnees
+cd ~/BD511/ch04
 ```
 
 ### 0.2 Contrôler l'installation du chapitre 2
@@ -65,7 +65,7 @@ cd ~/bd511/ch04
 Relancez le contrôle des réglages de production réalisé à la fin du chapitre 2 :
 
 ```bash
-sudo bash ~/bd511/ch02/check-mongodb.sh | tail -n 1
+sudo bash ~/BD511/ch02/check-mongodb.sh | tail -n 1
 ```
 
 Résultat attendu :
@@ -81,15 +81,15 @@ Si le script est absent ou signale des points KO, reprenez le handlab du chapitr
 Générez puis exécutez le contrôle propre à ce chapitre (outils, espace disque, réglages du journal des requêtes lentes) :
 
 ```bash
-cat > ~/bd511/ch04/00-prerequis.sh <<'EOF'
+cat > ~/BD511/ch04/00-prerequis.sh <<'EOF'
 #!/usr/bin/env bash
 # 00-prerequis.sh - BD511 ch.4 : vérifie l'environnement avant le TP
-# Usage : bash ~/bd511/ch04/00-prerequis.sh
+# Usage : bash ~/BD511/ch04/00-prerequis.sh
 set -u
 ko=0
 ok()  { printf '  [OK] %s\n' "$*"; }
 nok() { printf '  [KO] %s\n' "$*"; ko=$((ko + 1)); }
-URI="mongodb://127.0.0.1:27017/?appName=bd511-prerequis"
+URI="mongodb://127.0.0.1:27017/?appName=BD511-prerequis"
 
 echo "== Serveur et outils MongoDB"
 v=$(mongod --version 2>/dev/null | awk 'NR == 1 {print $3}')
@@ -113,7 +113,7 @@ libre=$(df -BG --output=avail "$HOME" | tail -n 1 | tr -dc '0-9')
 if (( libre >= 1 )); then ok "Espace libre dans $HOME : ${libre} Go (1 Go requis)"; else nok "Espace libre dans $HOME : ${libre} Go (1 Go requis)"; fi
 libre=$(df -BG --output=avail /var/lib/mongodb | tail -n 1 | tr -dc '0-9')
 if (( libre >= 1 )); then ok "Espace libre sur /var/lib/mongodb : ${libre} Go (1 Go requis)"; else nok "Espace libre sur /var/lib/mongodb : ${libre} Go (1 Go requis)"; fi
-v=$(mongosh --quiet "$URI" --eval 'const p = db.getSiblingDB("bd511").getProfilingStatus(); print(p.was + " " + p.slowms)' 2>/dev/null)
+v=$(mongosh --quiet "$URI" --eval 'const p = db.getSiblingDB("BD511").getProfilingStatus(); print(p.was + " " + p.slowms)' 2>/dev/null)
 if [[ $v == "0 100" ]]; then ok "Profiler désactivé, seuil des requêtes lentes slowms = 100 ms (valeurs par défaut)"
 else nok "Profiler/slowms modifiés (was slowms = ${v:-?}) : redémarrez mongod (sudo systemctl restart mongod)"; fi
 
@@ -121,7 +121,7 @@ echo
 if (( ko == 0 )); then echo "Résultat : environnement prêt pour le TP."; else echo "Résultat : ${ko} point(s) à corriger."; fi
 exit $(( ko > 0 ))
 EOF
-bash ~/bd511/ch04/00-prerequis.sh
+bash ~/BD511/ch04/00-prerequis.sh
 ```
 
 Résultat attendu (les espaces libres dépendent de votre VM) :
@@ -175,7 +175,7 @@ Ce modèle applique les principes vus en cours :
 Les données sont produites par un script Python qui n'utilise que la bibliothèque standard. Son générateur pseudo-aléatoire est déterministe : tout le monde obtient exactement le même fichier, ce que la somme de contrôle de l'étape suivante vérifie.
 
 ```bash
-cat > ~/bd511/ch04/generer_activites.py <<'EOF'
+cat > ~/BD511/ch04/generer_activites.py <<'EOF'
 #!/usr/bin/env python3
 """generer_activites.py - BD511 ch.4 : génère le journal d'activité de la plate-forme e-learning.
 
@@ -259,7 +259,7 @@ def main():
 if __name__ == "__main__":
     main()
 EOF
-cd ~/bd511/ch04/donnees
+cd ~/BD511/ch04/donnees
 python3 ../generer_activites.py
 ```
 
@@ -269,15 +269,15 @@ Résultat attendu (après 15 à 30 secondes) :
 activites.json : 1000000 activités, du 01/01/2024 au 15/10/2026
 ```
 
-> Le jeu de données est aussi fourni tout fait, compressé (`activites.json.gz`, 20 Mo), dans l'archive `BD511_CH04_fichiers.zip` qui accompagne ce handlab. Si le générateur ne peut pas être exécuté, copiez ce fichier dans `~/bd511/ch04/donnees/` : le script d'import de la partie 1.4 le décompresse et vérifie sa somme de contrôle.
+> Le jeu de données est aussi fourni tout fait, compressé (`activites.json.gz`, 20 Mo), dans l'archive `BD511_CH04_fichiers.zip` qui accompagne ce handlab. Si le générateur ne peut pas être exécuté, copiez ce fichier dans `~/BD511/ch04/donnees/` : le script d'import de la partie 1.4 le décompresse et vérifie sa somme de contrôle.
 
 ### 1.3 Vérifier l'intégrité du fichier
 
 ```bash
-cat > ~/bd511/ch04/donnees/SHA256SUMS <<'EOF'
+cat > ~/BD511/ch04/donnees/SHA256SUMS <<'EOF'
 5f3b8145768ba5995ded0fdbe995dec762768cfd079b7849d3925c4d7e818ba3  activites.json
 EOF
-cd ~/bd511/ch04/donnees
+cd ~/BD511/ch04/donnees
 sha256sum -c SHA256SUMS
 ls -lh activites.json
 head -n 2 activites.json
@@ -299,15 +299,15 @@ Le fichier est au format **Extended JSON**, un document par ligne : `$oid` et `$
 Le script suivant (re)crée la collection dans son **état initial** : il recrée le fichier s'il est absent ou altéré (en décompressant `activites.json.gz` s'il est présent, sinon avec le générateur), supprime la collection existante (`--drop`, index compris) puis importe le fichier. Il servira aussi de « remise à zéro » en cas de fausse manœuvre.
 
 ```bash
-cat > ~/bd511/ch04/importer-activites.sh <<'EOF'
+cat > ~/BD511/ch04/importer-activites.sh <<'EOF'
 #!/usr/bin/env bash
-# importer-activites.sh - BD511 ch.4 : (re)crée la collection bd511.activites dans son état initial
+# importer-activites.sh - BD511 ch.4 : (re)crée la collection BD511.activites dans son état initial
 #   1 000 000 documents, aucun index secondaire (seulement l'index _id_).
 #   Si activites.json est absent ou altéré, le décompresse depuis activites.json.gz (archive du TP)
 #   ou, à défaut, le régénère ; puis l'importe. Durée : environ 1 minute.
-# Usage : bash ~/bd511/ch04/importer-activites.sh
+# Usage : bash ~/BD511/ch04/importer-activites.sh
 set -euo pipefail
-cd "$HOME/bd511/ch04/donnees"
+cd "$HOME/BD511/ch04/donnees"
 
 if ! sha256sum --quiet --check SHA256SUMS >/dev/null 2>&1; then
   if [[ -f activites.json.gz ]]; then
@@ -320,43 +320,43 @@ if ! sha256sum --quiet --check SHA256SUMS >/dev/null 2>&1; then
   sha256sum --check SHA256SUMS
 fi
 
-echo "== Import dans bd511.activites (la collection est d'abord supprimée, index compris)"
-mongoimport --uri "mongodb://127.0.0.1:27017/?appName=bd511-import" \
-  --db bd511 --collection activites --drop \
+echo "== Import dans BD511.activites (la collection est d'abord supprimée, index compris)"
+mongoimport --uri "mongodb://127.0.0.1:27017/?appName=BD511-import" \
+  --db BD511 --collection activites --drop \
   --writeConcern '{w: "majority"}' --numInsertionWorkers 2 \
   --file activites.json
 
 echo "== Contrôle"
-mongosh --quiet "mongodb://127.0.0.1:27017/bd511?appName=bd511-import" --eval '
+mongosh --quiet "mongodb://127.0.0.1:27017/BD511?appName=BD511-import" --eval '
   const n = db.activites.countDocuments();
   const index = db.activites.getIndexes().map(i => i.name).join(", ");
-  print(`bd511.activites : ${n} documents ; index : ${index}`);'
+  print(`BD511.activites : ${n} documents ; index : ${index}`);'
 EOF
-bash ~/bd511/ch04/importer-activites.sh
+bash ~/BD511/ch04/importer-activites.sh
 ```
 
 Résultat attendu (horodatages et progression variables, l'import dure de 25 à 60 secondes) :
 
 ```text
-== Import dans bd511.activites (la collection est d'abord supprimée, index compris)
-2026-10-22T17:12:47.773+0200	connected to: mongodb://127.0.0.1:27017/?appName=bd511-import
-2026-10-22T17:12:47.785+0200	dropping: `bd511.activites`
-2026-10-22T17:12:50.785+0200	[###.....................] bd511.activites	22.6MB/179MB (12.6%)
+== Import dans BD511.activites (la collection est d'abord supprimée, index compris)
+2026-10-22T17:12:47.773+0200	connected to: mongodb://127.0.0.1:27017/?appName=BD511-import
+2026-10-22T17:12:47.785+0200	dropping: `BD511.activites`
+2026-10-22T17:12:50.785+0200	[###.....................] BD511.activites	22.6MB/179MB (12.6%)
 …
-2026-10-22T17:13:11.285+0200	[########################] bd511.activites	179MB/179MB (100.0%)
+2026-10-22T17:13:11.285+0200	[########################] BD511.activites	179MB/179MB (100.0%)
 2026-10-22T17:13:11.285+0200	1000000 document(s) imported successfully. 0 document(s) failed to import.
 == Contrôle
-bd511.activites : 1000000 documents ; index : _id_
+BD511.activites : 1000000 documents ; index : _id_
 ```
 
 Les options de `mongoimport` sont celles du chapitre 3 : `w: "majority"` (l'écriture est confirmée de façon durable), et 2 *workers* d'insertion, un par vCPU. La collection n'a pour l'instant **qu'un seul index**, `_id_`, créé automatiquement par MongoDB.
 
 ### 1.5 Explorer la collection
 
-Ouvrez le **terminal 2** et la session mongosh qui servira jusqu'à la fin du TP. Le paramètre `appName=bd511-tp4` identifie vos commandes dans le journal du serveur, à côté de celles de « l'application » (`bd511-appli`).
+Ouvrez le **terminal 2** et la session mongosh qui servira jusqu'à la fin du TP. Le paramètre `appName=BD511-tp4` identifie vos commandes dans le journal du serveur, à côté de celles de « l'application » (`BD511-appli`).
 
 ```bash
-mongosh "mongodb://127.0.0.1:27017/bd511?appName=bd511-tp4"
+mongosh "mongodb://127.0.0.1:27017/BD511?appName=BD511-tp4"
 ```
 
 ```javascript
@@ -437,9 +437,9 @@ La page n'a besoin que de **10 documents sur un million**. Gardez ces chiffres e
 Le script suivant exécute la requête de la page, exactement comme le fait l'application, et affiche la page trois fois de suite pour mesurer la durée de chaque requête. Dans le terminal 1 :
 
 ```bash
-cat > ~/bd511/ch04/requete-lente.js <<'EOF'
+cat > ~/BD511/ch04/requete-lente.js <<'EOF'
 // requete-lente.js - BD511 ch.4 : requête de la page « Derniers quiz réussis » de la plate-forme
-// Usage : mongosh --quiet "mongodb://127.0.0.1:27017/bd511?appName=bd511-appli" ~/bd511/ch04/requete-lente.js
+// Usage : mongosh --quiet "mongodb://127.0.0.1:27017/BD511?appName=BD511-appli" ~/BD511/ch04/requete-lente.js
 // appName identifie l'application dans le journal de mongod et dans db.currentOp().
 // La page est affichée 3 fois de suite : la durée de chaque requête est mesurée côté client.
 const formation = "BD511";
@@ -464,7 +464,7 @@ for (const q of quiz) {
 }
 print(`${quiz.length} quiz ; durée des 3 affichages : ${durees.join(" ms, ")} ms`);
 EOF
-mongosh --quiet "mongodb://127.0.0.1:27017/bd511?appName=bd511-appli" ~/bd511/ch04/requete-lente.js
+mongosh --quiet "mongodb://127.0.0.1:27017/BD511?appName=BD511-appli" ~/BD511/ch04/requete-lente.js
 ```
 
 Résultat attendu (durées variables) :
@@ -511,7 +511,7 @@ Résultat attendu :
 Dans le terminal 1, extrayez du journal les requêtes lentes de l'application, grâce à son `appName` :
 
 ```bash
-sudo jq -c 'select(.msg == "Slow query" and .attr.appName == "bd511-appli")
+sudo jq -c 'select(.msg == "Slow query" and .attr.appName == "BD511-appli")
   | {heure: .t["$date"][11:19], ns: .attr.ns, plan: .attr.planSummary, cles: .attr.keysExamined,
      docs: .attr.docsExamined, tri: .attr.hasSortStage, renvoyes: .attr.nreturned, ms: .attr.durationMillis}' \
   /var/log/mongodb/mongod.log | tail -n 3
@@ -520,9 +520,9 @@ sudo jq -c 'select(.msg == "Slow query" and .attr.appName == "bd511-appli")
 Résultat attendu (heures et durées variables) :
 
 ```text
-{"heure":"17:30:12","ns":"bd511.activites","plan":"COLLSCAN","cles":0,"docs":1000000,"tri":true,"renvoyes":10,"ms":688}
-{"heure":"17:30:13","ns":"bd511.activites","plan":"COLLSCAN","cles":0,"docs":1000000,"tri":true,"renvoyes":10,"ms":466}
-{"heure":"17:30:13","ns":"bd511.activites","plan":"COLLSCAN","cles":0,"docs":1000000,"tri":true,"renvoyes":10,"ms":439}
+{"heure":"17:30:12","ns":"BD511.activites","plan":"COLLSCAN","cles":0,"docs":1000000,"tri":true,"renvoyes":10,"ms":688}
+{"heure":"17:30:13","ns":"BD511.activites","plan":"COLLSCAN","cles":0,"docs":1000000,"tri":true,"renvoyes":10,"ms":466}
+{"heure":"17:30:13","ns":"BD511.activites","plan":"COLLSCAN","cles":0,"docs":1000000,"tri":true,"renvoyes":10,"ms":439}
 ```
 
 Le journal pose déjà le diagnostic :
@@ -536,7 +536,7 @@ Le journal pose déjà le diagnostic :
 | `nreturned` | 10 | pour 10 documents renvoyés |
 | `durationMillis` | ≈ 500 | durée côté serveur |
 
-> L'entrée complète contient aussi la requête (`command`), son empreinte `queryShapeHash`, la clé du cache de plans `planCacheKey`, le temps processeur `cpuNanos`… Affichez la dernière en entier avec `sudo jq -c 'select(.msg == "Slow query" and .attr.appName == "bd511-appli")' /var/log/mongodb/mongod.log | tail -n 1 | jq .`
+> L'entrée complète contient aussi la requête (`command`), son empreinte `queryShapeHash`, la clé du cache de plans `planCacheKey`, le temps processeur `cpuNanos`… Affichez la dernière en entier avec `sudo jq -c 'select(.msg == "Slow query" and .attr.appName == "BD511-appli")' /var/log/mongodb/mongod.log | tail -n 1 | jq .`
 
 ### 2.3 Le plan choisi : `explain("queryPlanner")`
 
@@ -579,7 +579,7 @@ Résultat attendu :
         { score: { '$gte': 80 } }
       ]
     },
-    nss: 'bd511.activites',
+    nss: 'BD511.activites',
     direction: 'forward'
   }
 }
@@ -652,7 +652,7 @@ Résultat attendu (durées, `saveState` et `restoreState` variables) :
       saveState: 25,
       restoreState: 25,
       isEOF: 1,
-      nss: 'bd511.activites',
+      nss: 'BD511.activites',
       direction: 'forward',
       docsExamined: 1000000
     }
@@ -688,9 +688,9 @@ Dans chaque étape : `works` compte les unités de travail, `advanced` les résu
 Les sorties d'`explain()` sont longues. Le script suivant définit une fonction `resume()` qui extrait l'essentiel d'un plan et ajoute un diagnostic. Créez-le dans le terminal 1 :
 
 ```bash
-cat > ~/bd511/ch04/explain-resume.js <<'EOF'
+cat > ~/BD511/ch04/explain-resume.js <<'EOF'
 // explain-resume.js - BD511 ch.4 : résumé lisible d'un plan d'exécution (explain "executionStats")
-// Chargement dans mongosh : load(process.env.HOME + "/bd511/ch04/explain-resume.js")
+// Chargement dans mongosh : load(process.env.HOME + "/BD511/ch04/explain-resume.js")
 // Usage : resume(db.collection.find(filtre).sort(tri).limit(n))   ou   resume(resultatDeExplain)
 
 // Étapes d'un plan, de la feuille (lecture des données) à la racine (envoi au client)
@@ -746,7 +746,7 @@ EOF
 Chargez-le dans la session mongosh (terminal 2) et appliquez-le à la requête :
 
 ```javascript
-load(process.env.HOME + "/bd511/ch04/explain-resume.js")
+load(process.env.HOME + "/BD511/ch04/explain-resume.js")
 resume(db.activites.find(filtre).sort(tri).limit(10))
 ```
 
@@ -780,7 +780,7 @@ Compass présente le même plan d'exécution sous forme graphique. Gardez le ter
 
 1. Lancez **MongoDB Compass** (menu des applications ▸ **MongoDB Compass**, ou `nohup mongodb-compass > /dev/null 2>&1 &` dans le terminal 1).
 2. Dans le panneau de gauche, section **CONNECTIONS**, survolez la connexion **BD511 - local** enregistrée au chapitre 2 et cliquez sur **CONNECT**.
-3. Dépliez la base **bd511** et cliquez sur la collection **activites**.
+3. Dépliez la base **BD511** et cliquez sur la collection **activites**.
 
 > Si la connexion n'existe plus, recréez-la : **Add new connection**, champ **URI** `mongodb://127.0.0.1:27017/?directConnection=true`, champ **Name** `BD511 - local`, puis **Save & Connect**.
 
@@ -834,9 +834,9 @@ Cliquez enfin sur **Raw Output** : c'est la sortie brute d'`explain()`, la même
 On ne corrige pas sans mesure de référence. Le script suivant exécute la requête une fois par index existant, en imposant l'index avec `hint()` (`{ $natural: 1 }` impose le parcours complet), puis sans contrainte (« choix du planificateur »). Pour chaque variante, il relève le plan, les clés et documents examinés, et la **médiane** de 5 exécutions complètes. Dans le terminal 1 :
 
 ```bash
-cat > ~/bd511/ch04/comparer.js <<'EOF'
+cat > ~/BD511/ch04/comparer.js <<'EOF'
 // comparer.js - BD511 ch.4 : compare les plans possibles de la requête lente, un par index existant
-// Usage : mongosh --quiet "mongodb://127.0.0.1:27017/bd511?appName=bd511-tp4" ~/bd511/ch04/comparer.js
+// Usage : mongosh --quiet "mongodb://127.0.0.1:27017/BD511?appName=BD511-tp4" ~/BD511/ch04/comparer.js
 // Chaque variante est imposée avec hint() ; la durée est la médiane de 5 exécutions complètes.
 const filtre = { formation_id: "BD511", type: "quiz", score: { $gte: 80 } };
 const tri = { date: -1 };
@@ -899,8 +899,8 @@ print("");
 print(`Index retenu par le planificateur : ${choix}`);
 if (masques.length) print(`Index masqués (non testés) : ${masques.join(", ")}`);
 EOF
-cd ~/bd511/ch04
-mongosh --quiet "mongodb://127.0.0.1:27017/bd511?appName=bd511-tp4" comparer.js | tee mesures-avant.txt
+cd ~/BD511/ch04
+mongosh --quiet "mongodb://127.0.0.1:27017/BD511?appName=BD511-tp4" comparer.js | tee mesures-avant.txt
 ```
 
 Résultat attendu (durées variables) :
@@ -958,7 +958,7 @@ Un index n'est vraiment efficace que s'il écarte les documents **avant** l'éta
 Mettons tous les champs de la requête dans un index **composé**, dans l'ordre où ils apparaissent : les deux égalités, la plage sur `score`, puis le tri sur `date`. Créez-le dans Compass :
 
 1. Ouvrez l'onglet **Indexes** de la collection `activites` et cliquez sur **Create Index**.
-2. Dans la fenêtre **Create Index** (`bd511.activites`), section **Index fields** :
+2. Dans la fenêtre **Create Index** (`BD511.activites`), section **Index fields** :
    - première ligne : dans **Select or type a field name**, choisissez `formation_id` ; dans **Select a type**, choisissez **1 (asc)** ;
    - cliquez sur **+** pour ajouter une ligne : `type`, **1 (asc)** ;
    - **+** : tapez `score` puis cliquez sur `score` dans la liste ou, s'il n'y figure pas, sur la proposition **Field: "score"** (Compass construit la liste à partir d'un échantillon de documents, et les vidéos et lectures n'ont pas de score), puis **1 (asc)** ;
@@ -1093,8 +1093,8 @@ Fermez la fenêtre.
 Relancez la mesure de référence dans le terminal 1 :
 
 ```bash
-cd ~/bd511/ch04
-mongosh --quiet "mongodb://127.0.0.1:27017/bd511?appName=bd511-tp4" comparer.js | tee mesures-apres.txt
+cd ~/BD511/ch04
+mongosh --quiet "mongodb://127.0.0.1:27017/BD511?appName=BD511-tp4" comparer.js | tee mesures-apres.txt
 ```
 
 Résultat attendu (durées variables) :
@@ -1115,7 +1115,7 @@ Index retenu par le planificateur : formation_type_date_score
 Puis réaffichez la page, comme le ferait l'application :
 
 ```bash
-mongosh --quiet "mongodb://127.0.0.1:27017/bd511?appName=bd511-appli" ~/bd511/ch04/requete-lente.js | tail -n 1
+mongosh --quiet "mongodb://127.0.0.1:27017/BD511?appName=BD511-appli" ~/BD511/ch04/requete-lente.js | tail -n 1
 ```
 
 Résultat attendu (durées variables) :
@@ -1127,7 +1127,7 @@ Résultat attendu (durées variables) :
 Le premier affichage inclut le choix du plan et l'initialisation du client ; les suivants réutilisent le plan mis en cache (partie 4.6). Le journal de `mongod` le confirme : depuis la création de l'index, la page n'y apparaît plus, ses requêtes passant sous le seuil de 100 ms :
 
 ```bash
-sudo jq -s -c '[.[] | select(.msg == "Slow query" and .attr.appName == "bd511-appli")]
+sudo jq -s -c '[.[] | select(.msg == "Slow query" and .attr.appName == "BD511-appli")]
   | group_by(.attr.planSummary) | map({plan: .[0].attr.planSummary, requetes_lentes: length})' \
   /var/log/mongodb/mongod.log
 ```
@@ -1287,11 +1287,11 @@ Dans Compass, cliquez sur l'onglet **Indexes** (badge **4**), puis sur **Refresh
 Le script suivant insère 200 000 activités dans deux collections de test : l'une avec le seul index `_id_`, l'autre avec les mêmes index secondaires que `activites`. Chaque mesure est répétée trois fois et la meilleure est retenue, pour limiter l'effet des activités de fond du serveur (points de contrôle WiredTiger…). Dans le terminal 1 (environ 20 secondes) :
 
 ```bash
-cat > ~/bd511/ch04/cout-ecriture.js <<'EOF'
+cat > ~/BD511/ch04/cout-ecriture.js <<'EOF'
 // cout-ecriture.js - BD511 ch.4 : mesure le coût des index secondaires sur les insertions
-// Usage : mongosh --quiet "mongodb://127.0.0.1:27017/bd511?appName=bd511-tp4" ~/bd511/ch04/cout-ecriture.js
+// Usage : mongosh --quiet "mongodb://127.0.0.1:27017/BD511?appName=BD511-tp4" ~/BD511/ch04/cout-ecriture.js
 // Copie 200 000 activités dans deux collections de test : l'une avec le seul index _id_,
-// l'autre avec les mêmes index secondaires que bd511.activites. Chaque mesure est répétée 3 fois
+// l'autre avec les mêmes index secondaires que BD511.activites. Chaque mesure est répétée 3 fois
 // et la meilleure est retenue (la moins perturbée) ; les collections de test sont supprimées à la fin.
 const NOMBRE = 200000;
 const ESSAIS = 3;
@@ -1321,19 +1321,19 @@ const sans = Math.min(...mesuresSans);
 const avec = Math.min(...mesuresAvec);
 const noms = indexSecondaires.map(ix => ix.name).join(", ") || "aucun";
 print(`Insertion de ${NOMBRE} activités, meilleur de ${ESSAIS} essais`);
-print(`Index secondaires de bd511.activites : ${noms}`);
+print(`Index secondaires de BD511.activites : ${noms}`);
 print("  index _id_ seul".padEnd(42) + `: ${String(sans).padStart(6)} ms`);
 print(`  _id_ + ${indexSecondaires.length} index secondaire(s)`.padEnd(42) + `: ${String(avec).padStart(6)} ms`);
 print("Surcoût dû aux index secondaires".padEnd(42) + `: x ${(avec / sans).toFixed(1)}`);
 EOF
-mongosh --quiet "mongodb://127.0.0.1:27017/bd511?appName=bd511-tp4" ~/bd511/ch04/cout-ecriture.js
+mongosh --quiet "mongodb://127.0.0.1:27017/BD511?appName=BD511-tp4" ~/BD511/ch04/cout-ecriture.js
 ```
 
 Résultat attendu (durées variables ; le surcoût se situe généralement entre × 2,5 et × 3,5) :
 
 ```text
 Insertion de 200000 activités, meilleur de 3 essais
-Index secondaires de bd511.activites : formation, formation_type_score_date, formation_type_date_score
+Index secondaires de BD511.activites : formation, formation_type_score_date, formation_type_date_score
   index _id_ seul                         :   1204 ms
   _id_ + 3 index secondaire(s)            :   3330 ms
 Surcoût dû aux index secondaires          : x 2.8
@@ -1468,14 +1468,14 @@ Résultat attendu :
 Mesurez à nouveau le coût en écriture (terminal 1) :
 
 ```bash
-mongosh --quiet "mongodb://127.0.0.1:27017/bd511?appName=bd511-tp4" ~/bd511/ch04/cout-ecriture.js
+mongosh --quiet "mongodb://127.0.0.1:27017/BD511?appName=BD511-tp4" ~/BD511/ch04/cout-ecriture.js
 ```
 
 Résultat attendu (durées variables ; le surcoût se situe généralement entre × 1,4 et × 2) :
 
 ```text
 Insertion de 200000 activités, meilleur de 3 essais
-Index secondaires de bd511.activites : formation_type_date_score
+Index secondaires de BD511.activites : formation_type_date_score
   index _id_ seul                         :   1038 ms
   _id_ + 1 index secondaire(s)            :   1756 ms
 Surcoût dû aux index secondaires          : x 1.7
@@ -1511,9 +1511,9 @@ Diagnostic             : ratio 50000 : la plupart des documents lus sont écart�
 D'après la règle ESR, il faut l'égalité puis le tri, sans plage : l'index `{ stagiaire_id: 1, date: -1 }`. Sur une collection en service, une construction d'index dure de quelques secondes à plusieurs heures ; il faut savoir la **suivre**. Le script suivant interroge `$currentOp` toutes les demi-secondes. Dans le terminal 1, créez-le, lancez la construction en arrière-plan (`&`) et suivez-la :
 
 ```bash
-cat > ~/bd511/ch04/suivre-construction.js <<'EOF'
+cat > ~/BD511/ch04/suivre-construction.js <<'EOF'
 // suivre-construction.js - BD511 ch.4 : suit les constructions d'index en cours ($currentOp)
-// Usage : mongosh --quiet "mongodb://127.0.0.1:27017/admin?appName=bd511-tp4" ~/bd511/ch04/suivre-construction.js
+// Usage : mongosh --quiet "mongodb://127.0.0.1:27017/admin?appName=BD511-tp4" ~/BD511/ch04/suivre-construction.js
 // Affiche la phase et l'avancement toutes les 0,5 s, jusqu'à la fin de la construction (2 minutes au plus).
 let dejaVu = false;
 let dernier = "";
@@ -1537,10 +1537,10 @@ for (let i = 0; i < 240; i++) {
   sleep(500);
 }
 EOF
-cd ~/bd511/ch04
-mongosh --quiet "mongodb://127.0.0.1:27017/bd511?appName=bd511-build" \
+cd ~/BD511/ch04
+mongosh --quiet "mongodb://127.0.0.1:27017/BD511?appName=BD511-build" \
   --eval 'db.activites.createIndex({ stagiaire_id: 1, date: -1 }, { name: "stagiaire_date" })' &
-mongosh --quiet "mongodb://127.0.0.1:27017/admin?appName=bd511-tp4" suivre-construction.js
+mongosh --quiet "mongodb://127.0.0.1:27017/admin?appName=BD511-tp4" suivre-construction.js
 wait
 ```
 
@@ -1548,13 +1548,13 @@ Résultat attendu (heures, pourcentages et numéro de tâche variables) :
 
 ```text
 [1] 24518
-17:19:50  bd511.activites  stagiaire_date  Index Build: scanning collection  24 %
-17:19:51  bd511.activites  stagiaire_date  Index Build: scanning collection  68 %
-17:19:51  bd511.activites  stagiaire_date  Index Build: scanning collection  
-17:19:53  bd511.activites  stagiaire_date  Index Build: inserting keys from external sorter into index  64 %
+17:19:50  BD511.activites  stagiaire_date  Index Build: scanning collection  24 %
+17:19:51  BD511.activites  stagiaire_date  Index Build: scanning collection  68 %
+17:19:51  BD511.activites  stagiaire_date  Index Build: scanning collection  
+17:19:53  BD511.activites  stagiaire_date  Index Build: inserting keys from external sorter into index  64 %
 stagiaire_date
 Construction terminée.
-[1]+  Done                    mongosh --quiet "mongodb://127.0.0.1:27017/bd511?appName=bd511-build" --eval 'db.activites.createIndex({ stagiaire_id: 1, date: -1 }, { name: "stagiaire_date" })'
+[1]+  Done                    mongosh --quiet "mongodb://127.0.0.1:27017/BD511?appName=BD511-build" --eval 'db.activites.createIndex({ stagiaire_id: 1, date: -1 }, { name: "stagiaire_date" })'
 ```
 
 > Si le script affiche « Aucune construction d'index en cours (déjà terminée ?) », la construction a été plus rapide que le démarrage du suivi : c'est normal sur une VM rapide, le journal ci-dessous en garde la trace.
@@ -1643,12 +1643,12 @@ exit
 Le script suivant vérifie l'état attendu de la collection et des plans d'exécution :
 
 ```bash
-cat > ~/bd511/ch04/verifier-ch04.sh <<'EOF'
+cat > ~/BD511/ch04/verifier-ch04.sh <<'EOF'
 #!/usr/bin/env bash
-# verifier-ch04.sh - BD511 ch.4 : contrôle de l'état final de bd511.activites (index et plans)
-# Usage : bash ~/bd511/ch04/verifier-ch04.sh
+# verifier-ch04.sh - BD511 ch.4 : contrôle de l'état final de BD511.activites (index et plans)
+# Usage : bash ~/BD511/ch04/verifier-ch04.sh
 set -u
-mongosh --quiet "mongodb://127.0.0.1:27017/bd511?appName=bd511-verif" --eval '
+mongosh --quiet "mongodb://127.0.0.1:27017/BD511?appName=BD511-verif" --eval '
 let ok = 0, ko = 0;
 function res(cond, libelle, detail) {
   print(`  [${cond ? "OK" : "KO"}] ${libelle}${detail === undefined ? "" : " : " + detail}`);
@@ -1662,7 +1662,7 @@ function etapes(exp) {
 const index = Object.fromEntries(db.activites.getIndexes().map(ix => [ix.name, ix]));
 const cle = nom => index[nom] ? EJSON.stringify(index[nom].key) : "absent";
 
-print("== Collection bd511.activites");
+print("== Collection BD511.activites");
 res(db.activites.countDocuments() === 1000000, "1 000 000 activités", db.activites.countDocuments());
 res(cle("formation_type_date_score") === EJSON.stringify({ formation_id: 1, type: 1, date: -1, score: 1 }),
     "Index ESR formation_type_date_score", cle("formation_type_date_score"));
@@ -1686,13 +1686,13 @@ print(`Bilan : ${ok} OK, ${ko} KO`);
 if (ko > 0) quit(1);
 '
 EOF
-bash ~/bd511/ch04/verifier-ch04.sh
+bash ~/BD511/ch04/verifier-ch04.sh
 ```
 
 Résultat attendu :
 
 ```text
-== Collection bd511.activites
+== Collection BD511.activites
   [OK] 1 000 000 activités : 1000000
   [OK] Index ESR formation_type_date_score : {"formation_id":1,"type":1,"date":-1,"score":1}
   [OK] Index stagiaire_date : {"stagiaire_id":1,"date":-1}
@@ -1753,7 +1753,7 @@ Ce TP a utilisé des index simples et composés. Les autres types vus en cours, 
 
 | Symptôme | Cause probable | Solution |
 | --- | --- | --- |
-| `sha256sum -c` affiche `activites.json: FAILED` | fichier tronqué ou généré par un script modifié | `rm ~/bd511/ch04/donnees/activites.json`, recopiez `generer_activites.py` (1.2) puis relancez `importer-activites.sh` |
+| `sha256sum -c` affiche `activites.json: FAILED` | fichier tronqué ou généré par un script modifié | `rm ~/BD511/ch04/donnees/activites.json`, recopiez `generer_activites.py` (1.2) puis relancez `importer-activites.sh` |
 | `load(...)` : `Uncaught Error: ENOENT: no such file or directory, open '…/explain-resume.js'` | `explain-resume.js` pas encore créé | créez-le (partie 2.6), puis relancez `load(...)` |
 | `ReferenceError: resume is not defined` ou `filtre is not defined` | nouvelle session mongosh | rechargez le script et redéfinissez `filtre` et `tri` (partie 2.3) |
 | `MongoServerError[BadValue]: hint provided does not correspond to an existing index` | nom d'index erroné, index supprimé ou masqué | `db.activites.getIndexes()` ; un index masqué ne peut pas être imposé par `hint()` |
@@ -1772,35 +1772,35 @@ Ce TP a utilisé des index simples et composés. Les autres types vus en cours, 
 
 | Fichier | Rôle | Partie |
 | --- | --- | --- |
-| `~/bd511/ch04/00-prerequis.sh` | Contrôle de l'environnement | 0.3 |
-| `~/bd511/ch04/generer_activites.py` | Générateur déterministe du jeu de données (bibliothèque standard) | 1.2 |
-| `~/bd511/ch04/donnees/activites.json` | 1 000 000 activités, Extended JSON, un document par ligne (généré, 180 Mo) | 1.2 |
-| `~/bd511/ch04/donnees/activites.json.gz` | Le même fichier, compressé (20 Mo) : fourni dans l'archive, facultatif | 1.2, 1.4 |
-| `~/bd511/ch04/donnees/SHA256SUMS` | Somme de contrôle du fichier de données | 1.3 |
-| `~/bd511/ch04/importer-activites.sh` | (Re)création de la collection dans son état initial | 1.4 |
-| `~/bd511/ch04/requete-lente.js` | Requête de la page « Derniers quiz réussis » (application) | 2.1, 4.5 |
-| `~/bd511/ch04/explain-resume.js` | Fonctions `resume()` et `etapesDuPlan()` pour mongosh | 2.6 |
-| `~/bd511/ch04/comparer.js` | Comparaison des plans et durées, une variante par index | 4.1, 4.5 |
-| `~/bd511/ch04/mesures-avant.txt`, `mesures-apres.txt` | Mesures de référence avant et après optimisation | 4.1, 4.5 |
-| `~/bd511/ch04/cout-ecriture.js` | Mesure du coût des index sur les insertions | 5.2, 5.4 |
-| `~/bd511/ch04/suivre-construction.js` | Suivi d'une construction d'index par `$currentOp` | 5.5 |
-| `~/bd511/ch04/verifier-ch04.sh` | Contrôle final | 6.1 |
-| Base `bd511`, collection `activites` | 1 000 000 documents ; index `_id_`, `formation_type_date_score`, `stagiaire_date` | 1.4 à 5.5 |
+| `~/BD511/ch04/00-prerequis.sh` | Contrôle de l'environnement | 0.3 |
+| `~/BD511/ch04/generer_activites.py` | Générateur déterministe du jeu de données (bibliothèque standard) | 1.2 |
+| `~/BD511/ch04/donnees/activites.json` | 1 000 000 activités, Extended JSON, un document par ligne (généré, 180 Mo) | 1.2 |
+| `~/BD511/ch04/donnees/activites.json.gz` | Le même fichier, compressé (20 Mo) : fourni dans l'archive, facultatif | 1.2, 1.4 |
+| `~/BD511/ch04/donnees/SHA256SUMS` | Somme de contrôle du fichier de données | 1.3 |
+| `~/BD511/ch04/importer-activites.sh` | (Re)création de la collection dans son état initial | 1.4 |
+| `~/BD511/ch04/requete-lente.js` | Requête de la page « Derniers quiz réussis » (application) | 2.1, 4.5 |
+| `~/BD511/ch04/explain-resume.js` | Fonctions `resume()` et `etapesDuPlan()` pour mongosh | 2.6 |
+| `~/BD511/ch04/comparer.js` | Comparaison des plans et durées, une variante par index | 4.1, 4.5 |
+| `~/BD511/ch04/mesures-avant.txt`, `mesures-apres.txt` | Mesures de référence avant et après optimisation | 4.1, 4.5 |
+| `~/BD511/ch04/cout-ecriture.js` | Mesure du coût des index sur les insertions | 5.2, 5.4 |
+| `~/BD511/ch04/suivre-construction.js` | Suivi d'une construction d'index par `$currentOp` | 5.5 |
+| `~/BD511/ch04/verifier-ch04.sh` | Contrôle final | 6.1 |
+| Base `BD511`, collection `activites` | 1 000 000 documents ; index `_id_`, `formation_type_date_score`, `stagiaire_date` | 1.4 à 5.5 |
 
 ## Annexe C – Rattrapage
 
-Tous les fichiers du TP (scripts, `SHA256SUMS` et jeu de données compressé) sont fournis dans l'archive `BD511_CH04_fichiers.zip` : son contenu `home/bd511/ch04/` se copie dans `~/bd511/ch04/`.
+Tous les fichiers du TP (scripts, `SHA256SUMS` et jeu de données compressé) sont fournis dans l'archive `BD511_CH04_fichiers.zip` : son contenu `home/BD511/ch04/` se copie dans `~/BD511/ch04/`.
 
 **Repartir de l'état initial** (début de la partie 2 ou de la partie 4), dans le terminal 1 :
 
 ```bash
-bash ~/bd511/ch04/importer-activites.sh
+bash ~/BD511/ch04/importer-activites.sh
 ```
 
 **Démarrer directement la partie 4** : après la remise à l'état initial, ouvrez la session mongosh du terminal 2 (partie 1.5) et préparez-la :
 
 ```javascript
-load(process.env.HOME + "/bd511/ch04/explain-resume.js")
+load(process.env.HOME + "/BD511/ch04/explain-resume.js")
 const filtre = { formation_id: "BD511", type: "quiz", score: { $gte: 80 } }
 const tri = { date: -1 }
 ```

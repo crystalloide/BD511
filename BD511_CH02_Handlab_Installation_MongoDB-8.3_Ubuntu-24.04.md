@@ -35,7 +35,7 @@
 - Toutes les commandes s'exécutent dans un **terminal** de la VM (`Ctrl` + `Alt` + `T`), avec votre compte habituel ; `sudo` est indiqué quand des droits d'administration sont nécessaires.
 - Les blocs qui créent un fichier (`cat > fichier <<'EOF'` ou `sudo tee fichier <<'EOF'`) se copient **en entier**, de la première ligne jusqu'à la ligne `EOF` incluse.
 - Les blocs intitulés « Résultat attendu » montrent la sortie à obtenir ; les valeurs variables (dates, identifiants, PID) diffèrent sur votre VM.
-- Tous les fichiers du TP sont générés dans `~/bd511/ch02` ou à leur emplacement système ; l'annexe C en donne la liste complète.
+- Tous les fichiers du TP sont générés dans `~/BD511/ch02` ou à leur emplacement système ; l'annexe C en donne la liste complète.
 
 > **Note formateur.** La partie 0.4 (changement de noyau) et le téléchargement de Compass (partie 4.1) peuvent être faits une fois pour toutes dans le modèle de VM : les stagiaires gagnent alors une dizaine de minutes et la bande passante de la salle est préservée.
 
@@ -52,8 +52,8 @@ su - user
 ```
 
 ```bash
-mkdir -p ~/bd511/ch02 && cd ~/bd511/ch02
-echo 'DPkg::Lock::Timeout "600";' | sudo tee /etc/apt/apt.conf.d/90-bd511-lock-timeout
+mkdir -p ~/BD511/ch02 && cd ~/BD511/ch02
+echo 'DPkg::Lock::Timeout "600";' | sudo tee /etc/apt/apt.conf.d/90-BD511-lock-timeout
 ```
 
 ### 0.2 Mettre le système à jour et installer les outils nécessaires
@@ -80,10 +80,10 @@ MongoDB 8.3 a plusieurs exigences matérielles et logicielles :
 Le script suivant contrôle ces points. Générez-le :
 
 ```bash
-cat > ~/bd511/ch02/00-verif-plateforme.sh <<'EOF'
+cat > ~/BD511/ch02/00-verif-plateforme.sh <<'EOF'
 #!/usr/bin/env bash
 # 00-verif-plateforme.sh - BD511 ch.2 : prérequis plate-forme pour MongoDB 8.3
-# Usage : bash ~/bd511/ch02/00-verif-plateforme.sh
+# Usage : bash ~/BD511/ch02/00-verif-plateforme.sh
 set -u
 ko=0
 ok()  { printf '  [OK] %s\n' "$*"; }
@@ -149,7 +149,7 @@ EOF
 Exécutez-le :
 
 ```bash
-bash ~/bd511/ch02/00-verif-plateforme.sh
+bash ~/BD511/ch02/00-verif-plateforme.sh
 ```
 
 Résultat attendu sur une VM Ubuntu 24.04.5 Desktop fraîchement installée :
@@ -184,10 +184,10 @@ Le noyau HWE 7.0 d'Ubuntu s'affiche `7.0.0-xx-generic`. MongoDB 8.3.13 lit `7.0.
 Sur un serveur de bases de données, le noyau GA est de toute façon le choix recommandé : c'est le noyau stock de la distribution, celui que MongoDB supporte et teste. Le script ci-dessous installe le noyau GA, retire la pile HWE (pour qu'elle ne revienne pas lors des mises à jour) et régénère la configuration du chargeur d'amorçage GRUB.
 
 ```bash
-cat > ~/bd511/ch02/01-noyau-ga.sh <<'EOF'
+cat > ~/BD511/ch02/01-noyau-ga.sh <<'EOF'
 #!/usr/bin/env bash
 # 01-noyau-ga.sh - BD511 ch.2 : remplace la pile noyau HWE par le noyau GA 6.8 d'Ubuntu 24.04
-# Usage : sudo bash ~/bd511/ch02/01-noyau-ga.sh   puis   sudo reboot
+# Usage : sudo bash ~/BD511/ch02/01-noyau-ga.sh   puis   sudo reboot
 set -euo pipefail
 [[ $EUID -eq 0 ]] || { echo "Lancez ce script avec sudo." >&2; exit 1; }
 . /etc/os-release
@@ -227,7 +227,7 @@ update-grub
 echo
 echo "Terminé. Redémarrez la VM maintenant : sudo reboot"
 EOF
-sudo bash ~/bd511/ch02/01-noyau-ga.sh
+sudo bash ~/BD511/ch02/01-noyau-ga.sh
 ```
 
 Le script affiche la liste des paquets supprimés, puis un avertissement normal à cette étape : `W: Removing the running kernel`. Redémarrez la VM :
@@ -240,7 +240,7 @@ Après le redémarrage, rouvrez un terminal et relancez le contrôle : tous les 
 
 ```bash
 uname -r
-bash ~/bd511/ch02/00-verif-plateforme.sh
+bash ~/BD511/ch02/00-verif-plateforme.sh
 ```
 
 Résultat attendu (extrait) :
@@ -440,11 +440,11 @@ MongoDB recommande fortement **XFS** pour les données du moteur WiredTiger ; su
 La VM du TP n'a qu'un disque : le script simule un disque dédié par un **fichier image formaté en XFS**, monté en boucle (*loop device*) sur `/var/lib/mongodb` à chaque démarrage via `/etc/fstab`. Pour un vrai disque, seule la source change dans `/etc/fstab` (par exemple `UUID=… /var/lib/mongodb xfs defaults,noatime 0 0`).
 
 ```bash
-cat > ~/bd511/ch02/02-volume-xfs.sh <<'EOF'
+cat > ~/BD511/ch02/02-volume-xfs.sh <<'EOF'
 #!/usr/bin/env bash
 # 02-volume-xfs.sh - BD511 ch.2 : volume XFS dédié (noatime) pour /var/lib/mongodb
 # Simule un disque dédié par un fichier image monté en boucle (loop).
-# Usage : sudo bash ~/bd511/ch02/02-volume-xfs.sh [taille_en_Go]   (8 Go par défaut)
+# Usage : sudo bash ~/BD511/ch02/02-volume-xfs.sh [taille_en_Go]   (8 Go par défaut)
 set -euo pipefail
 [[ $EUID -eq 0 ]] || { echo "Lancez ce script avec sudo." >&2; exit 1; }
 
@@ -497,7 +497,7 @@ chown mongodb:mongodb "$POINT"
 chmod 0750 "$POINT"
 findmnt "$POINT"
 EOF
-sudo bash ~/bd511/ch02/02-volume-xfs.sh
+sudo bash ~/BD511/ch02/02-volume-xfs.sh
 ```
 
 Résultat attendu (le numéro du périphérique `loop` varie) :
@@ -619,7 +619,7 @@ On ne modifie jamais `/lib/systemd/system/mongod.service`, qui appartient au paq
 
 ```bash
 sudo mkdir -p /etc/systemd/system/mongod.service.d
-sudo tee /etc/systemd/system/mongod.service.d/10-bd511.conf > /dev/null <<'EOF'
+sudo tee /etc/systemd/system/mongod.service.d/10-BD511.conf > /dev/null <<'EOF'
 # BD511 - Complément à l'unité mongod.service du paquet mongodb-org-server
 [Unit]
 RequiresMountsFor=/var/lib/mongodb
@@ -705,7 +705,7 @@ Résultat attendu (extrait) :
 ● mongod.service - MongoDB Database Server
      Loaded: loaded (/usr/lib/systemd/system/mongod.service; enabled; preset: enabled)
     Drop-In: /etc/systemd/system/mongod.service.d
-             └─10-bd511.conf
+             └─10-BD511.conf
      Active: active (running) since ...
        Docs: https://docs.mongodb.org/manual
     Process: ... ExecStartPre=/bin/sh -c ... (code=exited, status=0/SUCCESS)
@@ -758,10 +758,10 @@ GLIBC_TUNABLES=glibc.pthread.rseq=0
 Ce script vérifie en une fois l'ensemble des réglages de production et l'état du serveur. Il servira à la fin du TP (partie 6) et après chaque redémarrage de la VM.
 
 ```bash
-cat > ~/bd511/ch02/check-mongodb.sh <<'EOF'
+cat > ~/BD511/ch02/check-mongodb.sh <<'EOF'
 #!/usr/bin/env bash
 # check-mongodb.sh - BD511 ch.2 : contrôle de l'installation MongoDB et des réglages de production
-# Usage : sudo bash ~/bd511/ch02/check-mongodb.sh
+# Usage : sudo bash ~/BD511/ch02/check-mongodb.sh
 set -u
 [[ $EUID -eq 0 ]] || { echo "Lancez ce script avec sudo." >&2; exit 1; }
 
@@ -858,7 +858,7 @@ EOF
 ```
 
 ```bash
-sudo bash ~/bd511/ch02/check-mongodb.sh
+sudo bash ~/BD511/ch02/check-mongodb.sh
 ```
 
 Le seul avertissement de démarrage toléré à ce stade est « Access control is not enabled for the database » : l'authentification sera activée au chapitre 5.
@@ -932,7 +932,7 @@ exit
 Le jeu de données est un catalogue **fictif** de 24 formations, au format JSON *Extended* (une ligne par document). Il illustre les types BSON vus au chapitre 1 : chaînes, entiers, booléens, nombres décimaux exacts (`$numberDecimal` pour les prix), dates (`$date`), tableaux et documents imbriqués (les sessions). Certains champs ne sont présents que dans une partie des documents, ce qui montre la souplesse du schéma.
 
 ```bash
-cat > ~/bd511/ch02/formations.json <<'EOF'
+cat > ~/BD511/ch02/formations.json <<'EOF'
 {"_id":"BD511","titre":"NoSQL MongoDB : mise en œuvre et administration","domaine":"Bases de données","niveau":"Intermédiaire","duree_jours":3,"prix_ht":{"$numberDecimal":"2190.00"},"modalites":["présentiel","classe virtuelle"],"certifiante":false,"eligible_cpf":true,"mise_a_jour":{"$date":"2026-10-18T00:00:00Z"},"sessions":[{"debut":{"$date":"2026-11-16T09:00:00Z"},"ville":"Paris","places":12,"inscrits":9},{"debut":{"$date":"2026-12-14T09:00:00Z"},"ville":"Lyon","places":10,"inscrits":4},{"debut":{"$date":"2027-01-25T09:00:00Z"},"ville":"À distance","places":12,"inscrits":2}],"tags":["mongodb","nosql","administration","replica set","sharding"],"note_moyenne":4.7}
 {"_id":"BD512","titre":"MongoDB pour les développeurs","domaine":"Bases de données","niveau":"Fondamental","duree_jours":3,"prix_ht":{"$numberDecimal":"1990.00"},"modalites":["présentiel","classe virtuelle"],"certifiante":false,"mise_a_jour":{"$date":"2026-09-02T00:00:00Z"},"sessions":[{"debut":{"$date":"2026-11-23T09:00:00Z"},"ville":"Paris","places":12,"inscrits":11},{"debut":{"$date":"2027-02-08T09:00:00Z"},"ville":"Nantes","places":10,"inscrits":3}],"tags":["mongodb","développement","agrégation","drivers"],"note_moyenne":4.5}
 {"_id":"BD513","titre":"Apache Cassandra : architecture et exploitation","domaine":"Bases de données","niveau":"Avancé","duree_jours":3,"prix_ht":{"$numberDecimal":"2290.00"},"modalites":["présentiel"],"certifiante":false,"mise_a_jour":{"$date":"2026-06-15T00:00:00Z"},"sessions":[{"debut":{"$date":"2026-12-07T09:00:00Z"},"ville":"Paris","places":8,"inscrits":5}],"tags":["cassandra","nosql","cql","haute disponibilité"],"prerequis":["BD511"]}
@@ -958,36 +958,36 @@ cat > ~/bd511/ch02/formations.json <<'EOF'
 {"_id":"PY201","titre":"Python : les fondamentaux","domaine":"Programmation","niveau":"Fondamental","duree_jours":4,"prix_ht":{"$numberDecimal":"1990.00"},"modalites":["présentiel","classe virtuelle"],"certifiante":true,"eligible_cpf":true,"mise_a_jour":{"$date":"2026-07-01T00:00:00Z"},"sessions":[{"debut":{"$date":"2026-11-09T09:00:00Z"},"ville":"À distance","places":16,"inscrits":14},{"debut":{"$date":"2026-12-07T09:00:00Z"},"ville":"Nantes","places":10,"inscrits":6}],"tags":["python","programmation"],"note_moyenne":4.8}
 {"_id":"PY202","titre":"Python pour l'analyse de données","domaine":"Programmation","niveau":"Intermédiaire","duree_jours":3,"prix_ht":{"$numberDecimal":"1790.00"},"modalites":["classe virtuelle"],"certifiante":false,"mise_a_jour":{"$date":"2026-08-25T00:00:00Z"},"sessions":[{"debut":{"$date":"2027-01-25T09:00:00Z"},"ville":"À distance","places":16,"inscrits":5}],"tags":["python","pandas","visualisation"],"prerequis":["PY201"]}
 EOF
-wc -l ~/bd511/ch02/formations.json
+wc -l ~/BD511/ch02/formations.json
 ```
 
 Résultat attendu :
 
 ```text
-24 /home/<votre-compte>/bd511/ch02/formations.json
+24 /home/<votre-compte>/BD511/ch02/formations.json
 ```
 
-Importez le fichier avec `mongoimport` (Database Tools) dans la collection `formations` de la base `bd511`. L'option `--drop` vide la collection avant l'import, ce qui permet de relancer la commande sans créer de doublons :
+Importez le fichier avec `mongoimport` (Database Tools) dans la collection `formations` de la base `BD511`. L'option `--drop` vide la collection avant l'import, ce qui permet de relancer la commande sans créer de doublons :
 
 ```bash
-mongoimport --uri "mongodb://127.0.0.1:27017" --db bd511 --collection formations \
-  --drop --file ~/bd511/ch02/formations.json
+mongoimport --uri "mongodb://127.0.0.1:27017" --db BD511 --collection formations \
+  --drop --file ~/BD511/ch02/formations.json
 ```
 
 Résultat attendu :
 
 ```text
 2026-10-19T21:10:42.512+0200	connected to: mongodb://127.0.0.1:27017
-2026-10-19T21:10:42.513+0200	dropping: bd511.formations
+2026-10-19T21:10:42.513+0200	dropping: BD511.formations
 2026-10-19T21:10:42.561+0200	24 document(s) imported successfully. 0 document(s) failed to import.
 ```
 
 ### 3.3 Interroger les données
 
-Connectez-vous en indiquant cette fois une **chaîne de connexion** (URI) complète, qui sélectionne directement la base `bd511` :
+Connectez-vous en indiquant cette fois une **chaîne de connexion** (URI) complète, qui sélectionne directement la base `BD511` :
 
 ```bash
-mongosh "mongodb://127.0.0.1:27017/bd511"
+mongosh "mongodb://127.0.0.1:27017/BD511"
 ```
 
 Puis, dans mongosh :
@@ -1005,7 +1005,7 @@ Résultats attendus :
 
 | Commande | Résultat |
 | --- | --- |
-| `db.getName()` | `bd511` |
+| `db.getName()` | `BD511` |
 | `show collections` | `formations` |
 | `countDocuments()` | `24` |
 | `countDocuments({ domaine: "Bases de données" })` | `7` |
@@ -1042,7 +1042,7 @@ Quittez avec `exit`.
 mongosh s'utilise aussi dans des scripts d'exploitation, avec `--eval` pour une commande courte ou `--file` pour un fichier JavaScript. L'option `--quiet` supprime la bannière.
 
 ```bash
-mongosh --quiet --eval 'db.getSiblingDB("bd511").formations.distinct("domaine").sort()'
+mongosh --quiet --eval 'db.getSiblingDB("BD511").formations.distinct("domaine").sort()'
 ```
 
 Résultat attendu :
@@ -1061,9 +1061,9 @@ Résultat attendu :
 Générez le script de test de connexion, qui rassemble les informations utiles après une installation :
 
 ```bash
-cat > ~/bd511/ch02/test-connexion.js <<'EOF'
+cat > ~/BD511/ch02/test-connexion.js <<'EOF'
 // test-connexion.js - BD511 ch.2 : informations de connexion après installation
-// Usage : mongosh --quiet --file ~/bd511/ch02/test-connexion.js
+// Usage : mongosh --quiet --file ~/BD511/ch02/test-connexion.js
 const admin = db.getSiblingDB("admin");
 const build = admin.runCommand({ buildInfo: 1 });
 const statut = admin.runCommand({ serverStatus: 1 });
@@ -1071,7 +1071,7 @@ const options = admin.runCommand({ getCmdLineOpts: 1 }).parsed;
 const hote = admin.runCommand({ hostInfo: 1 });
 const avertissements = admin.runCommand({ getLog: "startupWarnings" }).log.map(l => JSON.parse(l).msg);
 const bases = admin.runCommand({ listDatabases: 1, nameOnly: true }).databases.map(b => b.name);
-const formations = db.getSiblingDB("bd511").formations;
+const formations = db.getSiblingDB("BD511").formations;
 
 const ligne = (libelle, valeur) => print(libelle.padEnd(28) + ": " + valeur);
 ligne("Serveur MongoDB", build.version + " (allocateur " + build.allocator + ")");
@@ -1084,11 +1084,11 @@ ligne("Écoute", options.net.bindIp + ":" + options.net.port);
 ligne("Caches TCMalloc par CPU", statut.tcmalloc.usingPerCPUCaches);
 ligne("Connexions", statut.connections.current + " ouverte(s), " + statut.connections.available + " disponible(s)");
 ligne("Bases", bases.join(", "));
-ligne("bd511.formations", formations.countDocuments() + " document(s)");
+ligne("BD511.formations", formations.countDocuments() + " document(s)");
 ligne("Avertissements de démarrage", avertissements.length);
 avertissements.forEach(a => print("  - " + a));
 EOF
-mongosh --quiet --file ~/bd511/ch02/test-connexion.js
+mongosh --quiet --file ~/BD511/ch02/test-connexion.js
 ```
 
 Résultat attendu :
@@ -1103,8 +1103,8 @@ dbPath                      : /var/lib/mongodb
 Écoute                      : 127.0.0.1:27017
 Caches TCMalloc par CPU     : true
 Connexions                  : 1 ouverte(s), 25599 disponible(s)
-Bases                       : admin, bd511, config, local
-bd511.formations            : 24 document(s)
+Bases                       : admin, BD511, config, local
+BD511.formations            : 24 document(s)
 Avertissements de démarrage : 1
   - Access control is not enabled for the database. Read and write access to data and configuration is unrestricted
 ```
@@ -1120,7 +1120,7 @@ Compass est distribué **séparément** du serveur, sous forme de paquet `.deb` 
 ### 4.1 Télécharger le paquet
 
 ```bash
-cd ~/bd511/ch02
+cd ~/BD511/ch02
 COMPASS_VERSION=1.53.0
 curl -fLO "https://downloads.mongodb.com/compass/mongodb-compass_${COMPASS_VERSION}_amd64.deb"
 dpkg-deb -f "mongodb-compass_${COMPASS_VERSION}_amd64.deb" Package Version
@@ -1138,7 +1138,7 @@ Version: 1.53.0
 L'installation avec `apt-get` (et non `dpkg -i`) résout automatiquement les dépendances (bibliothèques GTK, NSS, trousseau GNOME…) :
 
 ```bash
-cd ~/bd511/ch02
+cd ~/BD511/ch02
 COMPASS_VERSION=1.53.0
 sudo apt-get install -y "./mongodb-compass_${COMPASS_VERSION}_amd64.deb"
 ```
@@ -1194,13 +1194,13 @@ Au premier lancement, la fenêtre **Welcome to Compass** s'affiche : cliquez sur
 3. Dans le champ **Name**, saisissez `BD511 - local`. Choisissez une couleur dans la liste **Color** si vous le souhaitez et cochez **Favorite this connection**. La rubrique **Advanced Connection Options** (authentification, TLS, tunnel SSH) servira à partir du chapitre 5.
 4. Cliquez sur **Save & Connect**.
 
-Le volet de gauche affiche la connexion `BD511 - local` et, sous elle, les bases `admin`, `bd511`, `config` et `local`. Comme pour mongosh, aucun identifiant n'est demandé : l'authentification sera activée au chapitre 5.
+Le volet de gauche affiche la connexion `BD511 - local` et, sous elle, les bases `admin`, `BD511`, `config` et `local`. Comme pour mongosh, aucun identifiant n'est demandé : l'authentification sera activée au chapitre 5.
 
 > **Variante.** Compass accepte aussi la chaîne de connexion en argument : `mongodb-compass 'mongodb://127.0.0.1:27017/?directConnection=true'`.
 
 ### 5.3 Parcourir les données importées
 
-1. Dépliez la base **bd511** et cliquez sur la collection **formations**.
+1. Dépliez la base **BD511** et cliquez sur la collection **formations**.
 2. L'onglet **Documents** affiche les documents par pages de 20 ; le compteur au-dessus de la liste indique 24 documents au total. Basculez entre les vues liste, JSON et tableau avec les icônes situées au-dessus des documents.
 3. Dans la barre de filtre, saisissez le filtre suivant puis cliquez sur **Find** :
 
@@ -1217,7 +1217,7 @@ Le volet de gauche affiche la connexion `BD511 - local` et, sous elle, les bases
 Cliquez sur l'icône **>_** à droite du nom de la connexion dans la section **CONNECTIONS** (ou sur **Open MongoDB shell** en haut à droite d'un onglet). Le shell intégré s'ouvre en bas de la fenêtre ; saisissez :
 
 ```javascript
-use bd511
+use BD511
 db.formations.countDocuments()
 db.version()
 ```
@@ -1226,7 +1226,7 @@ Résultats attendus : `24`, puis `8.3.13`. Ce shell est la même application mon
 
 ### 5.5 Vérifier que les deux clients voient les mêmes données
 
-1. Dans Compass, onglet **Documents** de `bd511.formations`, cliquez sur **ADD DATA** ▸ **Insert document**, remplacez le contenu proposé par le document ci-dessous, puis cliquez sur **Insert** :
+1. Dans Compass, onglet **Documents** de `BD511.formations`, cliquez sur **ADD DATA** ▸ **Insert document**, remplacez le contenu proposé par le document ci-dessous, puis cliquez sur **Insert** :
 
    ```json
    { "_id": "TEST-COMPASS", "titre": "Document créé depuis Compass", "domaine": "Test" }
@@ -1235,8 +1235,8 @@ Résultats attendus : `24`, puis `8.3.13`. Ce shell est la même application mon
 2. Dans le terminal Linux , relisez ce document avec mongosh, puis supprimez-le :
 
    ```bash
-   mongosh --quiet --eval 'db.getSiblingDB("bd511").formations.findOne({ _id: "TEST-COMPASS" })'
-   mongosh --quiet --eval 'db.getSiblingDB("bd511").formations.deleteOne({ _id: "TEST-COMPASS" })'
+   mongosh --quiet --eval 'db.getSiblingDB("BD511").formations.findOne({ _id: "TEST-COMPASS" })'
+   mongosh --quiet --eval 'db.getSiblingDB("BD511").formations.deleteOne({ _id: "TEST-COMPASS" })'
    ```
 
    Résultat attendu :
@@ -1253,8 +1253,8 @@ Résultats attendus : `24`, puis `8.3.13`. Ce shell est la même application mon
 Remarque : dans le terminal de Compass, on est dans le shell mongosh : les commandes dans ce cas auraient été : 
 
    ```bash
-db.getSiblingDB("bd511").formations.findOne({ _id: "TEST-COMPASS" })
-db.getSiblingDB("bd511").formations.deleteOne({ _id: "TEST-COMPASS" })
+db.getSiblingDB("BD511").formations.findOne({ _id: "TEST-COMPASS" })
+db.getSiblingDB("BD511").formations.deleteOne({ _id: "TEST-COMPASS" })
    ```
 
 3. Dans Compass, cliquez sur **Find** (ou sur l'icône d'actualisation) : la collection compte de nouveau 24 documents.
@@ -1266,7 +1266,7 @@ db.getSiblingDB("bd511").formations.deleteOne({ _id: "TEST-COMPASS" })
 ### 6.1 Contrôle global
 
 ```bash
-sudo bash ~/bd511/ch02/check-mongodb.sh
+sudo bash ~/BD511/ch02/check-mongodb.sh
 ```
 
 Résultat attendu (exemple sur une VM VirtualBox avec un disque SATA) :
@@ -1317,7 +1317,7 @@ sudo reboot
 ```
 
 ```bash
-sudo bash ~/bd511/ch02/check-mongodb.sh
+sudo bash ~/BD511/ch02/check-mongodb.sh
 ```
 
 Le bilan doit être identique : montage du volume XFS par `/etc/fstab`, THP par `enable-transparent-huge-pages.service`, paramètres noyau par `/etc/sysctl.d`, ordonnanceur par la règle udev, démarrage automatique de `mongod` et *readahead* par son fichier complémentaire.
@@ -1345,7 +1345,7 @@ Le bilan doit être identique : montage du volume XFS par `/etc/fstab`, THP par 
 | mongosh : `MongoNetworkError: connect ECONNREFUSED 127.0.0.1:27017` | Service arrêté ou en cours de démarrage | `systemctl status mongod`, puis `sudo tail -n 20 /var/log/mongodb/mongod.log \| jq -c '{msg, attr}'`. |
 | Avertissement de démarrage sur `/sys/kernel/mm/transparent_hugepage/…` | Service THP inactif | `sudo systemctl enable --now enable-transparent-huge-pages && sudo systemctl restart mongod` |
 | Avertissement « We suggest setting swappiness to 0 or 1 » | Fichier sysctl non appliqué | `sudo sysctl -p /etc/sysctl.d/90-mongodb.conf && sudo systemctl restart mongod` |
-| Avertissement « Using the XFS filesystem is strongly recommended… » | `mongod` démarré avant la création du volume XFS | Relancez `sudo bash ~/bd511/ch02/02-volume-xfs.sh` (les données ext4 sont mises de côté), puis `sudo systemctl start mongod`. |
+| Avertissement « Using the XFS filesystem is strongly recommended… » | `mongod` démarré avant la création du volume XFS | Relancez `sudo bash ~/BD511/ch02/02-volume-xfs.sh` (les données ext4 sont mises de côté), puis `sudo systemctl start mongod`. |
 | Compass ne s'ouvre pas ; dans le terminal : « The SUID sandbox helper binary was found, but is not configured correctly » | Droits de `chrome-sandbox` modifiés | `sudo chown root:root /usr/lib/mongodb-compass/chrome-sandbox && sudo chmod 4755 /usr/lib/mongodb-compass/chrome-sandbox` |
 | Fenêtre Compass noire ou vide | Accélération graphique de la VM | Lancez `mongodb-compass --disable-gpu`. |
 | Compass : « connect ECONNREFUSED ::1:27017 » | Chaîne de connexion avec `localhost` résolu en IPv6 | Utilisez `mongodb://127.0.0.1:27017/?directConnection=true`. |
@@ -1369,7 +1369,7 @@ sudo rm -f /etc/systemd/system/enable-transparent-huge-pages.service /etc/sysctl
   /etc/udev/rules.d/60-mongodb-io-scheduler.rules /etc/apt/sources.list.d/mongodb-org-8.3.list \
   /usr/share/keyrings/mongodb-server-8.0.gpg
 sudo systemctl daemon-reload
-rm -rf ~/bd511/ch02
+rm -rf ~/BD511/ch02
 ```
 
 Redémarrez ensuite la VM pour revenir aux réglages noyau par défaut d'Ubuntu.
@@ -1378,22 +1378,22 @@ Redémarrez ensuite la VM pour revenir aux réglages noyau par défaut d'Ubuntu.
 
 | Fichier | Rôle | Partie |
 | --- | --- | --- |
-| `/etc/apt/apt.conf.d/90-bd511-lock-timeout` | Attente du verrou APT au lieu d'un échec | 0.1 |
-| `~/bd511/ch02/00-verif-plateforme.sh` | Contrôle des prérequis (OS, AVX, mémoire, disque, noyau) | 0.3 |
-| `~/bd511/ch02/01-noyau-ga.sh` | Passage du noyau HWE au noyau GA 6.8 | 0.4 |
+| `/etc/apt/apt.conf.d/90-BD511-lock-timeout` | Attente du verrou APT au lieu d'un échec | 0.1 |
+| `~/BD511/ch02/00-verif-plateforme.sh` | Contrôle des prérequis (OS, AVX, mémoire, disque, noyau) | 0.3 |
+| `~/BD511/ch02/01-noyau-ga.sh` | Passage du noyau HWE au noyau GA 6.8 | 0.4 |
 | `/usr/share/keyrings/mongodb-server-8.0.gpg` | Clé de signature du dépôt MongoDB | 1.1 |
 | `/etc/apt/sources.list.d/mongodb-org-8.3.list` | Déclaration du dépôt MongoDB 8.3 | 1.2 |
-| `~/bd511/ch02/02-volume-xfs.sh` | Création et montage du volume XFS de données | 2.1 |
+| `~/BD511/ch02/02-volume-xfs.sh` | Création et montage du volume XFS de données | 2.1 |
 | `/var/lib/mongodb-xfs.img` + ligne dans `/etc/fstab` | Volume XFS simulé, monté sur `/var/lib/mongodb` | 2.1 |
 | `/etc/systemd/system/enable-transparent-huge-pages.service` | Activation des THP au démarrage | 2.2 |
 | `/etc/sysctl.d/90-mongodb.conf` | Paramètres noyau recommandés | 2.3 |
 | `/etc/udev/rules.d/60-mongodb-io-scheduler.rules` | Ordonnanceur d'E/S `none` | 2.4 |
-| `/etc/systemd/system/mongod.service.d/10-bd511.conf` | Complément de l'unité `mongod` (montage, THP, *readahead*) | 2.5 |
+| `/etc/systemd/system/mongod.service.d/10-BD511.conf` | Complément de l'unité `mongod` (montage, THP, *readahead*) | 2.5 |
 | `/etc/mongod.conf` (original : `/etc/mongod.conf.orig`) | Configuration du serveur | 2.6 |
-| `~/bd511/ch02/check-mongodb.sh` | Contrôle global de l'installation | 2.8, 6 |
-| `~/bd511/ch02/formations.json` | Jeu de données (24 formations fictives) | 3.2 |
-| `~/bd511/ch02/test-connexion.js` | Script mongosh de test de connexion | 3.4 |
-| `~/bd511/ch02/mongodb-compass_1.53.0_amd64.deb` | Paquet d'installation de Compass | 4.1 |
+| `~/BD511/ch02/check-mongodb.sh` | Contrôle global de l'installation | 2.8, 6 |
+| `~/BD511/ch02/formations.json` | Jeu de données (24 formations fictives) | 3.2 |
+| `~/BD511/ch02/test-connexion.js` | Script mongosh de test de connexion | 3.4 |
+| `~/BD511/ch02/mongodb-compass_1.53.0_amd64.deb` | Paquet d'installation de Compass | 4.1 |
 
 ## Annexe D – Références
 

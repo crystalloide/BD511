@@ -5,7 +5,7 @@
 | **Formation** | BD511 – NoSQL MongoDB : mise en œuvre et administration |
 | **Chapitre** | 7 – Sharding |
 | **Durée indicative** | 3 h |
-| **Environnement** | VM Ubuntu 24.04 LTS Desktop du chapitre 6 (2 vCPU), avec le replica set RS1 en service sous Docker ; **6 Go de RAM** (partie 0.1) ; 2 Go libres sur le volume `/srv/bd511` |
+| **Environnement** | VM Ubuntu 24.04 LTS Desktop du chapitre 6 (2 vCPU), avec le replica set RS1 en service sous Docker ; **6 Go de RAM** (partie 0.1) ; 2 Go libres sur le volume `/srv/BD511` |
 | **Versions vérifiées le 25/10/2026** | MongoDB Community Server **8.3.13** (image Docker officielle `mongo:8.3.13`) · Docker Engine **29.9.2** · Docker Compose **5.6.1** · mongosh **2.13.0** · Database Tools **100.19.1** · Python **3.12** |
 
 ## Objectifs du TP
@@ -24,7 +24,7 @@ Ce TP démarre les services du profil `sharding` du fichier Docker Compose écri
 | Groupe | Conteneurs (adresse : port) | Rôle | Au début du TP |
 | --- | --- | --- | --- |
 | RSCFG | `config1` (.101 : 27041), `config2` (.102 : 27042), `config3` (.103 : 27043) | serveurs de configuration (métadonnées du cluster) | à créer |
-| RS1 | `rs11` (.111 : 27011), `rs12` (.112 : 27012), `rs1arb` (.113 : 27013) | shard 1 | en service (chapitre 6), avec la base `bd511` |
+| RS1 | `rs11` (.111 : 27011), `rs12` (.112 : 27012), `rs1arb` (.113 : 27013) | shard 1 | en service (chapitre 6), avec la base `BD511` |
 | RS2 | `rs21` (.121 : 27021), `rs22` (.122 : 27022), `rs2arb` (.123 : 27023) | shard 2 | à créer |
 | – | `mongos1` (.141 : 27017) | routeur | à créer |
 | RS3, – | `rs31`, `rs32`, `rs3arb`, `mongos2` | troisième shard, second routeur | non utilisés |
@@ -44,7 +44,7 @@ Ce TP démarre les services du profil `sharding` du fichier Docker Compose écri
 │ config3  .103 : 27043 │   │ rs1arb  .113 : 27013  │   │ rs2arb  .123 : 27023  │
 │ balancer (primaire)   │   │ données du chapitre 6 │   │                       │
 └───────────────────────┘   └───────────────────────┘   └───────────────────────┘
-          réseau Docker « bd511 » 192.168.100.0/24 ; fichier de clé commun à tous les processus
+          réseau Docker « BD511 » 192.168.100.0/24 ; fichier de clé commun à tous les processus
 ```
 
 > **Pourquoi 6 Go de RAM.** Le cluster compte 10 processus MongoDB. Une fois les données chargées, ils occupent environ 2,3 Go : près de 400 Mo pour chacun des quatre membres porteurs de données des shards (cache WiredTiger de 256 Mo compris), environ 150 Mo par serveur de configuration ou arbitre, 60 Mo pour le routeur. Avec l'environnement de bureau d'Ubuntu, 4 Go ne suffisent plus. C'est aussi pourquoi RS3 et `mongos2` restent éteints.
@@ -64,11 +64,11 @@ Ce TP démarre les services du profil `sharding` du fichier Docker Compose écri
 ## Conventions
 
 - Toutes les commandes s'exécutent dans un terminal (`Ctrl` + `Alt` + `T`). Les sessions mongosh interactives se quittent avec `exit`.
-- Les commandes Docker s'exécutent avec `sudo` depuis le répertoire du projet `~/bd511/cluster`, comme au chapitre 6.
+- Les commandes Docker s'exécutent avec `sudo` depuis le répertoire du projet `~/BD511/cluster`, comme au chapitre 6.
 - Les services du cluster sont toujours **nommés** dans les commandes `docker compose` qui démarrent des conteneurs : `--profile sharding` démarrerait aussi RS3 et `mongos2`.
 - Les blocs qui créent un fichier (`cat > fichier <<'EOF'`) se copient **en entier**, de la première ligne jusqu'à la ligne `EOF` incluse.
 - Les blocs « Résultat attendu » montrent la sortie à obtenir. Les heures, durées, tailles mémoire et identifiants (`ObjectId`, `UUID`, horodatages) varient d'une VM à l'autre. Le jeu de données est généré de façon déterministe : les nombres de documents sont identiques, sauf mention contraire.
-- Les fichiers du TP sont générés dans `~/bd511/ch07` ; l'annexe B en donne la liste.
+- Les fichiers du TP sont générés dans `~/BD511/ch07` ; l'annexe B en donne la liste.
 
 ---
 
@@ -81,7 +81,7 @@ Si votre VM dispose déjà d'au moins 6 Go de RAM, passez à la partie 0.2.
 Arrêtez proprement le replica set RS1, puis la VM :
 
 ```bash
-cd ~/bd511/cluster
+cd ~/BD511/cluster
 sudo docker compose stop
 sudo poweroff
 ```
@@ -89,9 +89,9 @@ sudo poweroff
 Dans l'hyperviseur, VM arrêtée, portez la mémoire vive à **6144 Mo** (VirtualBox : *Configuration › Système › Carte mère › Mémoire vive* ; VMware : *Edit virtual machine settings › Memory*). Redémarrez la VM, ouvrez un terminal et relancez RS1 :
 
 ```bash
-cd ~/bd511/cluster
+cd ~/BD511/cluster
 sudo docker compose up -d --wait
-bash ~/bd511/ch06/attendre-primaire.sh rs11:27011
+bash ~/BD511/ch06/attendre-primaire.sh rs11:27011
 free -m | head -n 2
 ```
 
@@ -114,27 +114,27 @@ Comme au chapitre 6, `docker compose stop` laisse les conteneurs arrêtés au re
 Le script suivant vérifie la mémoire disponible, la place libre sur le volume de données, les outils, et l'état du cluster laissé par le chapitre 6 :
 
 ```bash
-mkdir -p ~/bd511/ch07/donnees
-cat > ~/bd511/ch07/00-prerequis.sh <<'EOF'
+mkdir -p ~/BD511/ch07/donnees
+cat > ~/BD511/ch07/00-prerequis.sh <<'EOF'
 #!/usr/bin/env bash
 # 00-prerequis.sh - BD511 ch.7 : vérifie que la VM et le replica set RS1 du chapitre 6 sont prêts pour le sharding
-# Usage : bash ~/bd511/ch07/00-prerequis.sh      (demande le mot de passe sudo pour interroger Docker)
+# Usage : bash ~/BD511/ch07/00-prerequis.sh      (demande le mot de passe sudo pour interroger Docker)
 set -u
 ko=0
 ok()  { printf '  [OK] %s\n' "$*"; }
 nok() { printf '  [KO] %s\n' "$*"; ko=$((ko + 1)); }
-CLUSTER="$HOME/bd511/cluster"
+CLUSTER="$HOME/BD511/cluster"
 
 echo "== Système"
 total=$(awk '/^MemTotal/ {print int($2 / 1024)}' /proc/meminfo)
 dispo=$(awk '/^MemAvailable/ {print int($2 / 1024)}' /proc/meminfo)
 if (( dispo >= 2560 )); then ok "Mémoire disponible : ${dispo} Mo sur ${total} Mo (2 560 Mo requis)"
 else nok "Mémoire disponible : ${dispo} Mo sur ${total} Mo (2 560 Mo requis) ; passez la VM à 6 Go de RAM (partie 0.1)"; fi
-if mountpoint -q /srv/bd511; then
-  libre=$(df -BM --output=avail /srv/bd511 | tail -n 1 | tr -dc '0-9')
-  if (( libre >= 2048 )); then ok "Volume /srv/bd511 monté : ${libre} Mo libres (2 048 Mo requis)"
-  else nok "Volume /srv/bd511 : ${libre} Mo libres (2 048 Mo requis)"; fi
-else nok "Volume /srv/bd511 non monté (chapitre 6, partie 2.2) : sudo mount /srv/bd511"; fi
+if mountpoint -q /srv/BD511; then
+  libre=$(df -BM --output=avail /srv/BD511 | tail -n 1 | tr -dc '0-9')
+  if (( libre >= 2048 )); then ok "Volume /srv/BD511 monté : ${libre} Mo libres (2 048 Mo requis)"
+  else nok "Volume /srv/BD511 : ${libre} Mo libres (2 048 Mo requis)"; fi
+else nok "Volume /srv/BD511 non monté (chapitre 6, partie 2.2) : sudo mount /srv/BD511"; fi
 for outil in mongosh mongoimport python3 jq; do
   if command -v "$outil" >/dev/null; then ok "$outil présent"; else nok "$outil absent"; fi
 done
@@ -145,12 +145,12 @@ manquants=""
 for f in docker-compose.yml conf/mongod.conf secrets/keyfile secrets/admin.pwd secrets/appli.pwd; do
   sudo test -s "$CLUSTER/$f" || manquants+=" $f"
 done
-if [[ -z $manquants ]]; then ok "Fichiers du cluster présents dans ~/bd511/cluster"; else nok "Fichiers absents de ~/bd511/cluster :$manquants"; fi
+if [[ -z $manquants ]]; then ok "Fichiers du cluster présents dans ~/BD511/cluster"; else nok "Fichiers absents de ~/BD511/cluster :$manquants"; fi
 noms=$(getent hosts config1 rs21 mongos1 | wc -l)
 if (( noms == 3 )); then ok "Noms des membres déclarés dans /etc/hosts"; else nok "Noms absents de /etc/hosts : relancez 03-hosts.sh (chapitre 6, partie 2.3)"; fi
-etat=$("$HOME/bd511/ch06/mongosh-rs1" --quiet --eval 'print(rs.status().members.map(m => m.stateStr).sort().join(" "))' 2>/dev/null)
+etat=$("$HOME/BD511/ch06/mongosh-rs1" --quiet --eval 'print(rs.status().members.map(m => m.stateStr).sort().join(" "))' 2>/dev/null)
 if [[ $etat == "ARBITER PRIMARY SECONDARY" ]]; then ok "Replica set RS1 : un primaire, un secondaire, un arbitre"
-else nok "Replica set RS1 indisponible ou dégradé (${etat:-aucune réponse}) : cd ~/bd511/cluster && sudo docker compose up -d --wait"; fi
+else nok "Replica set RS1 indisponible ou dégradé (${etat:-aucune réponse}) : cd ~/BD511/cluster && sudo docker compose up -d --wait"; fi
 if [[ -n $(sudo docker ps -aq --filter name='^(config[123]|rs2[12]|rs2arb|mongos1)$') ]]; then
   nok "Des conteneurs du chapitre 7 existent déjà : voir l'annexe C pour repartir de zéro"
 else ok "Aucun conteneur du chapitre 7 créé"; fi
@@ -159,7 +159,7 @@ echo
 if (( ko == 0 )); then echo "Résultat : VM prête pour le TP."; else echo "Résultat : ${ko} point(s) à corriger."; fi
 exit $(( ko > 0 ))
 EOF
-bash ~/bd511/ch07/00-prerequis.sh
+bash ~/BD511/ch07/00-prerequis.sh
 ```
 
 Résultat attendu (mémoire et espace libre variables) :
@@ -167,14 +167,14 @@ Résultat attendu (mémoire et espace libre variables) :
 ```text
 == Système
   [OK] Mémoire disponible : 3907 Mo sur 5923 Mo (2 560 Mo requis)
-  [OK] Volume /srv/bd511 monté : 3314 Mo libres (2 048 Mo requis)
+  [OK] Volume /srv/BD511 monté : 3314 Mo libres (2 048 Mo requis)
   [OK] mongosh présent
   [OK] mongoimport présent
   [OK] python3 présent
   [OK] jq présent
 == Cluster Docker du chapitre 6
   [OK] Docker Engine 29.9.2 actif
-  [OK] Fichiers du cluster présents dans ~/bd511/cluster
+  [OK] Fichiers du cluster présents dans ~/BD511/cluster
   [OK] Noms des membres déclarés dans /etc/hosts
   [OK] Replica set RS1 : un primaire, un secondaire, un arbitre
   [OK] Aucun conteneur du chapitre 7 créé
@@ -203,7 +203,7 @@ L'ordre de déploiement en découle : les serveurs de configuration d'abord, pui
 Démarrez les trois conteneurs de RSCFG :
 
 ```bash
-cd ~/bd511/cluster
+cd ~/BD511/cluster
 sudo docker compose up -d --wait config1 config2 config3
 ```
 
@@ -219,10 +219,10 @@ Résultat attendu :
 Comme pour RS1, on initialise le replica set par l'**exception localhost**, depuis l'intérieur du conteneur `config1`. La configuration porte l'option `configsvr: true`, obligatoire pour un replica set de serveurs de configuration, et trois membres porteurs de données, sans arbitre ni priorité particulière :
 
 ```bash
-cat > ~/bd511/ch07/init-rscfg.js <<'EOF'
+cat > ~/BD511/ch07/init-rscfg.js <<'EOF'
 // init-rscfg.js - BD511 ch.7 : initialise le replica set RSCFG des serveurs de configuration
 // Exécuté dans le conteneur config1, par l'interface locale (exception localhost : aucun utilisateur n'existe encore).
-// Usage : cd ~/bd511/cluster && sudo docker compose exec -T config1 mongosh --port 27041 --quiet --file /dev/stdin < ~/bd511/ch07/init-rscfg.js
+// Usage : cd ~/BD511/cluster && sudo docker compose exec -T config1 mongosh --port 27041 --quiet --file /dev/stdin < ~/BD511/ch07/init-rscfg.js
 const config = {
   _id: "RSCFG",
   configsvr: true,                 // replica set de serveurs de configuration (lancés avec --configsvr)
@@ -242,8 +242,8 @@ for (let i = 0; i < 60; i++) {
 }
 for (const m of rs.status().members) print(`${m.name.padEnd(14)} ${m.stateStr}`);
 EOF
-cd ~/bd511/cluster
-sudo docker compose exec -T config1 mongosh --port 27041 --quiet --file /dev/stdin < ~/bd511/ch07/init-rscfg.js
+cd ~/BD511/cluster
+sudo docker compose exec -T config1 mongosh --port 27041 --quiet --file /dev/stdin < ~/BD511/ch07/init-rscfg.js
 ```
 
 Résultat attendu (après une dizaine de secondes ; le primaire est en général `config1`) :
@@ -264,12 +264,12 @@ Le replica set RSCFG accueillera la base `config` (métadonnées) et, dans sa ba
 RS2 reproduit RS1 : `rs21` (priorité 2), `rs22` (priorité 1) et l'arbitre `rs2arb`, tous lancés avec `--shardsvr` par le fichier Compose.
 
 ```bash
-cd ~/bd511/cluster
+cd ~/BD511/cluster
 sudo docker compose up -d --wait rs21 rs22 rs2arb
-cat > ~/bd511/ch07/init-rs2.js <<'EOF'
+cat > ~/BD511/ch07/init-rs2.js <<'EOF'
 // init-rs2.js - BD511 ch.7 : initialise le replica set RS2 (futur shard 2), sur le modèle de RS1
 // Exécuté dans le conteneur rs21, par l'interface locale (exception localhost : aucun utilisateur n'existe encore).
-// Usage : cd ~/bd511/cluster && sudo docker compose exec -T rs21 mongosh --port 27021 --quiet --file /dev/stdin < ~/bd511/ch07/init-rs2.js
+// Usage : cd ~/BD511/cluster && sudo docker compose exec -T rs21 mongosh --port 27021 --quiet --file /dev/stdin < ~/BD511/ch07/init-rs2.js
 const config = {
   _id: "RS2",
   members: [
@@ -288,7 +288,7 @@ for (let i = 0; i < 60; i++) {
 }
 for (const m of rs.status().members) print(`${m.name.padEnd(13)} ${m.stateStr}`);
 EOF
-sudo docker compose exec -T rs21 mongosh --port 27021 --quiet --file /dev/stdin < ~/bd511/ch07/init-rs2.js
+sudo docker compose exec -T rs21 mongosh --port 27021 --quiet --file /dev/stdin < ~/BD511/ch07/init-rs2.js
 ```
 
 Résultat attendu :
@@ -309,7 +309,7 @@ rs2arb:27023  ARBITER
 Créez ensuite l'**administrateur local** du shard, toujours par l'exception localhost, avec le mot de passe du compte `admin` du chapitre 6 :
 
 ```bash
-cd ~/bd511/cluster
+cd ~/BD511/cluster
 sudo docker compose exec -T rs21 mongosh --port 27021 --quiet --file /dev/stdin <<EOF
 const admin = db.getSiblingDB("admin");
 admin.createUser({ user: "admin", pwd: "$(cat secrets/admin.pwd)", roles: [ "root" ] }, { w: "majority", wtimeout: 10000 });
@@ -334,7 +334,7 @@ Un cluster shardé a **deux niveaux de comptes** :
 Le fichier Compose lance `mongos1` avec le fichier de clé et l'adresse des serveurs de configuration (`--configdb RSCFG/config1:27041,config2:27042,config3:27043`). Démarrez-le :
 
 ```bash
-cd ~/bd511/cluster
+cd ~/BD511/cluster
 sudo docker compose up -d --wait mongos1
 ```
 
@@ -348,13 +348,13 @@ Résultat attendu :
 Aucun compte n'existe encore sur RSCFG : l'exception localhost s'applique au routeur. Créez par son intermédiaire les deux comptes du cluster, avec les mêmes noms, rôles et mots de passe qu'au chapitre 6 (fichiers `secrets/*.pwd`) :
 
 ```bash
-cd ~/bd511/cluster
+cd ~/BD511/cluster
 sudo docker compose exec -T mongos1 mongosh --port 27017 --quiet --file /dev/stdin <<EOF
 const admin = db.getSiblingDB("admin");
 const wc = { w: "majority", wtimeout: 10000 };
 admin.createUser({ user: "admin", pwd: "$(cat secrets/admin.pwd)", roles: [ "root" ] }, wc);
 admin.auth("admin", "$(cat secrets/admin.pwd)");
-admin.createUser({ user: "appli", pwd: "$(cat secrets/appli.pwd)", roles: [ { role: "readWrite", db: "bd511" } ] }, wc);
+admin.createUser({ user: "appli", pwd: "$(cat secrets/appli.pwd)", roles: [ { role: "readWrite", db: "BD511" } ] }, wc);
 for (const u of admin.getUsers().users) print(u.user.padEnd(6), EJSON.stringify(u.roles));
 EOF
 sudo docker compose exec -T mongos1 mongosh --port 27017 --quiet --eval 'db.adminCommand({ listDatabases: 1 })'
@@ -364,7 +364,7 @@ Résultat attendu :
 
 ```text
 admin  [{"role":"root","db":"admin"}]
-appli  [{"role":"readWrite","db":"bd511"}]
+appli  [{"role":"readWrite","db":"BD511"}]
 MongoServerError: Command listDatabases requires authentication
 ```
 
@@ -375,14 +375,14 @@ Les comptes sont enregistrés sur RSCFG : l'exception localhost est désormais r
 Les applications se connectent au **routeur**, jamais directement aux shards. Le script suivant ouvre mongosh sur `mongos1` avec le compte `admin` (par défaut) ou `appli`. Pour l'observation, l'option `--cible` permet aussi de se connecter directement à un replica set du cluster : RSCFG avec les comptes du cluster, RS1 ou RS2 avec leurs comptes locaux.
 
 ```bash
-cat > ~/bd511/ch07/mongosh-cluster <<'EOF'
+cat > ~/BD511/ch07/mongosh-cluster <<'EOF'
 #!/usr/bin/env bash
-# mongosh-cluster - BD511 ch.7 : ouvre mongosh sur le cluster shardé, base bd511
+# mongosh-cluster - BD511 ch.7 : ouvre mongosh sur le cluster shardé, base BD511
 #   - par défaut, par le routeur mongos1 : c'est l'accès normal des applications ;
 #   - avec --cible RSCFG, RS1 ou RS2 : directement sur ce replica set, pour l'administration et l'observation.
-# Le mot de passe est lu dans ~/bd511/cluster/secrets/<compte>.pwd ; mongosh le masque ensuite
+# Le mot de passe est lu dans ~/BD511/cluster/secrets/<compte>.pwd ; mongosh le masque ensuite
 # dans la liste des processus (« mongodb://<credentials>@... »). Compte par défaut : admin.
-# Usage : ~/bd511/ch07/mongosh-cluster [--compte appli] [--cible RSCFG|RS1|RS2] [options et scripts mongosh...]
+# Usage : ~/BD511/ch07/mongosh-cluster [--compte appli] [--cible RSCFG|RS1|RS2] [options et scripts mongosh...]
 set -euo pipefail
 compte=admin; cible=mongos
 while [[ ${1:-} == --compte || ${1:-} == --cible ]]; do
@@ -396,11 +396,11 @@ case $cible in
   RS2)    hotes="rs21:27021,rs22:27022"; rs="replicaSet=RS2&" ;;
   *) echo "Cible inconnue : $cible (RSCFG, RS1 ou RS2)" >&2; exit 1 ;;
 esac
-mdp=$(< "$HOME/bd511/cluster/secrets/$compte.pwd")
-exec mongosh "mongodb://$compte:$mdp@$hotes/bd511?${rs}authSource=admin&appName=bd511-tp7-$compte" "$@"
+mdp=$(< "$HOME/BD511/cluster/secrets/$compte.pwd")
+exec mongosh "mongodb://$compte:$mdp@$hotes/BD511?${rs}authSource=admin&appName=BD511-tp7-$compte" "$@"
 EOF
-chmod +x ~/bd511/ch07/mongosh-cluster
-~/bd511/ch07/mongosh-cluster --quiet --eval 'print(db.hello().msg, "- shards :", db.adminCommand({ listShards: 1 }).shards.length)'
+chmod +x ~/BD511/ch07/mongosh-cluster
+~/BD511/ch07/mongosh-cluster --quiet --eval 'print(db.hello().msg, "- shards :", db.adminCommand({ listShards: 1 }).shards.length)'
 ```
 
 Résultat attendu :
@@ -416,7 +416,7 @@ isdbgrid - shards : 0
 Ajoutez RS1 au cluster. On désigne un shard par le nom de son replica set suivi d'un ou plusieurs membres : le routeur découvre les autres, arbitre compris.
 
 ```bash
-~/bd511/ch07/mongosh-cluster --quiet --eval 'sh.addShard("RS1/rs11:27011,rs12:27012")'
+~/BD511/ch07/mongosh-cluster --quiet --eval 'sh.addShard("RS1/rs11:27011,rs12:27012")'
 ```
 
 Résultat attendu :
@@ -428,7 +428,7 @@ MongoServerError: Cannot add RS1/rs11:27011,rs12:27012 as a shard since the impl
 C'est la situation étudiée au chapitre 6 (partie 5.1) : avec un arbitre, le write concern par défaut implicite d'un replica set PSA est `{ w: 1 }`, alors que celui d'un cluster est `{ w: "majority" }`. MongoDB refuse d'ajouter un shard dont le défaut implicite diffère de celui du cluster : il faut d'abord fixer explicitement le **write concern par défaut du cluster** (*cluster-wide write concern*). On choisit `majority` : une écriture confirmée ne peut plus être perdue par un rollback.
 
 ```bash
-~/bd511/ch07/mongosh-cluster --quiet --eval '
+~/BD511/ch07/mongosh-cluster --quiet --eval '
   const r = db.adminCommand({ setDefaultRWConcern: 1, defaultWriteConcern: { w: "majority" }, writeConcern: { w: "majority" } });
   print("write concern par défaut du cluster :", EJSON.stringify(r.defaultWriteConcern), "(" + r.defaultWriteConcernSource + ")");
   for (const rs of ["RS1/rs11:27011,rs12:27012", "RS2/rs21:27021,rs22:27022"]) print("shard ajouté :", sh.addShard(rs).shardAdded);
@@ -451,19 +451,19 @@ Le routeur a complété la liste des membres de chaque shard, arbitre compris. I
 
 ### 1.7 Observer le cluster
 
-RS1 n'est pas arrivé vide : il apporte la base `bd511` du chapitre 6. Le routeur l'a enregistrée dans les métadonnées, avec RS1 comme **shard primaire** :
+RS1 n'est pas arrivé vide : il apporte la base `BD511` du chapitre 6. Le routeur l'a enregistrée dans les métadonnées, avec RS1 comme **shard primaire** :
 
 ```bash
-~/bd511/ch07/mongosh-cluster --quiet --eval '
+~/BD511/ch07/mongosh-cluster --quiet --eval '
   db.getSiblingDB("config").databases.find().forEach(d => print("base", d._id, "- shard primaire :", d.primary));
-  print("collections de bd511 :", db.getCollectionNames().sort().join(" "));'
+  print("collections de BD511 :", db.getCollectionNames().sort().join(" "));'
 ```
 
 Résultat attendu :
 
 ```text
-base bd511 - shard primaire : RS1
-collections de bd511 : commandes ecritures formations inscriptions stagiaires tests_wc
+base BD511 - shard primaire : RS1
+collections de BD511 : commandes ecritures formations inscriptions stagiaires tests_wc
 ```
 
 Ces collections ne sont pas shardées : elles restent entièrement sur le shard primaire de leur base, RS1, et le routeur y envoie toutes leurs requêtes.
@@ -471,7 +471,7 @@ Ces collections ne sont pas shardées : elles restent entièrement sur le shard 
 De son côté, RS1 sait désormais qu'il est un shard : `addShard` a déposé sur son primaire un document d'identité, qui lui donne son nom et l'adresse des serveurs de configuration. Lisez-le par une connexion directe au replica set, avec le compte local `admin` :
 
 ```bash
-~/bd511/ch07/mongosh-cluster --cible RS1 --quiet --eval 'printjson(db.getSiblingDB("admin").system.version.findOne({ _id: "shardIdentity" }))'
+~/BD511/ch07/mongosh-cluster --cible RS1 --quiet --eval 'printjson(db.getSiblingDB("admin").system.version.findOne({ _id: "shardIdentity" }))'
 ```
 
 Résultat attendu (`clusterId` variable) :
@@ -488,14 +488,14 @@ Résultat attendu (`clusterId` variable) :
 Conséquence pour les applications : la connexion directe au replica set, utilisée au chapitre 6, ne leur est plus permise. Comparez la même requête avec le compte `appli`, directement sur RS1 puis par le routeur :
 
 ```bash
-~/bd511/ch07/mongosh-cluster --compte appli --cible RS1 --quiet --eval 'print(db.formations.countDocuments())'
-~/bd511/ch07/mongosh-cluster --compte appli --quiet --eval 'print(db.formations.countDocuments())'
+~/BD511/ch07/mongosh-cluster --compte appli --cible RS1 --quiet --eval 'print(db.formations.countDocuments())'
+~/BD511/ch07/mongosh-cluster --compte appli --quiet --eval 'print(db.formations.countDocuments())'
 ```
 
 Résultat attendu :
 
 ```text
-MongoServerError: You are connecting to a sharded cluster improperly by connecting directly to a shard. Please connect to the cluster via a router (mongos). Command: aggregate, Namespace: bd511.formations
+MongoServerError: You are connecting to a sharded cluster improperly by connecting directly to a shard. Please connect to the cluster via a router (mongos). Command: aggregate, Namespace: BD511.formations
 24
 ```
 
@@ -504,10 +504,10 @@ Depuis MongoDB 8.0, un shard refuse les opérations reçues directement, sauf po
 Enfin, ouvrez une session interactive sur le routeur et affichez l'état général du cluster :
 
 ```bash
-~/bd511/ch07/mongosh-cluster
+~/BD511/ch07/mongosh-cluster
 ```
 
-L'invite devient `[direct: mongos] bd511>`. Tapez :
+L'invite devient `[direct: mongos] BD511>`. Tapez :
 
 ```javascript
 sh.status()
@@ -559,7 +559,7 @@ databases
 [
   {
     database: {
-      _id: 'bd511',
+      _id: 'BD511',
       primary: 'RS1',
       version: {
         uuid: UUID('e9e93b70-e673-408e-ac17-b185b85ded7c'),
@@ -576,7 +576,7 @@ databases
 ]
 ```
 
-On y retrouve les deux shards, le routeur actif et sa version, l'état du **balancer** (actif, aucune migration pour l'instant) et la base `bd511`, qui n'a encore aucune collection shardée (`collections: {}`). La ligne `autosplit` n'a plus d'effet depuis MongoDB 6.0.3 : les chunks ne sont plus découpés automatiquement au fil des insertions, c'est le balancer qui découpe les plages au moment de les déplacer.
+On y retrouve les deux shards, le routeur actif et sa version, l'état du **balancer** (actif, aucune migration pour l'instant) et la base `BD511`, qui n'a encore aucune collection shardée (`collections: {}`). La ligne `autosplit` n'a plus d'effet depuis MongoDB 6.0.3 : les chunks ne sont plus découpés automatiquement au fil des insertions, c'est le balancer qui découpe les plages au moment de les déplacer.
 
 Quittez mongosh avec `exit`.
 
@@ -591,13 +591,13 @@ Le TP utilise un jeu de **200 000 ventes** d'une boutique en ligne, du 1er janvi
 Le générateur est **déterministe** (graine fixe) : il produit toujours exactement le même fichier, dont l'empreinte SHA-256 est connue. Le même fichier, compressé, est aussi fourni dans l'archive du TP (`donnees/ventes.json.gz`).
 
 ```bash
-cat > ~/bd511/ch07/generer_ventes.py <<'EOF'
+cat > ~/BD511/ch07/generer_ventes.py <<'EOF'
 #!/usr/bin/env python3
 """generer_ventes.py - BD511 ch.7 : génère le jeu de données des ventes, au format JSON (un document par ligne).
 
 Le générateur est déterministe (graine fixe) : il produit toujours exactement le même fichier,
 dont la somme de contrôle figure dans donnees/SHA256SUMS.
-Usage : python3 ~/bd511/ch07/generer_ventes.py > ~/bd511/ch07/donnees/ventes.json
+Usage : python3 ~/BD511/ch07/generer_ventes.py > ~/BD511/ch07/donnees/ventes.json
 """
 import json
 import random
@@ -650,11 +650,11 @@ for n in range(1, NB_VENTES + 1):
     }
     sortie.write(json.dumps(vente, separators=(",", ":")) + "\n")
 EOF
-cat > ~/bd511/ch07/donnees/SHA256SUMS <<'EOF'
+cat > ~/BD511/ch07/donnees/SHA256SUMS <<'EOF'
 326bb1749dc298c5145567e41853dee507fed51270c38ab88ba5431d7e0a58bd  ventes.json
 EOF
-python3 ~/bd511/ch07/generer_ventes.py > ~/bd511/ch07/donnees/ventes.json
-cd ~/bd511/ch07/donnees && sha256sum -c SHA256SUMS
+python3 ~/BD511/ch07/generer_ventes.py > ~/BD511/ch07/donnees/ventes.json
+cd ~/BD511/ch07/donnees && sha256sum -c SHA256SUMS
 wc -l ventes.json
 head -n 2 ventes.json
 ```
@@ -675,37 +675,37 @@ Le fichier est au format JSON étendu de MongoDB (*Extended JSON*) : `{"$date": 
 Le script d'import passe par le routeur, avec le compte `appli`, et refuse d'écrire dans une collection qui contient déjà des documents. Comme au chapitre 6, le mot de passe transite par un fichier de configuration temporaire.
 
 ```bash
-cat > ~/bd511/ch07/importer-ventes.sh <<'EOF'
+cat > ~/BD511/ch07/importer-ventes.sh <<'EOF'
 #!/usr/bin/env bash
-# importer-ventes.sh - BD511 ch.7 : importe le jeu de données des ventes dans une collection de la base bd511,
+# importer-ventes.sh - BD511 ch.7 : importe le jeu de données des ventes dans une collection de la base BD511,
 # par le routeur mongos1, avec le compte applicatif « appli ». La collection doit être vide ou inexistante.
 # Le mot de passe passe par un fichier de configuration temporaire (mode 600, supprimé à la fin).
-# Usage : bash ~/bd511/ch07/importer-ventes.sh <collection>        ex. : importer-ventes.sh ventes
+# Usage : bash ~/BD511/ch07/importer-ventes.sh <collection>        ex. : importer-ventes.sh ventes
 set -euo pipefail
 coll=${1:?"Usage : importer-ventes.sh <collection>"}
-DONNEES="$HOME/bd511/ch07/donnees"
-URI="mongodb://appli@mongos1:27017/?authSource=admin&appName=bd511-import"
-MONGOSH="$HOME/bd511/ch07/mongosh-cluster"
+DONNEES="$HOME/BD511/ch07/donnees"
+URI="mongodb://appli@mongos1:27017/?authSource=admin&appName=BD511-import"
+MONGOSH="$HOME/BD511/ch07/mongosh-cluster"
 
 cd "$DONNEES"
 sha256sum --quiet --check SHA256SUMS || { echo "ventes.json différent de la référence (partie 2.1)." >&2; exit 1; }
 if [[ $("$MONGOSH" --compte appli --quiet --eval "print(db.getCollection('$coll').countDocuments({}, { limit: 1 }))") != 0 ]]; then
-  echo "bd511.$coll contient déjà des documents : import annulé." >&2; exit 1
+  echo "BD511.$coll contient déjà des documents : import annulé." >&2; exit 1
 fi
 
 conf=$(mktemp)
 trap 'rm -f "$conf"' EXIT
-printf 'password: "%s"\n' "$(< "$HOME/bd511/cluster/secrets/appli.pwd")" > "$conf"
+printf 'password: "%s"\n' "$(< "$HOME/BD511/cluster/secrets/appli.pwd")" > "$conf"
 
 # Écriture confirmée par la majorité des membres porteurs de données de chaque shard, arrêt à la première erreur.
 debut=$SECONDS
-mongoimport --config "$conf" --uri "$URI" --db bd511 --collection "$coll" --file ventes.json \
+mongoimport --config "$conf" --uri "$URI" --db BD511 --collection "$coll" --file ventes.json \
   --writeConcern '{w: "majority"}' --stopOnError --quiet
 n=$("$MONGOSH" --compte appli --quiet --eval "print(db.getCollection('$coll').countDocuments())")
-echo "bd511.$coll : $n documents importés en $((SECONDS - debut)) s"
+echo "BD511.$coll : $n documents importés en $((SECONDS - debut)) s"
 EOF
-bash ~/bd511/ch07/importer-ventes.sh ventes
-~/bd511/ch07/mongosh-cluster --quiet --eval '
+bash ~/BD511/ch07/importer-ventes.sh ventes
+~/BD511/ch07/mongosh-cluster --quiet --eval '
   const s = db.ventes.stats();
   print("shardée :", s.sharded, "- shard(s) :", Object.keys(s.shards).join(", "), "-", s.count, "documents -", (s.size / 1048576).toFixed(1), "Mo");'
 ```
@@ -713,11 +713,11 @@ bash ~/bd511/ch07/importer-ventes.sh ventes
 Résultat attendu (durée variable) :
 
 ```text
-bd511.ventes : 200000 documents importés en 12 s
+BD511.ventes : 200000 documents importés en 12 s
 shardée : false - shard(s) : RS1 - 200000 documents - 23.5 Mo
 ```
 
-La collection `ventes` n'est pas shardée : le routeur l'a créée sur le shard primaire de la base `bd511`, RS1, qui porte toutes ses données (23,5 Mo non compressés).
+La collection `ventes` n'est pas shardée : le routeur l'a créée sur le shard primaire de la base `BD511`, RS1, qui porte toutes ses données (23,5 Mo non compressés).
 
 ### 2.3 Choisir la clé de sharding
 
@@ -731,7 +731,7 @@ La **clé de sharding** est le champ (ou les champs) dont la valeur décide du s
 Mesurez les champs candidats :
 
 ```bash
-~/bd511/ch07/mongosh-cluster --compte appli --quiet --eval '
+~/BD511/ch07/mongosh-cluster --compte appli --quiet --eval '
   for (const champ of ["region", "pays", "client", "date"]) {
     const n = db.ventes.aggregate([{ $group: { _id: "$" + champ } }, { $count: "n" }]).next().n;
     print(champ.padEnd(6), String(n).padStart(6), "valeurs distinctes");
@@ -762,16 +762,16 @@ client le plus fréquent : C00710 (23 ventes)
 Pour observer l'état initial, arrêtez d'abord le balancer. Une collection qui contient déjà des données doit disposer d'un **index** dont la clé de sharding est le préfixe ; créez-le, puis shardez la collection :
 
 ```bash
-~/bd511/ch07/mongosh-cluster --quiet --eval '
+~/BD511/ch07/mongosh-cluster --quiet --eval '
   sh.stopBalancer();
   print("balancer actif :", sh.getBalancerState());
   print("index :", db.ventes.createIndex({ client: 1 }));
-  print("collection shardée :", sh.shardCollection("bd511.ventes", { client: 1 }).collectionsharded);'
-cat > ~/bd511/ch07/repartition.js <<'EOF'
-// repartition.js - BD511 ch.7 : répartition d'une collection shardée de la base bd511 entre les shards
+  print("collection shardée :", sh.shardCollection("BD511.ventes", { client: 1 }).collectionsharded);'
+cat > ~/BD511/ch07/repartition.js <<'EOF'
+// repartition.js - BD511 ch.7 : répartition d'une collection shardée de la base BD511 entre les shards
 // Pour chaque shard : documents possédés, volume (données non compressées), chunks, documents orphelins.
-// Usage : COLL=ventes ~/bd511/ch07/mongosh-cluster --quiet ~/bd511/ch07/repartition.js
-const ns = `bd511.${process.env.COLL || "ventes"}`;
+// Usage : COLL=ventes ~/BD511/ch07/mongosh-cluster --quiet ~/BD511/ch07/repartition.js
+const ns = `BD511.${process.env.COLL || "ventes"}`;
 const config = db.getSiblingDB("config");
 const coll = config.collections.findOne({ _id: ns });
 if (!coll) { print(`${ns} n'est pas une collection shardée.`); quit(1); }
@@ -792,9 +792,9 @@ for (const { _id: shard } of config.shards.find({}, { _id: 1 }).sort({ _id: 1 })
         `  ${String(s.numOrphanedDocs).padStart(6)} orphelin(s)`);
 }
 EOF
-COLL=ventes ~/bd511/ch07/mongosh-cluster --quiet ~/bd511/ch07/repartition.js
-~/bd511/ch07/mongosh-cluster --quiet --eval '
-  const s = sh.balancerCollectionStatus("bd511.ventes");
+COLL=ventes ~/BD511/ch07/mongosh-cluster --quiet ~/BD511/ch07/repartition.js
+~/BD511/ch07/mongosh-cluster --quiet --eval '
+  const s = sh.balancerCollectionStatus("BD511.ventes");
   print("taille de chunk :", s.chunkSize, "Mo ; équilibrée :", s.balancerCompliant);'
 ```
 
@@ -803,8 +803,8 @@ Résultat attendu :
 ```text
 balancer actif : false
 index : client_1
-collection shardée : bd511.ventes
-bd511.ventes   clé de sharding {"client":1}
+collection shardée : BD511.ventes
+BD511.ventes   clé de sharding {"client":1}
   RS1   200000 documents  100 %   23.5 Mo    1 chunk(s)       0 orphelin(s)
   RS2        0 documents    0 %    0.0 Mo    0 chunk(s)       0 orphelin(s)
 taille de chunk : 128 Mo ; équilibrée : true
@@ -819,9 +819,9 @@ Pour MongoDB, la collection est pourtant **équilibrée**. Depuis la version 6.0
 Pour voir le balancer à l'œuvre sur un petit volume, ramenez la taille de chunk de la collection à 1 Mo, la valeur minimale :
 
 ```bash
-~/bd511/ch07/mongosh-cluster --quiet --eval '
-  print("réglage :", db.adminCommand({ configureCollectionBalancing: "bd511.ventes", chunkSize: 1 }).ok);
-  const s = sh.balancerCollectionStatus("bd511.ventes");
+~/BD511/ch07/mongosh-cluster --quiet --eval '
+  print("réglage :", db.adminCommand({ configureCollectionBalancing: "BD511.ventes", chunkSize: 1 }).ok);
+  const s = sh.balancerCollectionStatus("BD511.ventes");
   print("taille de chunk :", s.chunkSize, "Mo ; équilibrée :", s.balancerCompliant, "; motif :", s.firstComplianceViolation);'
 ```
 
@@ -841,12 +841,12 @@ L'écart toléré n'est plus que de 3 Mo : la collection est déséquilibrée (`
 Le script suivant affiche l'état de départ, puis une ligne à chaque migration terminée, avec les documents et les chunks de chaque shard. Il s'arrête dès que la collection est équilibrée :
 
 ```bash
-cat > ~/bd511/ch07/suivre-balancer.js <<'EOF'
+cat > ~/BD511/ch07/suivre-balancer.js <<'EOF'
 // suivre-balancer.js - BD511 ch.7 : suit le travail du balancer sur une collection jusqu'à ce qu'elle soit équilibrée
 // Une ligne au départ, puis à chaque migration terminée : documents et chunks de chaque shard, migrations depuis le sharding.
 // S'arrête dès que la collection est équilibrée (balancerCompliant), ou au bout de DUREE secondes (300 par défaut).
-// Usage : COLL=ventes ~/bd511/ch07/mongosh-cluster --quiet ~/bd511/ch07/suivre-balancer.js
-const ns = `bd511.${process.env.COLL || "ventes"}`;
+// Usage : COLL=ventes ~/BD511/ch07/mongosh-cluster --quiet ~/BD511/ch07/suivre-balancer.js
+const ns = `BD511.${process.env.COLL || "ventes"}`;
 const duree = Number(process.env.DUREE || 300);
 const config = db.getSiblingDB("config");
 const { uuid } = config.collections.findOne({ _id: ns });
@@ -894,15 +894,15 @@ for (;;) {
   sleep(250);
 }
 EOF
-~/bd511/ch07/mongosh-cluster --quiet --eval 'sh.startBalancer(); print("balancer actif :", sh.getBalancerState())'
-COLL=ventes ~/bd511/ch07/mongosh-cluster --quiet ~/bd511/ch07/suivre-balancer.js
+~/BD511/ch07/mongosh-cluster --quiet --eval 'sh.startBalancer(); print("balancer actif :", sh.getBalancerState())'
+COLL=ventes ~/BD511/ch07/mongosh-cluster --quiet ~/BD511/ch07/suivre-balancer.js
 ```
 
 Résultat attendu (heures variables ; l'ensemble prend une vingtaine de secondes ; sur une VM très chargée, une ligne peut regrouper deux migrations) :
 
 ```text
 balancer actif : true
-12:21:27  suivi de bd511.ventes : taille de chunk 1 Mo, balancer actif
+12:21:27  suivi de BD511.ventes : taille de chunk 1 Mo, balancer actif
 12:21:27  RS1 200000 docs  1 chunk(s) | RS2      0 docs  0 chunk(s) | 0 migration(s)
 12:21:32  RS1 191479 docs  1 chunk(s) | RS2   8521 docs  1 chunk(s) | 1 migration(s)
 12:21:34  RS1 182955 docs  1 chunk(s) | RS2  17045 docs  2 chunk(s) | 2 migration(s)
@@ -925,9 +925,9 @@ balancer actif : true
 Affichez la nouvelle répartition, puis l'historique des migrations, que les serveurs de configuration conservent dans `config.changelog` :
 
 ```bash
-COLL=ventes ~/bd511/ch07/mongosh-cluster --quiet ~/bd511/ch07/repartition.js
-~/bd511/ch07/mongosh-cluster --quiet --eval '
-  const migrations = db.getSiblingDB("config").changelog.find({ ns: "bd511.ventes", what: "moveChunk.commit" }).sort({ time: 1 }).toArray();
+COLL=ventes ~/BD511/ch07/mongosh-cluster --quiet ~/BD511/ch07/repartition.js
+~/BD511/ch07/mongosh-cluster --quiet --eval '
+  const migrations = db.getSiblingDB("config").changelog.find({ ns: "BD511.ventes", what: "moveChunk.commit" }).sort({ time: 1 }).toArray();
   print(migrations.length, "migrations, dont les trois premières :");
   for (const m of migrations.slice(0, 3)) {
     const d = m.details;
@@ -938,7 +938,7 @@ COLL=ventes ~/bd511/ch07/mongosh-cluster --quiet ~/bd511/ch07/repartition.js
 Résultat attendu :
 
 ```text
-bd511.ventes   clé de sharding {"client":1}
+BD511.ventes   clé de sharding {"client":1}
   RS1   106268 documents   53 %   12.5 Mo    1 chunk(s)   93732 orphelin(s)
   RS2    93732 documents   47 %   11.0 Mo   11 chunk(s)       0 orphelin(s)
 11 migrations, dont les trois premières :
@@ -952,12 +952,12 @@ L'écart est désormais inférieur à 3 Mo. RS2 détient les plus petites valeur
 La colonne **orphelins** mérite une explication. Après chaque migration, RS1, le shard donneur, conserve sa copie des documents partis : ce sont des **documents orphelins**. Il ne les supprime qu'après un délai, pour laisser se terminer les lectures qui avaient commencé avant la migration. Constatez-le en interrogeant RS1 directement, puis par le routeur :
 
 ```bash
-~/bd511/ch07/mongosh-cluster --cible RS1 --quiet --eval '
+~/BD511/ch07/mongosh-cluster --cible RS1 --quiet --eval '
   print("documents présents sur RS1 :", db.ventes.countDocuments());
-  const taches = db.getSiblingDB("config").rangeDeletions.find({ nss: "bd511.ventes" }).toArray();
+  const taches = db.getSiblingDB("config").rangeDeletions.find({ nss: "BD511.ventes" }).toArray();
   print("suppressions de plages en attente :", taches.length, "-", taches.reduce((t, x) => t + Number(x.numOrphanDocs), 0), "documents orphelins");
   print("délai avant suppression :", db.adminCommand({ getParameter: 1, orphanCleanupDelaySecs: 1 }).orphanCleanupDelaySecs, "s");'
-~/bd511/ch07/mongosh-cluster --quiet --eval 'print("documents vus par le routeur :", db.ventes.countDocuments())'
+~/BD511/ch07/mongosh-cluster --quiet --eval 'print("documents vus par le routeur :", db.ventes.countDocuments())'
 ```
 
 Résultat attendu (moins d'une heure après les migrations) :
@@ -974,7 +974,7 @@ RS1 contient encore physiquement les 200 000 ventes, dont 93 732 qui appartienne
 mongosh fournit aussi une vue de synthèse de la répartition :
 
 ```bash
-~/bd511/ch07/mongosh-cluster --quiet --eval 'db.ventes.getShardDistribution()'
+~/BD511/ch07/mongosh-cluster --quiet --eval 'db.ventes.getShardDistribution()'
 ```
 
 Résultat attendu (moins d'une heure après les migrations ; l'ordre des shards peut varier) :
@@ -1023,10 +1023,10 @@ Attention aux nombres de documents : `getShardDistribution()` lit les statistiqu
 Le routeur n'envoie une requête qu'aux shards qui peuvent détenir les documents demandés. Il ne le sait que si le filtre porte sur la clé de sharding. Le script suivant demande au routeur le plan d'exécution (`explain`) de cinq requêtes types et indique les shards interrogés :
 
 ```bash
-cat > ~/bd511/ch07/routage.js <<'EOF'
+cat > ~/BD511/ch07/routage.js <<'EOF'
 // routage.js - BD511 ch.7 : comment mongos route quelques requêtes types sur une collection shardée
 // « ciblée » : envoyée au seul shard concerné ; « diffusée » : envoyée à tous les shards (scatter-gather).
-// Usage : COLL=ventes ~/bd511/ch07/mongosh-cluster --quiet ~/bd511/ch07/routage.js
+// Usage : COLL=ventes ~/BD511/ch07/mongosh-cluster --quiet ~/BD511/ch07/routage.js
 const coll = db.getCollection(process.env.COLL || "ventes");
 const requetes = [
   ["un client", { client: "C01913" }],
@@ -1042,7 +1042,7 @@ for (const [libelle, filtre] of requetes) {
   print(`${libelle.padEnd(25)} ${routage.padEnd(8)}  ${plan.stage.padEnd(12)}  ${shards.join(", ")}`);
 }
 EOF
-COLL=ventes ~/bd511/ch07/mongosh-cluster --quiet ~/bd511/ch07/routage.js
+COLL=ventes ~/BD511/ch07/mongosh-cluster --quiet ~/BD511/ch07/routage.js
 ```
 
 Résultat attendu :
@@ -1063,7 +1063,7 @@ une région et un client   ciblée    SINGLE_SHARD  RS2
 Une migration consomme des ressources (copie, réplication, puis suppression des orphelins). En production, on la cantonne souvent à une **fenêtre** creuse, définie dans les métadonnées et interprétée dans le fuseau horaire du primaire de RSCFG (ici celui de la VM, monté dans les conteneurs) :
 
 ```bash
-~/bd511/ch07/mongosh-cluster --quiet --eval '
+~/BD511/ch07/mongosh-cluster --quiet --eval '
   const config = db.getSiblingDB("config");
   config.settings.updateOne({ _id: "balancer" }, { $set: { activeWindow: { start: "23:00", stop: "06:00" } } }, { upsert: true });
   print("fenêtre :", EJSON.stringify(config.settings.findOne({ _id: "balancer" }).activeWindow));
@@ -1082,7 +1082,7 @@ fenêtre supprimée : 1
 Le balancer reste actif, mais ne lance plus de migration en dehors de la fenêtre. Pour la suite du TP, la fenêtre a été supprimée. Retenez aussi :
 
 - `sh.stopBalancer()` avant toute sauvegarde par copie des fichiers ou par instantané, puis `sh.startBalancer()` : une migration en cours rendrait la sauvegarde incohérente entre les shards ;
-- `sh.disableBalancing("bd511.ventes")` exclut une seule collection du balancer ;
+- `sh.disableBalancing("BD511.ventes")` exclut une seule collection du balancer ;
 - la taille de chunk d'une collection se règle avec `configureCollectionBalancing` (partie 2.5) ; celle du cluster, avec le document `chunksize` de `config.settings`.
 
 ---
@@ -1100,11 +1100,11 @@ On compare trois autres façons de sharder les mêmes ventes, chacune dans sa pr
 Créez les deux derniers scripts, puis mesurez la référence : la collection `ventes` de la partie 2, shardée à intervalles sur `client`.
 
 ```bash
-cat > ~/bd511/ch07/inserer-ventes.js <<'EOF'
+cat > ~/BD511/ch07/inserer-ventes.js <<'EOF'
 // inserer-ventes.js - BD511 ch.7 : simule l'activité d'octobre 2026 (10 000 nouvelles ventes, numérotées
 // à partir de 200 001) dans une collection, puis indique sur quel shard ces nouvelles ventes ont été écrites.
 // Relançable : les ventes d'une exécution précédente sont d'abord supprimées.
-// Usage : COLL=ventes_date ~/bd511/ch07/mongosh-cluster --quiet ~/bd511/ch07/inserer-ventes.js
+// Usage : COLL=ventes_date ~/BD511/ch07/mongosh-cluster --quiet ~/BD511/ch07/inserer-ventes.js
 const nom = process.env.COLL || "ventes";
 const coll = db.getCollection(nom);
 const NB = 10000, PREMIER = 200001, DEBUT = Date.parse("2026-10-01T00:00:00Z");
@@ -1136,17 +1136,17 @@ const duree = ((Date.now() - t0) / 1000).toFixed(1);
 // Nombre de nouvelles ventes trouvées sur chaque shard (plan d'exécution de la requête diffusée correspondante)
 const stats = coll.find({ _id: { $gte: PREMIER } }).explain("executionStats").executionStats.executionStages;
 const parShard = stats.shards ?? [{ shardName: stats.shardName, nReturned: stats.nReturned }];
-print(`bd511.${nom} : ${NB} nouvelles ventes (octobre 2026) insérées en ${duree} s`);
+print(`BD511.${nom} : ${NB} nouvelles ventes (octobre 2026) insérées en ${duree} s`);
 for (const s of parShard.sort((a, b) => a.shardName.localeCompare(b.shardName))) {
   const n = s.nReturned ?? s.executionStages?.nReturned;
   print(`  ${s.shardName}  ${String(n).padStart(6)} nouvelles ventes ${String(Math.round(100 * n / NB)).padStart(4)} %`);
 }
 EOF
-cat > ~/bd511/ch07/chunks.js <<'EOF'
+cat > ~/BD511/ch07/chunks.js <<'EOF'
 // chunks.js - BD511 ch.7 : liste les chunks d'une collection shardée, dans l'ordre de la clé, avec leur shard
 // Puis les plages de zones éventuellement définies sur la collection.
-// Usage : COLL=ventes_date ~/bd511/ch07/mongosh-cluster --quiet ~/bd511/ch07/chunks.js
-const ns = `bd511.${process.env.COLL || "ventes"}`;
+// Usage : COLL=ventes_date ~/BD511/ch07/mongosh-cluster --quiet ~/BD511/ch07/chunks.js
+const ns = `BD511.${process.env.COLL || "ventes"}`;
 const config = db.getSiblingDB("config");
 const coll = config.collections.findOne({ _id: ns });
 if (!coll) { print(`${ns} n'est pas une collection shardée.`); quit(1); }
@@ -1157,13 +1157,13 @@ config.chunks.find({ uuid: coll.uuid }).sort({ min: 1 })
 config.tags.find({ ns }).sort({ min: 1 })
   .forEach(z => print(`  zone   ${z.tag}  ${texte(z.min)}  ->  ${texte(z.max)}`));
 EOF
-COLL=ventes ~/bd511/ch07/mongosh-cluster --quiet ~/bd511/ch07/inserer-ventes.js
+COLL=ventes ~/BD511/ch07/mongosh-cluster --quiet ~/BD511/ch07/inserer-ventes.js
 ```
 
 Résultat attendu (durée variable) :
 
 ```text
-bd511.ventes : 10000 nouvelles ventes (octobre 2026) insérées en 0.5 s
+BD511.ventes : 10000 nouvelles ventes (octobre 2026) insérées en 0.5 s
   RS1    5352 nouvelles ventes   54 %
   RS2    4648 nouvelles ventes   46 %
 ```
@@ -1177,21 +1177,21 @@ Avec une clé à intervalles, chaque chunk couvre une plage **contiguë** de val
 Shardez la collection vide `ventes_date` sur la date. Pour partir d'une situation réaliste, où l'historique est déjà réparti, découpez la plage au 1er janvier 2026 et envoyez les ventes de 2025 sur RS2 :
 
 ```bash
-~/bd511/ch07/mongosh-cluster --quiet --eval '
-  const ns = "bd511.ventes_date", janvier2026 = ISODate("2026-01-01T00:00:00Z");
+~/BD511/ch07/mongosh-cluster --quiet --eval '
+  const ns = "BD511.ventes_date", janvier2026 = ISODate("2026-01-01T00:00:00Z");
   print("collection shardée :", sh.shardCollection(ns, { date: 1 }).collectionsharded);
   print("découpage au 01/01/2026 :", sh.splitAt(ns, { date: janvier2026 }).ok);
   print("migration de 2025 vers RS2 :", sh.moveRange(ns, "RS2", { date: MinKey }, { date: janvier2026 }).ok);'
-COLL=ventes_date ~/bd511/ch07/mongosh-cluster --quiet ~/bd511/ch07/chunks.js
+COLL=ventes_date ~/BD511/ch07/mongosh-cluster --quiet ~/BD511/ch07/chunks.js
 ```
 
 Résultat attendu :
 
 ```text
-collection shardée : bd511.ventes_date
+collection shardée : BD511.ventes_date
 découpage au 01/01/2026 : 1
 migration de 2025 vers RS2 : 1
-bd511.ventes_date   clé de sharding {"date":1}
+BD511.ventes_date   clé de sharding {"date":1}
   chunk  RS2  {"date":{"$minKey":1}}  ->  {"date":{"$date":"2026-01-01T00:00:00Z"}}
   chunk  RS1  {"date":{"$date":"2026-01-01T00:00:00Z"}}  ->  {"date":{"$maxKey":1}}
 ```
@@ -1199,20 +1199,20 @@ bd511.ventes_date   clé de sharding {"date":1}
 La collection étant vide, `shardCollection` a créé lui-même l'index `{ date: 1 }`. `splitAt` et `moveRange` sont les commandes de découpage et de migration manuelles, que le balancer utilise aussi pour son propre compte. Importez les ventes, puis mesurez :
 
 ```bash
-bash ~/bd511/ch07/importer-ventes.sh ventes_date
-COLL=ventes_date ~/bd511/ch07/mongosh-cluster --quiet ~/bd511/ch07/repartition.js
-COLL=ventes_date ~/bd511/ch07/mongosh-cluster --quiet ~/bd511/ch07/inserer-ventes.js
-COLL=ventes_date ~/bd511/ch07/mongosh-cluster --quiet ~/bd511/ch07/routage.js
+bash ~/BD511/ch07/importer-ventes.sh ventes_date
+COLL=ventes_date ~/BD511/ch07/mongosh-cluster --quiet ~/BD511/ch07/repartition.js
+COLL=ventes_date ~/BD511/ch07/mongosh-cluster --quiet ~/BD511/ch07/inserer-ventes.js
+COLL=ventes_date ~/BD511/ch07/mongosh-cluster --quiet ~/BD511/ch07/routage.js
 ```
 
 Résultat attendu (durées variables) :
 
 ```text
-bd511.ventes_date : 200000 documents importés en 13 s
-bd511.ventes_date   clé de sharding {"date":1}
+BD511.ventes_date : 200000 documents importés en 13 s
+BD511.ventes_date   clé de sharding {"date":1}
   RS1    85580 documents   43 %   10.0 Mo    1 chunk(s)       0 orphelin(s)
   RS2   114420 documents   57 %   13.4 Mo    1 chunk(s)       0 orphelin(s)
-bd511.ventes_date : 10000 nouvelles ventes (octobre 2026) insérées en 0.4 s
+BD511.ventes_date : 10000 nouvelles ventes (octobre 2026) insérées en 0.4 s
   RS1   10000 nouvelles ventes  100 %
   RS2       0 nouvelles ventes    0 %
 un client                 diffusée  SHARD_MERGE   RS1, RS2
@@ -1229,15 +1229,15 @@ Les données historiques sont réparties (57 % sur RS2 pour 2025, 43 % sur RS1 p
 Avec une clé **hachée**, MongoDB calcule un hachage de la valeur (un entier de 64 bits) et découpe les chunks selon ce hachage. Des valeurs voisines obtiennent des hachages sans rapport entre eux : les documents se dispersent uniformément entre les shards.
 
 ```bash
-~/bd511/ch07/mongosh-cluster --quiet --eval 'print("collection shardée :", sh.shardCollection("bd511.ventes_hash", { client: "hashed" }).collectionsharded)'
-COLL=ventes_hash ~/bd511/ch07/mongosh-cluster --quiet ~/bd511/ch07/chunks.js
+~/BD511/ch07/mongosh-cluster --quiet --eval 'print("collection shardée :", sh.shardCollection("BD511.ventes_hash", { client: "hashed" }).collectionsharded)'
+COLL=ventes_hash ~/BD511/ch07/mongosh-cluster --quiet ~/BD511/ch07/chunks.js
 ```
 
 Résultat attendu :
 
 ```text
-collection shardée : bd511.ventes_hash
-bd511.ventes_hash   clé de sharding {"client":"hashed"}
+collection shardée : BD511.ventes_hash
+BD511.ventes_hash   clé de sharding {"client":"hashed"}
   chunk  RS2  {"client":{"$minKey":1}}  ->  {"client":0}
   chunk  RS1  {"client":0}  ->  {"client":{"$maxKey":1}}
 ```
@@ -1245,20 +1245,20 @@ bd511.ventes_hash   clé de sharding {"client":"hashed"}
 Sur une collection vide, MongoDB crée d'emblée un chunk par shard : les hachages négatifs d'un côté, les positifs de l'autre. Importez et mesurez :
 
 ```bash
-bash ~/bd511/ch07/importer-ventes.sh ventes_hash
-COLL=ventes_hash ~/bd511/ch07/mongosh-cluster --quiet ~/bd511/ch07/repartition.js
-COLL=ventes_hash ~/bd511/ch07/mongosh-cluster --quiet ~/bd511/ch07/inserer-ventes.js
-COLL=ventes_hash ~/bd511/ch07/mongosh-cluster --quiet ~/bd511/ch07/routage.js
+bash ~/BD511/ch07/importer-ventes.sh ventes_hash
+COLL=ventes_hash ~/BD511/ch07/mongosh-cluster --quiet ~/BD511/ch07/repartition.js
+COLL=ventes_hash ~/BD511/ch07/mongosh-cluster --quiet ~/BD511/ch07/inserer-ventes.js
+COLL=ventes_hash ~/BD511/ch07/mongosh-cluster --quiet ~/BD511/ch07/routage.js
 ```
 
 Résultat attendu (durées variables) :
 
 ```text
-bd511.ventes_hash : 200000 documents importés en 15 s
-bd511.ventes_hash   clé de sharding {"client":"hashed"}
+BD511.ventes_hash : 200000 documents importés en 15 s
+BD511.ventes_hash   clé de sharding {"client":"hashed"}
   RS1    99285 documents   50 %   11.6 Mo    1 chunk(s)       0 orphelin(s)
   RS2   100715 documents   50 %   11.7 Mo    1 chunk(s)       0 orphelin(s)
-bd511.ventes_hash : 10000 nouvelles ventes (octobre 2026) insérées en 0.5 s
+BD511.ventes_hash : 10000 nouvelles ventes (octobre 2026) insérées en 0.5 s
   RS1    4997 nouvelles ventes   50 %
   RS2    5003 nouvelles ventes   50 %
 un client                 ciblée    SINGLE_SHARD  RS1
@@ -1275,14 +1275,14 @@ Données et écritures sont réparties à parts égales dès l'import, sans aucu
 Les **zones** attachent des plages de valeurs de la clé à des shards désignés. Elles servent à **localiser** les données : garder les clients européens sur des serveurs situés en Europe (protection des données, latence), placer les données anciennes sur du matériel moins coûteux. Ici, la zone `EUROPE` est attribuée à RS1 et la zone `AMERIQUES` à RS2. La clé commence par la région, pour que les plages de zone puissent s'exprimer sur ce préfixe.
 
 ```bash
-~/bd511/ch07/mongosh-cluster --quiet --eval '
-  const ns = "bd511.ventes_zone";
+~/BD511/ch07/mongosh-cluster --quiet --eval '
+  const ns = "BD511.ventes_zone";
   print("RS1 dans la zone EUROPE :", sh.addShardToZone("RS1", "EUROPE").ok);
   print("RS2 dans la zone AMERIQUES :", sh.addShardToZone("RS2", "AMERIQUES").ok);
   print("plage AMERIQUES :", sh.updateZoneKeyRange(ns, { region: MinKey, client: MinKey }, { region: "EU", client: MinKey }, "AMERIQUES").ok);
   print("plage EUROPE :", sh.updateZoneKeyRange(ns, { region: "EU", client: MinKey }, { region: MaxKey, client: MaxKey }, "EUROPE").ok);
   print("collection shardée :", sh.shardCollection(ns, { region: 1, client: 1 }).collectionsharded);'
-COLL=ventes_zone ~/bd511/ch07/mongosh-cluster --quiet ~/bd511/ch07/chunks.js
+COLL=ventes_zone ~/BD511/ch07/mongosh-cluster --quiet ~/BD511/ch07/chunks.js
 ```
 
 Résultat attendu :
@@ -1292,8 +1292,8 @@ RS1 dans la zone EUROPE : 1
 RS2 dans la zone AMERIQUES : 1
 plage AMERIQUES : 1
 plage EUROPE : 1
-collection shardée : bd511.ventes_zone
-bd511.ventes_zone   clé de sharding {"region":1,"client":1}
+collection shardée : BD511.ventes_zone
+BD511.ventes_zone   clé de sharding {"region":1,"client":1}
   chunk  RS2  {"region":{"$minKey":1},"client":{"$minKey":1}}  ->  {"region":"EU","client":{"$minKey":1}}
   chunk  RS1  {"region":"EU","client":{"$minKey":1}}  ->  {"region":{"$maxKey":1},"client":{"$maxKey":1}}
   zone   AMERIQUES  {"region":{"$minKey":1},"client":{"$minKey":1}}  ->  {"region":"EU","client":{"$minKey":1}}
@@ -1303,20 +1303,20 @@ bd511.ventes_zone   clé de sharding {"region":1,"client":1}
 Les zones ont été définies **avant** de sharder la collection vide : MongoDB a créé un chunk par plage de zone, directement sur le bon shard. Les deux plages se touchent et couvrent tout l'espace des clés : `AM` précède `EU` dans l'ordre alphabétique, donc toutes les ventes `AM` tombent dans la plage `AMERIQUES`, toutes les ventes `EU` dans la plage `EUROPE`. Ainsi, aucun chunk n'échappe aux zones, et une requête sur une région ne touche qu'un chunk.
 
 ```bash
-bash ~/bd511/ch07/importer-ventes.sh ventes_zone
-COLL=ventes_zone ~/bd511/ch07/mongosh-cluster --quiet ~/bd511/ch07/repartition.js
-COLL=ventes_zone ~/bd511/ch07/mongosh-cluster --quiet ~/bd511/ch07/inserer-ventes.js
-COLL=ventes_zone ~/bd511/ch07/mongosh-cluster --quiet ~/bd511/ch07/routage.js
+bash ~/BD511/ch07/importer-ventes.sh ventes_zone
+COLL=ventes_zone ~/BD511/ch07/mongosh-cluster --quiet ~/BD511/ch07/repartition.js
+COLL=ventes_zone ~/BD511/ch07/mongosh-cluster --quiet ~/BD511/ch07/inserer-ventes.js
+COLL=ventes_zone ~/BD511/ch07/mongosh-cluster --quiet ~/BD511/ch07/routage.js
 ```
 
 Résultat attendu (durées variables) :
 
 ```text
-bd511.ventes_zone : 200000 documents importés en 17 s
-bd511.ventes_zone   clé de sharding {"region":1,"client":1}
+BD511.ventes_zone : 200000 documents importés en 17 s
+BD511.ventes_zone   clé de sharding {"region":1,"client":1}
   RS1   120303 documents   60 %   14.0 Mo    1 chunk(s)       0 orphelin(s)
   RS2    79697 documents   40 %    9.3 Mo    1 chunk(s)       0 orphelin(s)
-bd511.ventes_zone : 10000 nouvelles ventes (octobre 2026) insérées en 0.5 s
+BD511.ventes_zone : 10000 nouvelles ventes (octobre 2026) insérées en 0.5 s
   RS1    6104 nouvelles ventes   61 %
   RS2    3896 nouvelles ventes   39 %
 un client                 diffusée  SHARD_MERGE   RS1, RS2
@@ -1348,18 +1348,18 @@ Changer d'avis reste possible, à un coût : `refineCollectionShardKey` ajoute d
 Un cluster shardé s'arrête dans un ordre précis : balancer désactivé, puis routeur(s), shards et enfin serveurs de configuration. Il redémarre dans l'ordre inverse. Le script suivant applique cette procédure aux conteneurs du TP :
 
 ```bash
-cat > ~/bd511/ch07/cluster.sh <<'EOF'
+cat > ~/BD511/ch07/cluster.sh <<'EOF'
 #!/usr/bin/env bash
 # cluster.sh - BD511 ch.7 : démarre ou arrête le cluster shardé dans l'ordre recommandé, ou affiche son état
 #   demarrer : serveurs de configuration, puis shards, puis routeur ; réactive le balancer
 #   arreter  : désactive le balancer, puis arrête le routeur, les shards et enfin les serveurs de configuration
-# Usage : bash ~/bd511/ch07/cluster.sh demarrer|arreter|etat
+# Usage : bash ~/BD511/ch07/cluster.sh demarrer|arreter|etat
 set -euo pipefail
 CONFIG=(config1 config2 config3)
 SHARDS=(rs11 rs12 rs1arb rs21 rs22 rs2arb)
 ROUTEURS=(mongos1)
-MONGOSH="$HOME/bd511/ch07/mongosh-cluster"
-cd "$HOME/bd511/cluster"
+MONGOSH="$HOME/BD511/ch07/mongosh-cluster"
+cd "$HOME/BD511/cluster"
 
 case ${1:-} in
   demarrer)
@@ -1378,8 +1378,8 @@ case ${1:-} in
     echo "Usage : $0 demarrer|arreter|etat" >&2; exit 1 ;;
 esac
 EOF
-bash ~/bd511/ch07/cluster.sh arreter
-bash ~/bd511/ch07/cluster.sh demarrer
+bash ~/BD511/ch07/cluster.sh arreter
+bash ~/BD511/ch07/cluster.sh demarrer
 ```
 
 Résultat attendu (durées variables ; l'arrêt prend une minute environ) :
@@ -1420,13 +1420,13 @@ balancer actif : true
 ### 4.2 Contrôle final
 
 ```bash
-cat > ~/bd511/ch07/verifier-ch07.sh <<'EOF'
+cat > ~/BD511/ch07/verifier-ch07.sh <<'EOF'
 #!/usr/bin/env bash
 # verifier-ch07.sh - BD511 ch.7 : contrôle final du cluster shardé et des collections du TP
-# Usage : bash ~/bd511/ch07/verifier-ch07.sh      (demande le mot de passe sudo pour interroger Docker)
+# Usage : bash ~/BD511/ch07/verifier-ch07.sh      (demande le mot de passe sudo pour interroger Docker)
 set -u
-cd "$HOME/bd511/cluster"
-MONGOSH="$HOME/bd511/ch07/mongosh-cluster"
+cd "$HOME/BD511/cluster"
+MONGOSH="$HOME/BD511/ch07/mongosh-cluster"
 ok=0; ko=0
 res() { if [[ $1 == 0 ]]; then printf '  [OK] %s\n' "$2"; ok=$((ok + 1)); else printf '  [KO] %s\n' "$2"; ko=$((ko + 1)); fi; }
 
@@ -1444,16 +1444,16 @@ shards=$("$MONGOSH" --quiet --eval 'print(db.adminCommand({ listShards: 1 }).sha
 wc=$("$MONGOSH" --quiet --eval 'const r = db.adminCommand({ getDefaultRWConcern: 1 }); print(r.defaultWriteConcern.w, r.defaultWriteConcernSource)' 2>/dev/null)
 [[ $wc == "majority global" ]]; res $? "Write concern par défaut du cluster : $wc"
 comptes=$("$MONGOSH" --quiet --eval 'print(db.getSiblingDB("admin").getUsers().users.map(u => u.user + ":" + u.roles.map(r => r.role + "@" + r.db).join(",")).sort().join(" "))' 2>/dev/null)
-[[ $comptes == "admin:root@admin appli:readWrite@bd511" ]]; res $? "Comptes du cluster : $comptes"
-mongosh --quiet "mongodb://mongos1:27017/?appName=bd511-verif" --eval 'db.adminCommand({ listDatabases: 1 })' 2>&1 | grep -q "requires authentication"
+[[ $comptes == "admin:root@admin appli:readWrite@BD511" ]]; res $? "Comptes du cluster : $comptes"
+mongosh --quiet "mongodb://mongos1:27017/?appName=BD511-verif" --eval 'db.adminCommand({ listDatabases: 1 })' 2>&1 | grep -q "requires authentication"
 res $? "Accès anonyme au routeur refusé"
 [[ $("$MONGOSH" --quiet --eval 'print(sh.getBalancerState())' 2>/dev/null) == true ]]; res $? "Balancer actif"
 
-echo "== Collections shardées de bd511"
+echo "== Collections shardées de BD511"
 while read -r coll cle; do
   r=$("$MONGOSH" --quiet --eval "
-    const c = db.getSiblingDB('config').collections.findOne({ _id: 'bd511.$coll' });
-    const shards = db.getSiblingDB('admin').aggregate([{ \$shardedDataDistribution: {} }, { \$match: { ns: 'bd511.$coll' } }])
+    const c = db.getSiblingDB('config').collections.findOne({ _id: 'BD511.$coll' });
+    const shards = db.getSiblingDB('admin').aggregate([{ \$shardedDataDistribution: {} }, { \$match: { ns: 'BD511.$coll' } }])
       .toArray()[0].shards.filter(s => s.numOwnedDocuments > 0).length;
     print(EJSON.stringify(c.key), db.getCollection('$coll').countDocuments(), shards)" 2>/dev/null)
   [[ $r == "$cle 210000 2" ]]; res $? "$coll : clé, documents, shards occupés = $r"
@@ -1472,7 +1472,7 @@ echo
 echo "Bilan : ${ok} OK, ${ko} KO"
 exit $(( ko > 0 ))
 EOF
-bash ~/bd511/ch07/verifier-ch07.sh
+bash ~/BD511/ch07/verifier-ch07.sh
 ```
 
 Résultat attendu :
@@ -1484,10 +1484,10 @@ Résultat attendu :
   [OK] Serveurs de configuration : RSCFG configsvr PRIMARY,SECONDARY,SECONDARY
   [OK] Shards (nom=replica set) : RS1=RS1 RS2=RS2
   [OK] Write concern par défaut du cluster : majority global
-  [OK] Comptes du cluster : admin:root@admin appli:readWrite@bd511
+  [OK] Comptes du cluster : admin:root@admin appli:readWrite@BD511
   [OK] Accès anonyme au routeur refusé
   [OK] Balancer actif
-== Collections shardées de bd511
+== Collections shardées de BD511
   [OK] ventes : clé, documents, shards occupés = {"client":1} 210000 2
   [OK] ventes_date : clé, documents, shards occupés = {"date":1} 210000 2
   [OK] ventes_hash : clé, documents, shards occupés = {"client":"hashed"} 210000 2
@@ -1551,7 +1551,7 @@ rs1arb    234.9MiB / 512MiB
 | Symptôme | Cause probable | Solution |
 | --- | --- | --- |
 | `00-prerequis.sh` : mémoire disponible insuffisante | VM à 4 Go, ou applications ouvertes | partie 0.1 ; fermez Compass et le navigateur |
-| `00-prerequis.sh` : replica set RS1 indisponible | conteneurs RS1 arrêtés (redémarrage de la VM après `docker compose stop`) | `cd ~/bd511/cluster && sudo docker compose up -d --wait` |
+| `00-prerequis.sh` : replica set RS1 indisponible | conteneurs RS1 arrêtés (redémarrage de la VM après `docker compose stop`) | `cd ~/BD511/cluster && sudo docker compose up -d --wait` |
 | `00-prerequis.sh` : conteneurs du chapitre 7 déjà créés | TP déjà commencé | reprenez à la partie en cours, ou repartez de zéro (annexe C) |
 | `docker compose up --wait mongos1` échoue : `mongos1 is unhealthy` | RSCFG pas encore initialisé | partie 1.2, puis relancez la commande |
 | `init-rscfg.js` ou `init-rs2.js` : `already initialized` | replica set déjà initialisé | rien à faire ; vérifiez l'état avec `mongosh-cluster --cible RSCFG` ou `--cible RS2` |
@@ -1569,56 +1569,56 @@ rs1arb    234.9MiB / 512MiB
 
 | Fichier | Rôle | Partie |
 | --- | --- | --- |
-| `~/bd511/ch07/00-prerequis.sh` | Contrôle de la VM et du cluster du chapitre 6 | 0.2 |
-| `~/bd511/ch07/init-rscfg.js` | Initialisation du replica set des serveurs de configuration | 1.2 |
-| `~/bd511/ch07/init-rs2.js` | Initialisation du replica set RS2 | 1.3 |
-| `~/bd511/ch07/mongosh-cluster` | Connexion par le routeur, ou directe à RSCFG, RS1 ou RS2 | 1.5 |
-| `~/bd511/ch07/generer_ventes.py` | Générateur déterministe des 200 000 ventes | 2.1 |
-| `~/bd511/ch07/donnees/SHA256SUMS`, `ventes.json` | Empreinte de référence et jeu de données | 2.1 |
-| `~/bd511/ch07/importer-ventes.sh` | Import des ventes par le routeur, compte `appli` | 2.2 |
-| `~/bd511/ch07/repartition.js` | Répartition d'une collection : documents, volume, chunks, orphelins | 2.4 |
-| `~/bd511/ch07/suivre-balancer.js` | Suivi des migrations jusqu'à l'équilibre | 2.6 |
-| `~/bd511/ch07/routage.js` | Routage de cinq requêtes types (ciblées ou diffusées) | 2.8 |
-| `~/bd511/ch07/inserer-ventes.js` | 10 000 nouvelles ventes et leur répartition par shard | 3.1 |
-| `~/bd511/ch07/chunks.js` | Liste des chunks et des zones d'une collection | 3.1 |
-| `~/bd511/ch07/cluster.sh` | Arrêt, démarrage et état du cluster, dans l'ordre | 4.1 |
-| `~/bd511/ch07/verifier-ch07.sh` | Contrôle final | 4.2 |
-| `~/bd511/cluster/` | Projet Docker Compose du chapitre 6, utilisé sans modification | – |
-| `/srv/bd511/config1` … `/srv/bd511/rs2arb` | Données des nouveaux membres | 1.2, 1.3 |
+| `~/BD511/ch07/00-prerequis.sh` | Contrôle de la VM et du cluster du chapitre 6 | 0.2 |
+| `~/BD511/ch07/init-rscfg.js` | Initialisation du replica set des serveurs de configuration | 1.2 |
+| `~/BD511/ch07/init-rs2.js` | Initialisation du replica set RS2 | 1.3 |
+| `~/BD511/ch07/mongosh-cluster` | Connexion par le routeur, ou directe à RSCFG, RS1 ou RS2 | 1.5 |
+| `~/BD511/ch07/generer_ventes.py` | Générateur déterministe des 200 000 ventes | 2.1 |
+| `~/BD511/ch07/donnees/SHA256SUMS`, `ventes.json` | Empreinte de référence et jeu de données | 2.1 |
+| `~/BD511/ch07/importer-ventes.sh` | Import des ventes par le routeur, compte `appli` | 2.2 |
+| `~/BD511/ch07/repartition.js` | Répartition d'une collection : documents, volume, chunks, orphelins | 2.4 |
+| `~/BD511/ch07/suivre-balancer.js` | Suivi des migrations jusqu'à l'équilibre | 2.6 |
+| `~/BD511/ch07/routage.js` | Routage de cinq requêtes types (ciblées ou diffusées) | 2.8 |
+| `~/BD511/ch07/inserer-ventes.js` | 10 000 nouvelles ventes et leur répartition par shard | 3.1 |
+| `~/BD511/ch07/chunks.js` | Liste des chunks et des zones d'une collection | 3.1 |
+| `~/BD511/ch07/cluster.sh` | Arrêt, démarrage et état du cluster, dans l'ordre | 4.1 |
+| `~/BD511/ch07/verifier-ch07.sh` | Contrôle final | 4.2 |
+| `~/BD511/cluster/` | Projet Docker Compose du chapitre 6, utilisé sans modification | – |
+| `/srv/BD511/config1` … `/srv/BD511/rs2arb` | Données des nouveaux membres | 1.2, 1.3 |
 
 ## Annexe C – Exploiter le cluster
 
-Toutes ces commandes s'exécutent dans `~/bd511/cluster`.
+Toutes ces commandes s'exécutent dans `~/BD511/cluster`.
 
 | Action | Commande |
 | --- | --- |
-| État des conteneurs du cluster | `bash ~/bd511/ch07/cluster.sh etat` |
-| Arrêter, démarrer le cluster dans l'ordre | `bash ~/bd511/ch07/cluster.sh arreter`, `bash ~/bd511/ch07/cluster.sh demarrer` |
+| État des conteneurs du cluster | `bash ~/BD511/ch07/cluster.sh etat` |
+| Arrêter, démarrer le cluster dans l'ordre | `bash ~/BD511/ch07/cluster.sh arreter`, `bash ~/BD511/ch07/cluster.sh demarrer` |
 | Journal du routeur (JSON) | `sudo docker compose logs --no-log-prefix mongos1 \| jq -c '{t: .t["$date"], msg}'` |
 | Migrations du balancer dans le journal du shard donneur | `sudo docker compose logs --no-log-prefix rs11 \| jq -c 'select(.c == "MIGRATE") \| {t: .t["$date"], msg}'` |
-| État du balancer | `~/bd511/ch07/mongosh-cluster --quiet --eval 'printjson(sh.isBalancerRunning())'` |
+| État du balancer | `~/BD511/ch07/mongosh-cluster --quiet --eval 'printjson(sh.isBalancerRunning())'` |
 
 **Repartir de zéro (note formateur).** RS1 porte désormais l'identité d'un shard et des collections shardées : le retirer du cluster serait long (vidage du shard par le balancer, puis retrait). Pour rejouer le TP, on supprime donc les conteneurs et les données de tous les membres, puis on reconstruit RS1 avec les scripts du chapitre 6 (parties 3.2, 3.3 et 3.5) :
 
 ```bash
-cd ~/bd511/cluster
+cd ~/BD511/cluster
 sudo docker compose --profile sharding down
-sudo find /srv/bd511/config1 /srv/bd511/config2 /srv/bd511/config3 /srv/bd511/rs11 /srv/bd511/rs12 /srv/bd511/rs1arb \
-  /srv/bd511/rs21 /srv/bd511/rs22 /srv/bd511/rs2arb -mindepth 1 -delete
+sudo find /srv/BD511/config1 /srv/BD511/config2 /srv/BD511/config3 /srv/BD511/rs11 /srv/BD511/rs12 /srv/BD511/rs1arb \
+  /srv/BD511/rs21 /srv/BD511/rs22 /srv/BD511/rs2arb -mindepth 1 -delete
 sudo docker compose up -d --wait
-sudo docker compose exec -T rs11 mongosh --port 27011 --quiet --file /dev/stdin < ~/bd511/ch06/init-rs1.js
+sudo docker compose exec -T rs11 mongosh --port 27011 --quiet --file /dev/stdin < ~/BD511/ch06/init-rs1.js
 sudo docker compose exec -T rs11 mongosh --port 27011 --quiet --file /dev/stdin <<EOF
 const admin = db.getSiblingDB("admin");
 const wc = { w: "majority", wtimeout: 10000 };
 admin.createUser({ user: "admin", pwd: "$(cat secrets/admin.pwd)", roles: [ "root" ] }, wc);
 admin.auth("admin", "$(cat secrets/admin.pwd)");
-admin.createUser({ user: "appli", pwd: "$(cat secrets/appli.pwd)", roles: [ { role: "readWrite", db: "bd511" } ] }, wc);
+admin.createUser({ user: "appli", pwd: "$(cat secrets/appli.pwd)", roles: [ { role: "readWrite", db: "BD511" } ] }, wc);
 EOF
-bash ~/bd511/ch06/importer-rs1.sh
-rm -f ~/bd511/ch07/donnees/ventes.json
+bash ~/BD511/ch06/importer-rs1.sh
+rm -f ~/BD511/ch07/donnees/ventes.json
 ```
 
-Reprenez ensuite à la partie 0.2. La base `bd511` ne contient alors que les collections `formations`, `inscriptions` et `stagiaires` (partie 1.7).
+Reprenez ensuite à la partie 0.2. La base `BD511` ne contient alors que les collections `formations`, `inscriptions` et `stagiaires` (partie 1.7).
 
 ## Annexe D – Références
 
