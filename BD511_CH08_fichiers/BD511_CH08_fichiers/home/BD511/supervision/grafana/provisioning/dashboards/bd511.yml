@@ -1,0 +1,11 @@
+# Tableaux de bord chargés depuis des fichiers JSON au démarrage de Grafana (provisioning)
+apiVersion: 1
+providers:
+  - name: BD511
+    folder: BD511                # dossier Grafana qui reçoit les tableaux de bord
+    type: file
+    disableDeletion: true
+    allowUiUpdates: false        # le fichier JSON reste la référence
+    updateIntervalSeconds: 30
+    options:
+      path: /etc/grafana/dashboards
