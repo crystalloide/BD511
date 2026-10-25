@@ -1117,7 +1117,9 @@ Le nombre de connexions disponibles confirme le calcul de la partie 2.3 : 80 % d
 
 Compass est distribué **séparément** du serveur, sous forme de paquet `.deb` (Ubuntu 20.04 ou plus récent, x86_64 uniquement). Il nécessite un serveur MongoDB 7.0 ou plus récent.
 
-### 4.1 Télécharger le paquet
+**IMPORTANT : Si vous êtes sur WSL2, allez à l'étape 4.3 pour installaer compass sur windows**
+
+### 4.1 ** Sur une VM Linux** Télécharger le package compass : 
 
 ```bash
 cd ~/BD511/ch02
@@ -1133,7 +1135,7 @@ Package: mongodb-compass
 Version: 1.53.0
 ```
 
-### 4.2 Installer le paquet
+### 4.2 ** Sur une VM Linux** : Installer compass 
 
 L'installation avec `apt-get` (et non `dpkg -i`) résout automatiquement les dépendances (bibliothèques GTK, NSS, trousseau GNOME…) :
 
@@ -1143,7 +1145,7 @@ COMPASS_VERSION=1.53.0
 sudo apt-get install -y "./mongodb-compass_${COMPASS_VERSION}_amd64.deb"
 ```
 
-Vérifiez l'installation :
+**Vérifiez l'installation :**
 
 ```bash
 mongodb-compass --version --no-sandbox
@@ -1163,8 +1165,9 @@ Version: 1.53.0
 Compass est une application Electron (moteur Chromium). Ubuntu 24.04 restreint par AppArmor la création d'espaces de noms utilisateur, que Chromium utilise pour isoler ses processus ; Compass se replie alors sur l'utilitaire `chrome-sandbox`, qui doit appartenir à `root` et porter le bit **setuid** (`s` dans `-rwsr-xr-x`). Le paquet le configure ainsi ; si ces droits sont modifiés, Compass ne démarre plus (voir l'annexe A).
 
 ---
-#### Pour windows (si on a installé le serveur sur WSL2 par exemple) :
+#### 4.3 Pour windows (si on a installé le serveur sur WSL2 par exemple) :
 
+**Récupérer et dézipper à l'endroit de votre choix le package Compass :**
 ```bash
 https://downloads.mongodb.com/compass/mongodb-compass-1.53.0-win32-x64.zip
 ```
@@ -1173,11 +1176,14 @@ https://downloads.mongodb.com/compass/mongodb-compass-1.53.0-win32-x64.zip
 
 ### 5.1 Lancer Compass
 
-Lancez Compass depuis le menu des applications (*Afficher les applications* ▸ **MongoDB Compass**) ou depuis le terminal :
+**5.1.1 Sur Linux,** lancez Compass depuis le menu des applications (*Afficher les applications* ▸ **MongoDB Compass**) ou depuis le terminal :
 
 ```bash
 nohup mongodb-compass > /dev/null 2>&1 &
 ```
+
+**5.1.2 Sur Windows,** lancer **MongoDBCompass.exe** dans le répertoire décompressé.  
+
 
 Au premier lancement, la fenêtre **Welcome to Compass** s'affiche : cliquez sur **Start**. Le texte en bas de cette fenêtre indique que Compass envoie des données d'usage anonymes à MongoDB ; ce comportement se règle dans les paramètres de Compass (icône d'engrenage à côté du titre **Compass**, en haut du volet de gauche).
 
