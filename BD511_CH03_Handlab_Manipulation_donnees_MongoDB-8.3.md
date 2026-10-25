@@ -1159,6 +1159,7 @@ db.formations.find({ modalites: "intra-entreprise" }, { modalites: 1 }).sort({ _
 db.formations.countDocuments({ modalites: { $size: 1 } })
 db.formations.find({ tags: "python" }, { tags: 1 }).sort({ _id: 1 })
 db.formations.find({ tags: { $all: ["python", "orchestration"] } }, { titre: 1 })
+db.formations.find({ tags: { $all: ["python", "orchestration"] } }, { titre: 1, tags:1 })
 db.inscriptions.countDocuments({ presences: false })
 ```
 
