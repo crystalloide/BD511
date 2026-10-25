@@ -42,11 +42,11 @@ Le cluster des chapitres 6 et 7 est décrit par le tableau suivant (fichier `Arc
 Le fichier Docker Compose de ce TP décrit **toute** l'architecture, mais ce chapitre ne démarre que le replica set **RS1** ; les autres services portent le profil Compose `sharding` et serviront au chapitre 7.
 
 ```text
-              VM Ubuntu (hôte Docker) - réseau « bd511 » 192.168.100.0/24, passerelle 192.168.100.1
+              VM Ubuntu (hôte Docker) - réseau « BD511 » 192.168.100.0/24, passerelle 192.168.100.1
    ┌──────────────────────────┐    ┌──────────────────────────┐    ┌──────────────────────────┐
    │ rs11      .111 : 27011   │    │ rs12      .112 : 27012   │    │ rs1arb    .113 : 27013   │
    │ PRIMARY   (priorité 2)   │───►│ SECONDARY (priorité 1)   │    │ ARBITER   (priorité 0)   │
-   │ données : /srv/bd511/rs11│    │ données : /srv/bd511/rs12│    │ vote, aucune donnée      │
+   │ données : /srv/BD511/rs11│    │ données : /srv/BD511/rs12│    │ vote, aucune donnée      │
    └──────────────────────────┘    └──────────────────────────┘    └──────────────────────────┘
         réplication de l'oplog : rs11 ─► rs12          battements de cœur toutes les 2 s entre les 3 membres
 ```
@@ -73,10 +73,10 @@ Le fichier Docker Compose de ce TP décrit **toute** l'architecture, mais ce cha
   - **terminal 1** : les commandes d'administration (bash) ;
   - **terminal 2** : la surveillance du replica set (partie 4 et suivantes) ;
   - **terminal 3** : une application qui écrit en continu (partie 4).
-- Les commandes Docker s'exécutent avec `sudo` depuis le répertoire du projet `~/bd511/cluster` : le groupe `docker` donne l'équivalent des droits `root`, on n'y ajoute donc pas le compte de travail.
+- Les commandes Docker s'exécutent avec `sudo` depuis le répertoire du projet `~/BD511/cluster` : le groupe `docker` donne l'équivalent des droits `root`, on n'y ajoute donc pas le compte de travail.
 - Les blocs qui créent un fichier (`cat > fichier <<'EOF'`) se copient **en entier**, de la première ligne jusqu'à la ligne `EOF` incluse.
 - Les blocs « Résultat attendu » montrent la sortie à obtenir. Les heures, durées, identifiants (`ObjectId`, conteneurs, ports clients) et numéros de terme d'élection varient d'une VM à l'autre ; tout le reste est identique.
-- Les fichiers du TP sont générés dans `~/bd511/ch06` (scripts) et `~/bd511/cluster` (projet Docker Compose, réutilisé au chapitre 7) ; l'annexe B en donne la liste.
+- Les fichiers du TP sont générés dans `~/BD511/ch06` (scripts) et `~/BD511/cluster` (projet Docker Compose, réutilisé au chapitre 7) ; l'annexe B en donne la liste.
 
 > **Note formateur.** L'annexe C remet RS1 à zéro en une commande (suppression des conteneurs et des données) pour repartir de la partie 3.
 
@@ -89,8 +89,8 @@ Le fichier Docker Compose de ce TP décrit **toute** l'architecture, mais ce cha
 Dans le terminal 1 :
 
 ```bash
-mkdir -p ~/bd511/ch06/donnees ~/bd511/cluster/conf
-cd ~/bd511/ch06
+mkdir -p ~/BD511/ch06/donnees ~/BD511/cluster/conf
+cd ~/BD511/ch06
 ```
 
 ### 0.2 Contrôler les réglages du chapitre 2
@@ -98,7 +98,7 @@ cd ~/bd511/ch06
 Les conteneurs partagent le **noyau de la VM** : les réglages système de production appliqués au chapitre 2 (Transparent Huge Pages, `swappiness`, `max_map_count`…) valent aussi pour les `mongod` lancés sous Docker. Relancez leur contrôle :
 
 ```bash
-sudo bash ~/bd511/ch02/check-mongodb.sh | tail -n 1
+sudo bash ~/BD511/ch02/check-mongodb.sh | tail -n 1
 ```
 
 Résultat attendu :
@@ -110,10 +110,10 @@ Bilan : 26 OK, 0 KO
 ### 0.3 Contrôler les prérequis du chapitre
 
 ```bash
-cat > ~/bd511/ch06/00-prerequis.sh <<'EOF'
+cat > ~/BD511/ch06/00-prerequis.sh <<'EOF'
 #!/usr/bin/env bash
 # 00-prerequis.sh - BD511 ch.6 : vérifie la VM avant de déployer le replica set sous Docker
-# Usage : bash ~/bd511/ch06/00-prerequis.sh
+# Usage : bash ~/BD511/ch06/00-prerequis.sh
 set -u
 ko=0
 ok()  { printf '  [OK] %s\n' "$*"; }
@@ -134,7 +134,7 @@ if (( dispo >= 1536 )); then ok "Mémoire disponible : ${dispo} Mo (1 536 Mo req
 libre=$(df -BG --output=avail / | tail -n 1 | tr -dc '0-9')
 if (( libre >= 7 )); then ok "Espace libre sur / : ${libre} Go (7 Go requis)"; else nok "Espace libre sur / : ${libre} Go (7 Go requis) ; agrandissez le disque (annexe A)"; fi
 route=$(ip -4 route show 192.168.100.0/24)
-if [[ -z $route || $route == *"dev bd511 "* ]]; then ok "Plage réseau 192.168.100.0/24 libre pour Docker"
+if [[ -z $route || $route == *"dev BD511 "* ]]; then ok "Plage réseau 192.168.100.0/24 libre pour Docker"
 else nok "Plage 192.168.100.0/24 déjà utilisée : $route"; fi
 
 echo "== Outils clients installés au chapitre 2"
@@ -150,7 +150,7 @@ echo
 if (( ko == 0 )); then echo "Résultat : VM prête pour le TP."; else echo "Résultat : ${ko} point(s) à corriger."; fi
 exit $(( ko > 0 ))
 EOF
-bash ~/bd511/ch06/00-prerequis.sh
+bash ~/BD511/ch06/00-prerequis.sh
 ```
 
 Résultat attendu (mémoire et espace disque variables) :
@@ -284,7 +284,7 @@ Deux informations serviront plus loin :
 Le tableau de l'architecture est enregistré dans le projet sous forme de fichier texte à colonnes séparées par des tabulations : les scripts suivants s'en servent pour créer les répertoires de données et les noms d'hôtes.
 
 ```bash
-cat > ~/bd511/cluster/architecture.tsv <<'EOF'
+cat > ~/BD511/cluster/architecture.tsv <<'EOF'
 host	port d'écoute	fonction	groupe	service	paramètre	répertoire
 192.168.100.111	27011	primary	RS1	mongod	--shardsvr	rs11
 192.168.100.112	27012	secondary	RS1	mongod	--shardsvr	rs12
@@ -301,7 +301,7 @@ host	port d'écoute	fonction	groupe	service	paramètre	répertoire
 192.168.100.141	27017	routeur requête		mongos		mongos1
 192.168.100.142	27018	optionnel		mongos		mongos2
 EOF
-column -t -s $'\t' ~/bd511/cluster/architecture.tsv | head -n 4
+column -t -s $'\t' ~/BD511/cluster/architecture.tsv | head -n 4
 ```
 
 Résultat attendu :
@@ -315,22 +315,22 @@ host             port d'écoute  fonction         groupe  service  paramètre   
 
 ### 2.2 Créer un volume XFS pour les données du cluster
 
-Comme au chapitre 2, les données vont sur un volume **XFS** monté en **`noatime`**, simulé par un fichier image. Il est monté sur `/srv/bd511`, avec un sous-répertoire par `mongod` de l'architecture (colonne « répertoire ») : `/srv/bd511/rs11` deviendra le `/data/db` du conteneur `rs11`. Le script ajoute une dépendance au démon Docker : s'il démarre avant que le volume soit monté, il attend, au lieu de lancer des `mongod` sur des répertoires vides du disque système.
+Comme au chapitre 2, les données vont sur un volume **XFS** monté en **`noatime`**, simulé par un fichier image. Il est monté sur `/srv/BD511`, avec un sous-répertoire par `mongod` de l'architecture (colonne « répertoire ») : `/srv/BD511/rs11` deviendra le `/data/db` du conteneur `rs11`. Le script ajoute une dépendance au démon Docker : s'il démarre avant que le volume soit monté, il attend, au lieu de lancer des `mongod` sur des répertoires vides du disque système.
 
 ```bash
-cat > ~/bd511/ch06/02-volume-cluster.sh <<'EOF'
+cat > ~/BD511/ch06/02-volume-cluster.sh <<'EOF'
 #!/usr/bin/env bash
 # 02-volume-cluster.sh - BD511 ch.6 : volume XFS dédié (noatime) aux données du cluster Docker
-# Simule un disque dédié par un fichier image monté en boucle sur /srv/bd511, puis crée un
+# Simule un disque dédié par un fichier image monté en boucle sur /srv/BD511, puis crée un
 # répertoire de données par mongod de l'architecture (colonne « répertoire »).
-# Usage : sudo bash ~/bd511/ch06/02-volume-cluster.sh ~/bd511/cluster/architecture.tsv [taille_en_Go]
+# Usage : sudo bash ~/BD511/ch06/02-volume-cluster.sh ~/BD511/cluster/architecture.tsv [taille_en_Go]
 set -euo pipefail
 [[ $EUID -eq 0 ]] || { echo "Lancez ce script avec sudo." >&2; exit 1; }
 
 ARCHI=${1:?"chemin de architecture.tsv attendu"}
 TAILLE_GO=${2:-4}
-IMAGE=/var/lib/bd511-cluster-xfs.img
-POINT=/srv/bd511
+IMAGE=/var/lib/BD511-cluster-xfs.img
+POINT=/srv/BD511
 UID_MONGODB=999      # utilisateur mongodb de l'image officielle mongo (uid et gid 999)
 
 [[ -r $ARCHI ]] || { echo "Fichier introuvable : $ARCHI" >&2; exit 1; }
@@ -348,7 +348,7 @@ if ! findmnt -n -t xfs "$POINT" >/dev/null; then
   fi
   if [[ $(blkid -p -s TYPE -o value "$IMAGE" 2>/dev/null || true) != xfs ]]; then
     echo "Formatage XFS..."
-    mkfs.xfs -q -f -L bd511cluster "$IMAGE"
+    mkfs.xfs -q -f -L BD511cluster "$IMAGE"
   fi
   if ! grep -qE "^${IMAGE}[[:space:]]" /etc/fstab; then
     cp /etc/fstab "/etc/fstab.bak-$(date +%Y%m%d%H%M%S)"
@@ -367,7 +367,7 @@ done
 # Docker ne doit pas démarrer les conteneurs si le volume n'est pas monté :
 # sinon mongod initialiserait des répertoires vides sur le disque système.
 install -d /etc/systemd/system/docker.service.d
-cat > /etc/systemd/system/docker.service.d/bd511-volume.conf <<CONF
+cat > /etc/systemd/system/docker.service.d/BD511-volume.conf <<CONF
 # BD511 : les conteneurs MongoDB ont besoin du volume de données $POINT
 [Unit]
 RequiresMountsFor=$POINT
@@ -377,16 +377,16 @@ systemctl daemon-reload
 findmnt "$POINT"
 ls -ln "$POINT"
 EOF
-sudo bash ~/bd511/ch06/02-volume-cluster.sh ~/bd511/cluster/architecture.tsv
+sudo bash ~/BD511/ch06/02-volume-cluster.sh ~/BD511/cluster/architecture.tsv
 ```
 
 Résultat attendu (le numéro du périphérique `loop` varie ; selon la version du noyau, l'option `attr2` peut ne pas figurer dans la liste) :
 
 ```text
-Création de /var/lib/bd511-cluster-xfs.img (4 Go)...
+Création de /var/lib/BD511-cluster-xfs.img (4 Go)...
 Formatage XFS...
 TARGET     SOURCE     FSTYPE OPTIONS
-/srv/bd511 /dev/loop9 xfs    rw,noatime,attr2,inode64,logbufs=8,logbsize=32k,noquota
+/srv/BD511 /dev/loop9 xfs    rw,noatime,attr2,inode64,logbufs=8,logbsize=32k,noquota
 total 0
 drwxr-x--- 2 999 999 6 Oct 23 14:10 config1
 drwxr-x--- 2 999 999 6 Oct 23 14:10 config2
@@ -407,12 +407,12 @@ drwxr-x--- 2 999 999 6 Oct 23 14:10 rs3arb
 Les membres d'un replica set se désignent de préférence par des **noms d'hôtes** plutôt que par des adresses IP : une adresse peut changer, le nom reste. Dans le réseau Docker, chaque conteneur est joignable par son nom (`rs11`, `rs12`…) grâce au DNS intégré de Docker. La VM, elle, doit connaître ces noms pour que mongosh et les applications suivent les membres du replica set : le script suivant les ajoute à `/etc/hosts`.
 
 ```bash
-cat > ~/bd511/ch06/03-hosts.sh <<'EOF'
+cat > ~/BD511/ch06/03-hosts.sh <<'EOF'
 #!/usr/bin/env bash
 # 03-hosts.sh - BD511 ch.6 : déclare les noms des membres du cluster dans /etc/hosts de la VM
 # (les conteneurs se résolvent entre eux par le DNS de Docker ; la VM, elle, passe par /etc/hosts).
 # Le bloc est délimité par deux marqueurs : le script peut être relancé sans créer de doublons.
-# Usage : sudo bash ~/bd511/ch06/03-hosts.sh ~/bd511/cluster/architecture.tsv
+# Usage : sudo bash ~/BD511/ch06/03-hosts.sh ~/BD511/cluster/architecture.tsv
 set -euo pipefail
 [[ $EUID -eq 0 ]] || { echo "Lancez ce script avec sudo." >&2; exit 1; }
 ARCHI=${1:?"chemin de architecture.tsv attendu"}
@@ -428,7 +428,7 @@ sed -i "/^${DEBUT}\$/,/^${FIN}\$/d" /etc/hosts
 } >> /etc/hosts
 sed -n "/^${DEBUT}\$/,/^${FIN}\$/p" /etc/hosts
 EOF
-sudo bash ~/bd511/ch06/03-hosts.sh ~/bd511/cluster/architecture.tsv
+sudo bash ~/BD511/ch06/03-hosts.sh ~/BD511/cluster/architecture.tsv
 getent hosts rs11 rs12 rs1arb
 ```
 
@@ -463,7 +463,7 @@ En production, ces noms sont déclarés dans le DNS de l'entreprise, et chaque m
 Les membres d'un replica set s'authentifient entre eux. La méthode la plus simple est le **fichier de clé** (*keyFile*) : un secret partagé, identique sur tous les membres, de 6 à 1 024 caractères base64. Activer `keyFile` active aussi le **contrôle d'accès** des clients : sans compte, plus rien n'est permis, sauf, depuis l'interface locale du serveur et tant qu'aucun utilisateur n'existe, l'initialisation du replica set et la création du premier utilisateur (exception localhost).
 
 ```bash
-cd ~/bd511/cluster
+cd ~/BD511/cluster
 install -d -m 700 secrets
 openssl rand -base64 756 > secrets/keyfile
 chmod 400 secrets/keyfile
@@ -494,14 +494,14 @@ Le refus de lecture est voulu : le fichier de clé appartient désormais à l'ui
 Tous les `mongod` du cluster partagent un même fichier de configuration, monté en lecture seule dans chaque conteneur. Les réglages propres à chaque membre (port, adresse d'écoute, replica set, rôle dans le cluster) sont passés en ligne de commande par le fichier Docker Compose.
 
 ```bash
-cat > ~/bd511/cluster/conf/mongod.conf <<'EOF'
+cat > ~/BD511/cluster/conf/mongod.conf <<'EOF'
 # mongod.conf - BD511 : configuration commune à tous les mongod du cluster Docker (chapitres 6 et 7)
 # Montée en lecture seule dans chaque conteneur : /etc/mongo/mongod.conf
 # Les réglages propres à chaque membre (port, adresse d'écoute, replica set, rôle dans le cluster)
 # sont passés en ligne de commande dans docker-compose.yml.
 
 storage:
-  dbPath: /data/db                 # volume XFS de l'hôte (/srv/bd511/<membre>) monté sur /data/db
+  dbPath: /data/db                 # volume XFS de l'hôte (/srv/BD511/<membre>) monté sur /data/db
   wiredTiger:
     engineConfig:
       # Plusieurs mongod partagent la même machine : le cache de chacun est borné explicitement
@@ -537,12 +537,12 @@ Les choix de production de ce fichier :
 Le fichier décrit les 14 services de l'architecture. Une **ancre YAML** (`x-mongodb`) regroupe les réglages communs : version exacte de l'image, redémarrage automatique, délai d'arrêt propre, plafond mémoire et limites de ressources recommandées par MongoDB. Chaque service ajoute son adresse IP fixe, sa ligne de commande et ses volumes. Les services des chapitres suivants portent le profil `sharding` : `docker compose up` ne les démarre pas sans `--profile sharding`.
 
 ```bash
-cat > ~/bd511/cluster/docker-compose.yml <<'EOF'
+cat > ~/BD511/cluster/docker-compose.yml <<'EOF'
 # docker-compose.yml - BD511 : cluster MongoDB 8.3 décrit dans architecture.tsv (chapitres 6 et 7)
 #   - services sans profil        : replica set RS1 (rs11, rs12, rs1arb)                 -> chapitre 6
 #   - profil « sharding »         : RS2, RS3, serveurs de configuration RSCFG, mongos    -> chapitre 7
-# Usage : cd ~/bd511/cluster && docker compose up -d --wait
-name: bd511
+# Usage : cd ~/BD511/cluster && docker compose up -d --wait
+name: BD511
 
 # Réglages communs à tous les processus MongoDB (ancre YAML reprise par chaque service)
 x-mongodb: &mongodb
@@ -563,9 +563,9 @@ services:
     command: ["--config", "/etc/mongo/mongod.conf", "--port", "27011", "--bind_ip", "localhost,192.168.100.111",
               "--replSet", "RS1", "--shardsvr"]
     networks:
-      bd511: { ipv4_address: 192.168.100.111 }
+      BD511: { ipv4_address: 192.168.100.111 }
     volumes:
-      - /srv/bd511/rs11:/data/db
+      - /srv/BD511/rs11:/data/db
       - ./conf/mongod.conf:/etc/mongo/mongod.conf:ro
       - ./secrets/keyfile:/etc/mongo/keyfile:ro
       - /etc/localtime:/etc/localtime:ro
@@ -581,9 +581,9 @@ services:
     command: ["--config", "/etc/mongo/mongod.conf", "--port", "27012", "--bind_ip", "localhost,192.168.100.112",
               "--replSet", "RS1", "--shardsvr"]
     networks:
-      bd511: { ipv4_address: 192.168.100.112 }
+      BD511: { ipv4_address: 192.168.100.112 }
     volumes:
-      - /srv/bd511/rs12:/data/db
+      - /srv/BD511/rs12:/data/db
       - ./conf/mongod.conf:/etc/mongo/mongod.conf:ro
       - ./secrets/keyfile:/etc/mongo/keyfile:ro
       - /etc/localtime:/etc/localtime:ro
@@ -600,9 +600,9 @@ services:
     command: ["--config", "/etc/mongo/mongod.conf", "--port", "27013", "--bind_ip", "localhost,192.168.100.113",
               "--replSet", "RS1", "--shardsvr"]
     networks:
-      bd511: { ipv4_address: 192.168.100.113 }
+      BD511: { ipv4_address: 192.168.100.113 }
     volumes:
-      - /srv/bd511/rs1arb:/data/db
+      - /srv/BD511/rs1arb:/data/db
       - ./conf/mongod.conf:/etc/mongo/mongod.conf:ro
       - ./secrets/keyfile:/etc/mongo/keyfile:ro
       - /etc/localtime:/etc/localtime:ro
@@ -620,9 +620,9 @@ services:
     command: ["--config", "/etc/mongo/mongod.conf", "--port", "27021", "--bind_ip", "localhost,192.168.100.121",
               "--replSet", "RS2", "--shardsvr"]
     networks:
-      bd511: { ipv4_address: 192.168.100.121 }
+      BD511: { ipv4_address: 192.168.100.121 }
     volumes:
-      - /srv/bd511/rs21:/data/db
+      - /srv/BD511/rs21:/data/db
       - ./conf/mongod.conf:/etc/mongo/mongod.conf:ro
       - ./secrets/keyfile:/etc/mongo/keyfile:ro
       - /etc/localtime:/etc/localtime:ro
@@ -639,9 +639,9 @@ services:
     command: ["--config", "/etc/mongo/mongod.conf", "--port", "27022", "--bind_ip", "localhost,192.168.100.122",
               "--replSet", "RS2", "--shardsvr"]
     networks:
-      bd511: { ipv4_address: 192.168.100.122 }
+      BD511: { ipv4_address: 192.168.100.122 }
     volumes:
-      - /srv/bd511/rs22:/data/db
+      - /srv/BD511/rs22:/data/db
       - ./conf/mongod.conf:/etc/mongo/mongod.conf:ro
       - ./secrets/keyfile:/etc/mongo/keyfile:ro
       - /etc/localtime:/etc/localtime:ro
@@ -659,9 +659,9 @@ services:
     command: ["--config", "/etc/mongo/mongod.conf", "--port", "27023", "--bind_ip", "localhost,192.168.100.123",
               "--replSet", "RS2", "--shardsvr"]
     networks:
-      bd511: { ipv4_address: 192.168.100.123 }
+      BD511: { ipv4_address: 192.168.100.123 }
     volumes:
-      - /srv/bd511/rs2arb:/data/db
+      - /srv/BD511/rs2arb:/data/db
       - ./conf/mongod.conf:/etc/mongo/mongod.conf:ro
       - ./secrets/keyfile:/etc/mongo/keyfile:ro
       - /etc/localtime:/etc/localtime:ro
@@ -679,9 +679,9 @@ services:
     command: ["--config", "/etc/mongo/mongod.conf", "--port", "27031", "--bind_ip", "localhost,192.168.100.131",
               "--replSet", "RS3", "--shardsvr"]
     networks:
-      bd511: { ipv4_address: 192.168.100.131 }
+      BD511: { ipv4_address: 192.168.100.131 }
     volumes:
-      - /srv/bd511/rs31:/data/db
+      - /srv/BD511/rs31:/data/db
       - ./conf/mongod.conf:/etc/mongo/mongod.conf:ro
       - ./secrets/keyfile:/etc/mongo/keyfile:ro
       - /etc/localtime:/etc/localtime:ro
@@ -698,9 +698,9 @@ services:
     command: ["--config", "/etc/mongo/mongod.conf", "--port", "27032", "--bind_ip", "localhost,192.168.100.132",
               "--replSet", "RS3", "--shardsvr"]
     networks:
-      bd511: { ipv4_address: 192.168.100.132 }
+      BD511: { ipv4_address: 192.168.100.132 }
     volumes:
-      - /srv/bd511/rs32:/data/db
+      - /srv/BD511/rs32:/data/db
       - ./conf/mongod.conf:/etc/mongo/mongod.conf:ro
       - ./secrets/keyfile:/etc/mongo/keyfile:ro
       - /etc/localtime:/etc/localtime:ro
@@ -718,9 +718,9 @@ services:
     command: ["--config", "/etc/mongo/mongod.conf", "--port", "27033", "--bind_ip", "localhost,192.168.100.133",
               "--replSet", "RS3", "--shardsvr"]
     networks:
-      bd511: { ipv4_address: 192.168.100.133 }
+      BD511: { ipv4_address: 192.168.100.133 }
     volumes:
-      - /srv/bd511/rs3arb:/data/db
+      - /srv/BD511/rs3arb:/data/db
       - ./conf/mongod.conf:/etc/mongo/mongod.conf:ro
       - ./secrets/keyfile:/etc/mongo/keyfile:ro
       - /etc/localtime:/etc/localtime:ro
@@ -738,9 +738,9 @@ services:
     command: ["--config", "/etc/mongo/mongod.conf", "--port", "27041", "--bind_ip", "localhost,192.168.100.101",
               "--replSet", "RSCFG", "--configsvr"]
     networks:
-      bd511: { ipv4_address: 192.168.100.101 }
+      BD511: { ipv4_address: 192.168.100.101 }
     volumes:
-      - /srv/bd511/config1:/data/db
+      - /srv/BD511/config1:/data/db
       - ./conf/mongod.conf:/etc/mongo/mongod.conf:ro
       - ./secrets/keyfile:/etc/mongo/keyfile:ro
       - /etc/localtime:/etc/localtime:ro
@@ -757,9 +757,9 @@ services:
     command: ["--config", "/etc/mongo/mongod.conf", "--port", "27042", "--bind_ip", "localhost,192.168.100.102",
               "--replSet", "RSCFG", "--configsvr"]
     networks:
-      bd511: { ipv4_address: 192.168.100.102 }
+      BD511: { ipv4_address: 192.168.100.102 }
     volumes:
-      - /srv/bd511/config2:/data/db
+      - /srv/BD511/config2:/data/db
       - ./conf/mongod.conf:/etc/mongo/mongod.conf:ro
       - ./secrets/keyfile:/etc/mongo/keyfile:ro
       - /etc/localtime:/etc/localtime:ro
@@ -776,9 +776,9 @@ services:
     command: ["--config", "/etc/mongo/mongod.conf", "--port", "27043", "--bind_ip", "localhost,192.168.100.103",
               "--replSet", "RSCFG", "--configsvr"]
     networks:
-      bd511: { ipv4_address: 192.168.100.103 }
+      BD511: { ipv4_address: 192.168.100.103 }
     volumes:
-      - /srv/bd511/config3:/data/db
+      - /srv/BD511/config3:/data/db
       - ./conf/mongod.conf:/etc/mongo/mongod.conf:ro
       - ./secrets/keyfile:/etc/mongo/keyfile:ro
       - /etc/localtime:/etc/localtime:ro
@@ -796,7 +796,7 @@ services:
     command: ["mongos", "--keyFile", "/etc/mongo/keyfile", "--port", "27017", "--bind_ip", "localhost,192.168.100.141",
               "--configdb", "RSCFG/config1:27041,config2:27042,config3:27043"]
     networks:
-      bd511: { ipv4_address: 192.168.100.141 }
+      BD511: { ipv4_address: 192.168.100.141 }
     volumes:
       - ./secrets/keyfile:/etc/mongo/keyfile:ro
       - /etc/localtime:/etc/localtime:ro
@@ -813,7 +813,7 @@ services:
     command: ["mongos", "--keyFile", "/etc/mongo/keyfile", "--port", "27018", "--bind_ip", "localhost,192.168.100.142",
               "--configdb", "RSCFG/config1:27041,config2:27042,config3:27043"]
     networks:
-      bd511: { ipv4_address: 192.168.100.142 }
+      BD511: { ipv4_address: 192.168.100.142 }
     volumes:
       - ./secrets/keyfile:/etc/mongo/keyfile:ro
       - /etc/localtime:/etc/localtime:ro
@@ -823,16 +823,16 @@ services:
       start_interval: 2s
 
 networks:
-  bd511:
-    name: bd511
+  BD511:
+    name: BD511
     driver_opts:
-      com.docker.network.bridge.name: bd511   # nom de l'interface réseau sur la VM (ip addr show bd511)
+      com.docker.network.bridge.name: BD511   # nom de l'interface réseau sur la VM (ip addr show BD511)
     ipam:
       config:
         - subnet: 192.168.100.0/24
           gateway: 192.168.100.1         # adresse de la VM sur ce réseau
 EOF
-cd ~/bd511/cluster
+cd ~/BD511/cluster
 docker compose config --quiet && echo "docker-compose.yml valide"
 docker compose config --services
 docker compose --profile sharding config --services | wc -l
@@ -851,26 +851,26 @@ rs1arb
 Points à remarquer dans le service `rs11` :
 
 - `command` ne commence pas par `mongod` : le script d'entrée de l'image l'ajoute, prépare les droits de `/data/db`, puis lance `mongod` sous le compte `mongodb` ;
-- `--bind_ip localhost,192.168.100.111` : `mongod` n'écoute que sur l'interface locale du conteneur (pour l'exception localhost) et sur son adresse du réseau `bd511` ;
+- `--bind_ip localhost,192.168.100.111` : `mongod` n'écoute que sur l'interface locale du conteneur (pour l'exception localhost) et sur son adresse du réseau `BD511` ;
 - `--shardsvr` : le paramètre de l'architecture. RS1 deviendra un shard au chapitre 7 ; d'ici là, il fonctionne comme un replica set ordinaire ;
 - `healthcheck` : Docker vérifie toutes les 30 s (toutes les 2 s pendant la première minute) que `mongod` répond à un `ping`, ce qui permet à `docker compose up --wait` d'attendre que les membres soient prêts ;
 - `/etc/localtime` : les conteneurs écrivent leurs journaux à l'heure de la VM ;
-- aucun port n'est publié sur la VM (`ports:`) : on joint chaque conteneur directement par son adresse sur le réseau `bd511`.
+- aucun port n'est publié sur la VM (`ports:`) : on joint chaque conteneur directement par son adresse sur le réseau `BD511`.
 
 ### 2.7 Démarrer les conteneurs de RS1
 
 ```bash
-cd ~/bd511/cluster
+cd ~/BD511/cluster
 docker compose up -d --wait
 docker compose ps --format 'table {{.Name}}\t{{.Image}}\t{{.Status}}'
-ip -4 -br addr show bd511
+ip -4 -br addr show BD511
 ```
 
 Résultat attendu (l'affichage de `docker compose` se met à jour en direct ; ordre des lignes et durées variables) :
 
 ```text
 [+] up 4/4
- ✔ Network bd511    Created                                                    0.1s
+ ✔ Network BD511    Created                                                    0.1s
  ✔ Container rs12   Healthy                                                    6.2s
  ✔ Container rs1arb Healthy                                                    6.2s
  ✔ Container rs11   Healthy                                                    6.7s
@@ -878,13 +878,13 @@ NAME      IMAGE          STATUS
 rs11      mongo:8.3.13   Up 7 seconds (healthy)
 rs12      mongo:8.3.13   Up 7 seconds (healthy)
 rs1arb    mongo:8.3.13   Up 7 seconds (healthy)
-bd511            UP             192.168.100.1/24
+BD511            UP             192.168.100.1/24
 ```
 
 Vérifiez dans le journal de `rs11` les options réellement appliquées (fichier commun et ligne de commande fusionnés), puis l'absence d'avertissement de démarrage :
 
 ```bash
-cd ~/bd511/cluster
+cd ~/BD511/cluster
 docker compose logs --no-log-prefix rs11 | jq -c 'select(.msg == "Options set by command line") | .attr.options'
 docker compose logs --no-log-prefix rs11 | jq -r 'select(.tags != null) | .msg'
 docker compose logs --no-log-prefix rs11 | jq -r 'select(.id == 22074) | .msg'
@@ -926,10 +926,10 @@ Seules quelques commandes de diagnostic, comme `ping`, restent permises sans com
 Le script suivant décrit les trois membres, puis attend l'élection du primaire. Les membres sont désignés par leur nom d'hôte ; `rs11` reçoit la priorité la plus haute, conformément à l'architecture, et `rs1arb` est déclaré arbitre (`arbiterOnly`).
 
 ```bash
-cat > ~/bd511/ch06/init-rs1.js <<'EOF'
+cat > ~/BD511/ch06/init-rs1.js <<'EOF'
 // init-rs1.js - BD511 ch.6 : initialise le replica set RS1
 // Exécuté dans le conteneur rs11, par l'interface locale (exception localhost : aucun utilisateur n'existe encore).
-// Usage : cd ~/bd511/cluster && docker compose exec -T rs11 mongosh --port 27011 --quiet --file /dev/stdin < ~/bd511/ch06/init-rs1.js
+// Usage : cd ~/BD511/cluster && docker compose exec -T rs11 mongosh --port 27011 --quiet --file /dev/stdin < ~/BD511/ch06/init-rs1.js
 const config = {
   _id: "RS1",
   members: [
@@ -944,8 +944,8 @@ printjson(rs.initiate(config));
 for (let i = 0; i < 60 && !db.hello().isWritablePrimary; i++) sleep(1000);
 for (const m of rs.status().members) print(`${m.name.padEnd(13)} ${m.stateStr}`);
 EOF
-cd ~/bd511/cluster
-docker compose exec -T rs11 mongosh --port 27011 --quiet --file /dev/stdin < ~/bd511/ch06/init-rs1.js
+cd ~/BD511/cluster
+docker compose exec -T rs11 mongosh --port 27011 --quiet --file /dev/stdin < ~/BD511/ch06/init-rs1.js
 ```
 
 Résultat attendu (après une dizaine de secondes) :
@@ -966,18 +966,18 @@ L'option `-T` de `docker compose exec` transmet l'entrée standard (le script) �
 Deux comptes sont créés dans la base `admin`, toujours par l'exception localhost :
 
 - `admin`, avec le rôle `root`, pour l'administration ;
-- `appli`, avec le seul rôle `readWrite` sur la base `bd511`, pour l'application (principe du moindre privilège, chapitre 5).
+- `appli`, avec le seul rôle `readWrite` sur la base `BD511`, pour l'application (principe du moindre privilège, chapitre 5).
 
 Les mots de passe sont lus dans les fichiers de la partie 2.4 et transmis par l'entrée standard : ils n'apparaissent jamais dans la ligne de commande, donc ni dans la liste des processus ni dans l'historique du shell. Le compte `appli` est créé après une authentification en `admin`, car l'exception localhost disparaît dès que le premier utilisateur existe. Le write concern `majority` garantit que les comptes sont répliqués sur `rs12` avant la suite.
 
 ```bash
-cd ~/bd511/cluster
+cd ~/BD511/cluster
 docker compose exec -T rs11 mongosh --port 27011 --quiet --file /dev/stdin <<EOF
 const admin = db.getSiblingDB("admin");
 const wc = { w: "majority", wtimeout: 10000 };
 admin.createUser({ user: "admin", pwd: "$(cat secrets/admin.pwd)", roles: [ "root" ] }, wc);
 admin.auth("admin", "$(cat secrets/admin.pwd)");
-admin.createUser({ user: "appli", pwd: "$(cat secrets/appli.pwd)", roles: [ { role: "readWrite", db: "bd511" } ] }, wc);
+admin.createUser({ user: "appli", pwd: "$(cat secrets/appli.pwd)", roles: [ { role: "readWrite", db: "BD511" } ] }, wc);
 for (const u of admin.getUsers().users) print(u.user.padEnd(6), EJSON.stringify(u.roles));
 EOF
 docker compose exec -T rs11 mongosh --port 27011 --quiet --eval 'db.adminCommand({ listDatabases: 1 })'
@@ -987,7 +987,7 @@ Résultat attendu :
 
 ```text
 admin  [{"role":"root","db":"admin"}]
-appli  [{"role":"readWrite","db":"bd511"}]
+appli  [{"role":"readWrite","db":"BD511"}]
 MongoServerError: Command listDatabases requires authentication
 ```
 
@@ -1000,25 +1000,25 @@ La dernière commande le confirme : l'exception localhost est refermée, même d
 Une application se connecte au **replica set**, pas à un serveur : son URI liste quelques membres (la *seed list*) et le nom du replica set. Le driver découvre alors tous les membres, repère le primaire et le suit quand il change. Le script suivant ouvre mongosh de cette façon, avec l'un des deux comptes :
 
 ```bash
-cat > ~/bd511/ch06/mongosh-rs1 <<'EOF'
+cat > ~/BD511/ch06/mongosh-rs1 <<'EOF'
 #!/usr/bin/env bash
-# mongosh-rs1 - BD511 ch.6 : ouvre mongosh sur le replica set RS1, base bd511
-# Le mot de passe est lu dans ~/bd511/cluster/secrets/<compte>.pwd ; mongosh le masque ensuite
+# mongosh-rs1 - BD511 ch.6 : ouvre mongosh sur le replica set RS1, base BD511
+# Le mot de passe est lu dans ~/BD511/cluster/secrets/<compte>.pwd ; mongosh le masque ensuite
 # dans la liste des processus (« mongodb://<credentials>@... »). Compte par défaut : admin.
-# Usage : ~/bd511/ch06/mongosh-rs1 [--compte appli] [options et scripts mongosh...]
+# Usage : ~/BD511/ch06/mongosh-rs1 [--compte appli] [options et scripts mongosh...]
 set -euo pipefail
 compte=admin
 if [[ ${1:-} == --compte ]]; then compte=$2; shift 2; fi
-mdp=$(< "$HOME/bd511/cluster/secrets/$compte.pwd")
-exec mongosh "mongodb://$compte:$mdp@rs11:27011,rs12:27012/bd511?replicaSet=RS1&authSource=admin&appName=bd511-tp6-$compte" "$@"
+mdp=$(< "$HOME/BD511/cluster/secrets/$compte.pwd")
+exec mongosh "mongodb://$compte:$mdp@rs11:27011,rs12:27012/BD511?replicaSet=RS1&authSource=admin&appName=BD511-tp6-$compte" "$@"
 EOF
-chmod +x ~/bd511/ch06/mongosh-rs1
-~/bd511/ch06/mongosh-rs1
+chmod +x ~/BD511/ch06/mongosh-rs1
+~/BD511/ch06/mongosh-rs1
 ```
 
-Le mot de passe figure dans l'URI passée à mongosh, mais mongosh le masque aussitôt dans la liste des processus. Vérifiez-le depuis un autre terminal avec `ps -ef | grep [m]ongosh` : la commande apparaît sous la forme `mongosh mongodb://<credentials>@rs11:27011,rs12:27012/bd511?...`.
+Le mot de passe figure dans l'URI passée à mongosh, mais mongosh le masque aussitôt dans la liste des processus. Vérifiez-le depuis un autre terminal avec `ps -ef | grep [m]ongosh` : la commande apparaît sous la forme `mongosh mongodb://<credentials>@rs11:27011,rs12:27012/BD511?...`.
 
-L'invite indique le replica set et le rôle du membre courant : `RS1 [primary] bd511>`. Explorez le replica set :
+L'invite indique le replica set et le rôle du membre courant : `RS1 [primary] BD511>`. Explorez le replica set :
 
 ```javascript
 db.hello().hosts
@@ -1053,8 +1053,8 @@ Quittez mongosh avec `exit`.
 On importe dans RS1 le jeu de données du chapitre 3 (formations, inscriptions, stagiaires), avec le compte `appli`. Copiez d'abord les fichiers du chapitre 3 et vérifiez leur intégrité :
 
 ```bash
-cp ~/bd511/ch03/donnees/{formations.json,inscriptions.json,stagiaires.csv,stagiaires.fields,SHA256SUMS} ~/bd511/ch06/donnees/
-cd ~/bd511/ch06/donnees && sha256sum -c SHA256SUMS
+cp ~/BD511/ch03/donnees/{formations.json,inscriptions.json,stagiaires.csv,stagiaires.fields,SHA256SUMS} ~/BD511/ch06/donnees/
+cd ~/BD511/ch06/donnees && sha256sum -c SHA256SUMS
 ```
 
 Résultat attendu :
@@ -1066,41 +1066,41 @@ stagiaires.csv: OK
 stagiaires.fields: OK
 ```
 
-> Si le chapitre 3 n'a pas été réalisé sur cette VM, ces cinq fichiers se trouvent dans l'archive `BD511_CH06_fichiers.zip` qui accompagne ce handlab (répertoire `home/bd511/ch06/donnees`).
+> Si le chapitre 3 n'a pas été réalisé sur cette VM, ces cinq fichiers se trouvent dans l'archive `BD511_CH06_fichiers.zip` qui accompagne ce handlab (répertoire `home/BD511/ch06/donnees`).
 
 Le script d'import transmet le mot de passe à `mongoimport` par un fichier de configuration temporaire, lisible par vous seul et supprimé à la fin (option `--config`), et non par la ligne de commande :
 
 ```bash
-cat > ~/bd511/ch06/importer-rs1.sh <<'EOF'
+cat > ~/BD511/ch06/importer-rs1.sh <<'EOF'
 #!/usr/bin/env bash
 # importer-rs1.sh - BD511 ch.6 : importe le jeu de données du chapitre 3 dans le replica set RS1
 # Compte applicatif « appli » ; le mot de passe passe par un fichier de configuration temporaire
 # (mode 600, supprimé à la fin), jamais par la ligne de commande.
-# Usage : bash ~/bd511/ch06/importer-rs1.sh
+# Usage : bash ~/BD511/ch06/importer-rs1.sh
 set -euo pipefail
-DONNEES="$HOME/bd511/ch06/donnees"
-URI="mongodb://appli@rs11:27011,rs12:27012/?replicaSet=RS1&authSource=admin&appName=bd511-import"
+DONNEES="$HOME/BD511/ch06/donnees"
+URI="mongodb://appli@rs11:27011,rs12:27012/?replicaSet=RS1&authSource=admin&appName=BD511-import"
 
 cd "$DONNEES"
 sha256sum --quiet --check SHA256SUMS || { echo "Fichiers de données différents de la référence (partie 3.5)." >&2; exit 1; }
 
 conf=$(mktemp)
 trap 'rm -f "$conf"' EXIT
-printf 'password: "%s"\n' "$(< "$HOME/bd511/cluster/secrets/appli.pwd")" > "$conf"
+printf 'password: "%s"\n' "$(< "$HOME/BD511/cluster/secrets/appli.pwd")" > "$conf"
 
 # Écriture confirmée par la majorité des membres porteurs de données, arrêt à la première erreur.
-commun=(--config "$conf" --uri "$URI" --db bd511 --drop --writeConcern '{w: "majority"}' --stopOnError --quiet)
+commun=(--config "$conf" --uri "$URI" --db BD511 --drop --writeConcern '{w: "majority"}' --stopOnError --quiet)
 mongoimport "${commun[@]}" --collection formations --jsonArray --file formations.json
 mongoimport "${commun[@]}" --collection inscriptions --file inscriptions.json
 tail -n +2 stagiaires.csv | mongoimport "${commun[@]}" --collection stagiaires --type csv \
   --columnsHaveTypes --fieldFile stagiaires.fields --ignoreBlanks --parseGrace stop
 
-"$HOME/bd511/ch06/mongosh-rs1" --compte appli --quiet --eval '
+"$HOME/BD511/ch06/mongosh-rs1" --compte appli --quiet --eval '
   for (const nom of ["formations", "inscriptions", "stagiaires"]) {
     print(nom.padEnd(13) + ": " + db.getCollection(nom).countDocuments() + " documents");
   }'
 EOF
-bash ~/bd511/ch06/importer-rs1.sh
+bash ~/BD511/ch06/importer-rs1.sh
 ```
 
 Résultat attendu :
@@ -1116,7 +1116,7 @@ stagiaires   : 300 documents
 Reconnectez-vous avec le compte `admin` et observez l'oplog et la réplication :
 
 ```bash
-~/bd511/ch06/mongosh-rs1
+~/BD511/ch06/mongosh-rs1
 ```
 
 ```javascript
@@ -1172,9 +1172,9 @@ Quittez mongosh (`exit`).
 Dans le **terminal 2**, lancez la surveillance du replica set : chaque seconde, le script demande l'état des membres, de préférence à un secondaire pour continuer à répondre pendant la panne du primaire, et affiche une ligne à chaque changement.
 
 ```bash
-cat > ~/bd511/ch06/surveiller-rs.js <<'EOF'
+cat > ~/BD511/ch06/surveiller-rs.js <<'EOF'
 // surveiller-rs.js - BD511 ch.6 : affiche l'état des membres du replica set à chaque changement
-// Usage : ~/bd511/ch06/mongosh-rs1 --quiet ~/bd511/ch06/surveiller-rs.js   (15 min par défaut, DUREE=<s> pour changer ; Ctrl+C pour arrêter)
+// Usage : ~/BD511/ch06/mongosh-rs1 --quiet ~/BD511/ch06/surveiller-rs.js   (15 min par défaut, DUREE=<s> pour changer ; Ctrl+C pour arrêter)
 // Chaque seconde, l'état est demandé de préférence à un secondaire (readPreference secondaryPreferred) :
 // la surveillance continue pendant la panne du primaire, vue par les autres membres.
 const admin = db.getSiblingDB("admin");
@@ -1196,7 +1196,7 @@ for (let i = 0; i < duree; i++) {
   sleep(1000);
 }
 EOF
-~/bd511/ch06/mongosh-rs1 --quiet ~/bd511/ch06/surveiller-rs.js
+~/BD511/ch06/mongosh-rs1 --quiet ~/BD511/ch06/surveiller-rs.js
 ```
 
 Résultat attendu (heure variable) :
@@ -1211,13 +1211,13 @@ Le **terme** (*term*) est le numéro de l'élection en cours : il augmente de 1 
 Dans le **terminal 3**, créez le script qui simule l'application : il insère un document toutes les 100 ms avec le compte `appli`, et signale toute écriture en erreur ou plus lente qu'une seconde.
 
 ```bash
-cat > ~/bd511/ch06/ecrivain.js <<'EOF'
+cat > ~/BD511/ch06/ecrivain.js <<'EOF'
 // ecrivain.js - BD511 ch.6 : simule une application qui écrit en continu (10 insertions par seconde)
-// Usage : DUREE=120 ~/bd511/ch06/mongosh-rs1 --compte appli --quiet ~/bd511/ch06/ecrivain.js
+// Usage : DUREE=120 ~/BD511/ch06/mongosh-rs1 --compte appli --quiet ~/BD511/ch06/ecrivain.js
 // Affiche les incidents (erreur ou écriture de plus d'une seconde), un point d'étape toutes les 10 s,
 // puis la plus longue interruption : l'écart maximal entre deux écritures confirmées.
 const duree = Number(process.env.DUREE || 120);
-const coll = db.getSiblingDB("bd511").ecritures;
+const coll = db.getSiblingDB("BD511").ecritures;
 const heure = () => new Date().toTimeString().slice(0, 8);
 let ok = 0, erreurs = 0, n = 0, dernierOk = Date.now(), interruption = 0;
 const fin = Date.now() + duree * 1000;
@@ -1250,13 +1250,13 @@ EOF
 Lancez l'application dans le terminal 3 :
 
 ```bash
-DUREE=90 ~/bd511/ch06/mongosh-rs1 --compte appli --quiet ~/bd511/ch06/ecrivain.js
+DUREE=90 ~/BD511/ch06/mongosh-rs1 --compte appli --quiet ~/BD511/ch06/ecrivain.js
 ```
 
 Une dizaine de secondes plus tard, dans le **terminal 1**, « débranchez » le primaire : `docker compose kill` envoie le signal `SIGKILL`, qui tue `mongod` instantanément, comme une coupure de courant ou un plantage de la machine.
 
 ```bash
-cd ~/bd511/cluster
+cd ~/BD511/cluster
 docker compose kill rs11
 ```
 
@@ -1302,7 +1302,7 @@ Ce qui s'est passé :
 Le journal du nouveau primaire raconte l'élection (terminal 1) :
 
 ```bash
-cd ~/bd511/cluster
+cd ~/BD511/cluster
 docker compose logs --no-log-prefix rs12 | jq -c 'select(.id == 21216 or .c == "ELECTION" or .id == 21358 or .id == 21331)
   | {heure: .t["$date"][11:23], msg, membre: .attr.hostAndPort, de: .attr.from, vote: .attr.vote, terme: (.attr.term // .attr.newTerm), etat: .attr.newState}
   | with_entries(select(.value != null))'
@@ -1338,7 +1338,7 @@ Le journal retrace toute la vie de `rs12` :
 Les métriques de l'élection sont aussi conservées par les membres. Côté candidat, avec le compte `admin` :
 
 ```bash
-~/bd511/ch06/mongosh-rs1 --quiet --eval '
+~/BD511/ch06/mongosh-rs1 --quiet --eval '
   const m = rs.status().electionCandidateMetrics;
   printjson({ raison: m.lastElectionReason, terme: m.electionTerm, votesNecessaires: m.numVotesNeeded,
               priorite: m.priorityAtElection, delaiElection: m.electionTimeoutMillis,
@@ -1363,7 +1363,7 @@ Résultat attendu :
 Côté votant, sur l'arbitre (par l'exception localhost, la seule façon de s'y connecter) :
 
 ```bash
-cd ~/bd511/cluster
+cd ~/BD511/cluster
 docker compose exec -T rs1arb mongosh --port 27013 --quiet --eval '
   const m = rs.status().electionParticipantMetrics;
   printjson({ aVote: m.votedForCandidate, terme: m.electionTerm, candidat: m.electionCandidateMemberId })'
@@ -1386,7 +1386,7 @@ L'arbitre a voté pour le membre d'identifiant 1, `rs12`.
 Redémarrez `rs11` (terminal 1) :
 
 ```bash
-cd ~/bd511/cluster
+cd ~/BD511/cluster
 docker compose start rs11
 ```
 
@@ -1409,22 +1409,22 @@ Observez le terminal 2 (heures variables) :
 Pour ne pas enchaîner trop tôt, créez un petit script qui interroge le replica set toutes les 2 secondes jusqu'à ce qu'un primaire soit élu (ou, si on le précise, jusqu'à ce qu'un membre donné soit primaire) ; il resservira en partie 5. Attendez avec lui le retour de `rs11` comme primaire, puis consultez les métriques de cette nouvelle élection :
 
 ```bash
-cat > ~/bd511/ch06/attendre-primaire.sh <<'EOF'
+cat > ~/BD511/ch06/attendre-primaire.sh <<'EOF'
 #!/usr/bin/env bash
 # attendre-primaire.sh - BD511 ch.6 : attend qu'un primaire soit élu dans RS1 (90 s au plus) et l'affiche
-# Usage : bash ~/bd511/ch06/attendre-primaire.sh [membre]   ex. : attendre-primaire.sh rs11:27011
+# Usage : bash ~/BD511/ch06/attendre-primaire.sh [membre]   ex. : attendre-primaire.sh rs11:27011
 # Avec un membre en argument, attend que ce membre précis soit le primaire.
 cible=${1:-}
 for i in $(seq 1 45); do
-  p=$("$HOME/bd511/ch06/mongosh-rs1" --quiet --eval 'print(db.hello().primary || "")' 2>/dev/null)
+  p=$("$HOME/BD511/ch06/mongosh-rs1" --quiet --eval 'print(db.hello().primary || "")' 2>/dev/null)
   if [[ -n $p && ( -z $cible || $p == "$cible" ) ]]; then echo "$(date +%T)  primaire : $p"; exit 0; fi
   sleep 2
 done
 echo "$(date +%T)  pas de primaire${cible:+ $cible} après 90 s" >&2
 exit 1
 EOF
-bash ~/bd511/ch06/attendre-primaire.sh rs11:27011
-~/bd511/ch06/mongosh-rs1 --quiet --eval 'const m = rs.status().electionCandidateMetrics; print(db.hello().primary, m.lastElectionReason, m.electionTerm)'
+bash ~/BD511/ch06/attendre-primaire.sh rs11:27011
+~/BD511/ch06/mongosh-rs1 --quiet --eval 'const m = rs.status().electionCandidateMetrics; print(db.hello().primary, m.lastElectionReason, m.electionTerm)'
 ```
 
 Résultat attendu (heure variable) :
@@ -1443,15 +1443,15 @@ rs11:27011 priorityTakeover Long('3')
 Pour une maintenance (mise à jour, redémarrage de la machine), on ne coupe pas le primaire : on lui demande de **céder sa place** avec `rs.stepDown()`. Relancez l'application dans le terminal 3 :
 
 ```bash
-DUREE=90 ~/bd511/ch06/mongosh-rs1 --compte appli --quiet ~/bd511/ch06/ecrivain.js
+DUREE=90 ~/BD511/ch06/mongosh-rs1 --compte appli --quiet ~/BD511/ch06/ecrivain.js
 ```
 
 Puis, dans le terminal 1 :
 
 ```bash
-~/bd511/ch06/mongosh-rs1 --quiet --eval 'printjson(rs.stepDown(60))'
+~/BD511/ch06/mongosh-rs1 --quiet --eval 'printjson(rs.stepDown(60))'
 sleep 3
-~/bd511/ch06/mongosh-rs1 --quiet --eval 'print(db.hello().primary, rs.status().electionCandidateMetrics.lastElectionReason)'
+~/BD511/ch06/mongosh-rs1 --quiet --eval 'print(db.hello().primary, rs.status().electionCandidateMetrics.lastElectionReason)'
 ```
 
 Résultat attendu :
@@ -1518,7 +1518,7 @@ sinon
 Pour RS1 : 3 votants, majorité = 2 ; 2 membres non arbitres ≤ 2 → le défaut est **`{ w: 1 }`**. Vérifiez les compteurs du replica set (terminal 1) :
 
 ```bash
-~/bd511/ch06/mongosh-rs1 --quiet --eval '
+~/BD511/ch06/mongosh-rs1 --quiet --eval '
   const s = rs.status();
   printjson({ votants: s.votingMembersCount, majoriteDesVotes: s.majorityVoteCount,
               votantsPorteursDeDonnees: s.writableVotingMembersCount, majoriteEcriture: s.writeMajorityCount })
@@ -1546,11 +1546,11 @@ La commande `getDefaultRWConcern` est refusée : RS1 est démarré avec `--shard
 Le script suivant fait une insertion par write concern, mesure sa durée, puis vérifie si le document est présent sur le primaire :
 
 ```bash
-cat > ~/bd511/ch06/tester-wc.js <<'EOF'
+cat > ~/BD511/ch06/tester-wc.js <<'EOF'
 // tester-wc.js - BD511 ch.6 : une insertion par write concern, avec sa durée et son résultat
-// Usage : ~/bd511/ch06/mongosh-rs1 --compte appli --quiet ~/bd511/ch06/tester-wc.js
+// Usage : ~/BD511/ch06/mongosh-rs1 --compte appli --quiet ~/BD511/ch06/tester-wc.js
 // wtimeout borne l'attente à 3 s ; on vérifie ensuite si le document a bien été écrit sur le primaire.
-const coll = db.getSiblingDB("bd511").tests_wc;
+const coll = db.getSiblingDB("BD511").tests_wc;
 const essais = [
   { w: 0 },
   { w: 1 },
@@ -1577,7 +1577,7 @@ for (const wc of essais) {
   print(EJSON.stringify(wc).padEnd(36) + duree.padStart(8) + `  ${resultat}`.padEnd(40) + present);
 }
 EOF
-~/bd511/ch06/mongosh-rs1 --compte appli --quiet ~/bd511/ch06/tester-wc.js
+~/BD511/ch06/mongosh-rs1 --compte appli --quiet ~/BD511/ch06/tester-wc.js
 ```
 
 Résultat attendu (durées variables, de l'ordre de quelques millisecondes) :
@@ -1602,9 +1602,9 @@ writeConcern                           durée  résultat                        
 Arrêtez proprement le secondaire `rs12` (environ 15 secondes : `mongod` attend la fin des opérations en cours) :
 
 ```bash
-cd ~/bd511/cluster
+cd ~/BD511/cluster
 docker compose stop rs12
-~/bd511/ch06/mongosh-rs1 --compte appli --quiet ~/bd511/ch06/tester-wc.js
+~/BD511/ch06/mongosh-rs1 --compte appli --quiet ~/BD511/ch06/tester-wc.js
 ```
 
 Résultat attendu (durées variables) :
@@ -1630,7 +1630,7 @@ writeConcern                           durée  résultat                        
 Le **point de validation majoritaire** (*majority commit point*) ne progresse plus : comparez la dernière écriture appliquée et la dernière écriture majoritaire.
 
 ```bash
-~/bd511/ch06/mongosh-rs1 --quiet --eval '
+~/BD511/ch06/mongosh-rs1 --quiet --eval '
   const o = rs.status().optimes;
   printjson({ derniereEcritureAppliquee: o.lastAppliedWallTime, derniereEcritureMajoritaire: o.lastCommittedWallTime })'
 ```
@@ -1651,7 +1651,7 @@ Tant que ce point est figé, chaque `mongod` doit conserver en cache l'historiqu
 `rs12` est toujours arrêté. Une application enregistre cinq commandes avec `w: 1` ; le primaire les confirme toutes.
 
 ```bash
-~/bd511/ch06/mongosh-rs1 --compte appli --quiet --eval '
+~/BD511/ch06/mongosh-rs1 --compte appli --quiet --eval '
   for (let i = 1; i <= 5; i++) {
     const r = db.commandes.insertOne({ _id: "A" + i, montant: 100 * i, ecrite_sur: db.hello().me }, { writeConcern: { w: 1 } });
     print(r.insertedId, "confirmée :", r.acknowledged);
@@ -1671,10 +1671,10 @@ A5 confirmée : true
 Le primaire tombe en panne avant d'avoir pu répliquer ces écritures, puis `rs12` redémarre. Avec l'arbitre, il forme une majorité de votants et se fait élire, **sans** ces cinq commandes :
 
 ```bash
-cd ~/bd511/cluster
+cd ~/BD511/cluster
 docker compose kill rs11
 docker compose start rs12
-bash ~/bd511/ch06/attendre-primaire.sh
+bash ~/BD511/ch06/attendre-primaire.sh
 ```
 
 Résultat attendu (heure variable, environ 15 secondes plus tard) :
@@ -1690,7 +1690,7 @@ Résultat attendu (heure variable, environ 15 secondes plus tard) :
 L'activité reprend sur le nouveau primaire : trois nouvelles commandes, puis la liste des commandes connues.
 
 ```bash
-~/bd511/ch06/mongosh-rs1 --compte appli --quiet --eval '
+~/BD511/ch06/mongosh-rs1 --compte appli --quiet --eval '
   for (let i = 1; i <= 3; i++) db.commandes.insertOne({ _id: "B" + i, montant: 10 * i, ecrite_sur: db.hello().me });
   print(db.commandes.find().sort({ _id: 1 }).toArray().map(c => c._id).join(" "))'
 ```
@@ -1704,10 +1704,10 @@ B1 B2 B3
 Remettez `rs11` en service, attendez qu'il ait repris le rôle de primaire, puis relisez les commandes :
 
 ```bash
-cd ~/bd511/cluster
+cd ~/BD511/cluster
 docker compose start rs11
-bash ~/bd511/ch06/attendre-primaire.sh rs11:27011
-~/bd511/ch06/mongosh-rs1 --compte appli --quiet --eval 'print(db.commandes.find().sort({ _id: 1 }).toArray().map(c => c._id).join(" "))'
+bash ~/BD511/ch06/attendre-primaire.sh rs11:27011
+~/BD511/ch06/mongosh-rs1 --compte appli --quiet --eval 'print(db.commandes.find().sort({ _id: 1 }).toArray().map(c => c._id).join(" "))'
 ```
 
 Résultat attendu (heure variable, 15 à 30 secondes plus tard) :
@@ -1722,7 +1722,7 @@ B1 B2 B3
 Les commandes A1 à A5, **confirmées** à l'application, ont disparu. À son retour, `rs11` a constaté que son historique divergeait de celui du primaire `rs12` : il a annulé ses écritures non répliquées (**rollback**) avant de se resynchroniser, puis de reprendre le rôle de primaire. Le journal de `rs11` le détaille :
 
 ```bash
-cd ~/bd511/cluster
+cd ~/BD511/cluster
 docker compose logs --no-log-prefix rs11 | jq -c 'select(.c == "ROLLBACK" and (.id == 21593 or .id == 6984700 or .id == 21609 or .id == 21592))
   | {msg, collection: .attr.namespace, fichier: .attr.file, annulees: .attr.insert}
   | with_entries(select(.value != null))'
@@ -1732,8 +1732,8 @@ Résultat attendu (horodatages des fichiers et identifiants variables ; l'ordre 
 
 ```text
 {"msg":"Transition to ROLLBACK"}
-{"msg":"Preparing to write deleted documents to a rollback file","collection":"bd511.tests_wc","fichier":"/data/db/rollback/10c4ce6d-1b4b-48c2-b5af-f22102860509/removed.2026-10-23T14-30-41.1.bson"}
-{"msg":"Preparing to write deleted documents to a rollback file","collection":"bd511.commandes","fichier":"/data/db/rollback/05db54d2-73f4-4119-a206-1d32354702d8/removed.2026-10-23T14-30-41.2.bson"}
+{"msg":"Preparing to write deleted documents to a rollback file","collection":"BD511.tests_wc","fichier":"/data/db/rollback/10c4ce6d-1b4b-48c2-b5af-f22102860509/removed.2026-10-23T14-30-41.1.bson"}
+{"msg":"Preparing to write deleted documents to a rollback file","collection":"BD511.commandes","fichier":"/data/db/rollback/05db54d2-73f4-4119-a206-1d32354702d8/removed.2026-10-23T14-30-41.2.bson"}
 {"msg":"Operations reverted by rollback","annulees":11}
 {"msg":"Rollback complete"}
 ```
@@ -1743,8 +1743,8 @@ Onze insertions ont été annulées : les cinq commandes A1 à A5, mais aussi le
 Les documents annulés ne sont pas perdus pour tout le monde : `mongod` les a enregistrés dans des fichiers BSON, un par collection, sous `/data/db/rollback/`. Lisez celui de la collection `commandes` avec `bsondump` :
 
 ```bash
-cd ~/bd511/cluster
-f=$(docker compose logs --no-log-prefix rs11 | jq -r 'select(.id == 21609 and .attr.namespace == "bd511.commandes") | .attr.file' | tail -n 1)
+cd ~/BD511/cluster
+f=$(docker compose logs --no-log-prefix rs11 | jq -r 'select(.id == 21609 and .attr.namespace == "BD511.commandes") | .attr.file' | tail -n 1)
 docker compose exec -T rs11 bsondump --quiet "$f" | sort
 ```
 
@@ -1765,8 +1765,8 @@ MongoDB ne les réintègre jamais automatiquement : c'est à l'équipe applicati
 ### 5.5 Vérifier le retour à la normale
 
 ```bash
-~/bd511/ch06/mongosh-rs1 --quiet --eval 'rs.status().members.forEach(m => print(m.name.padEnd(13), m.stateStr))'
-~/bd511/ch06/mongosh-rs1 --compte appli --quiet ~/bd511/ch06/tester-wc.js | grep '"majority"'
+~/BD511/ch06/mongosh-rs1 --quiet --eval 'rs.status().members.forEach(m => print(m.name.padEnd(13), m.stateStr))'
+~/BD511/ch06/mongosh-rs1 --compte appli --quiet ~/BD511/ch06/tester-wc.js | grep '"majority"'
 ```
 
 Résultat attendu :
@@ -1787,12 +1787,12 @@ Les deux membres porteurs de données sont de nouveau disponibles : les écritur
 ### 6.1 Contrôle final
 
 ```bash
-cat > ~/bd511/ch06/verifier-ch06.sh <<'EOF'
+cat > ~/BD511/ch06/verifier-ch06.sh <<'EOF'
 #!/usr/bin/env bash
 # verifier-ch06.sh - BD511 ch.6 : contrôle final du replica set RS1 déployé sous Docker
-# Usage : bash ~/bd511/ch06/verifier-ch06.sh      (demande le mot de passe sudo pour interroger Docker)
+# Usage : bash ~/BD511/ch06/verifier-ch06.sh      (demande le mot de passe sudo pour interroger Docker)
 set -u
-cd "$HOME/bd511/cluster"
+cd "$HOME/BD511/cluster"
 ok=0; ko=0
 res() { if [[ $1 == 0 ]]; then printf '  [OK] %s\n' "$2"; ok=$((ok + 1)); else printf '  [KO] %s\n' "$2"; ko=$((ko + 1)); fi; }
 
@@ -1801,19 +1801,19 @@ etats=$(docker compose ps --format '{{.Name}}:{{.Health}}' | sort | tr '\n' ' ')
 [[ $etats == "rs11:healthy rs12:healthy rs1arb:healthy " ]]; res $? "Conteneurs RS1 en bonne santé : $etats"
 [[ $(docker info --format '{{.LiveRestoreEnabled}}') == true ]]; res $? "Démon Docker : live-restore actif"
 [[ $(docker inspect rs11 --format '{{.HostConfig.LogConfig.Config}}') == *"max-size:50m"* ]]; res $? "Rotation des journaux Docker (max-size 50m)"
-findmnt -n -t xfs -O noatime /srv/bd511 >/dev/null; res $? "Données sur volume XFS monté en noatime : /srv/bd511"
+findmnt -n -t xfs -O noatime /srv/BD511 >/dev/null; res $? "Données sur volume XFS monté en noatime : /srv/BD511"
 [[ $(stat -c '%a %u' secrets/keyfile) == "400 999" ]]; res $? "Fichier de clé : mode 400, propriétaire uid 999"
 
 echo "== Replica set RS1"
-etat=$("$HOME/bd511/ch06/mongosh-rs1" --quiet --eval '
+etat=$("$HOME/BD511/ch06/mongosh-rs1" --quiet --eval '
   const s = rs.status(), c = rs.conf();
   print(s.members.map(m => `${m.name}=${m.stateStr}/${c.members.find(x => x.host === m.name).priority}`).join(" "))' 2>/dev/null)
 [[ $etat == "rs11:27011=PRIMARY/2 rs12:27012=SECONDARY/1 rs1arb:27013=ARBITER/0" ]]; res $? "Membres et priorités : $etat"
-mongosh --quiet "mongodb://rs11:27011/?directConnection=true&appName=bd511-verif" --eval 'db.adminCommand({ listDatabases: 1 })' 2>&1 | grep -q "requires authentication"
+mongosh --quiet "mongodb://rs11:27011/?directConnection=true&appName=BD511-verif" --eval 'db.adminCommand({ listDatabases: 1 })' 2>&1 | grep -q "requires authentication"
 res $? "Accès anonyme refusé (contrôle d'accès actif)"
-comptes=$("$HOME/bd511/ch06/mongosh-rs1" --quiet --eval 'print(db.getSiblingDB("admin").getUsers().users.map(u => u.user + ":" + u.roles.map(r => r.role + "@" + r.db).join(",")).sort().join(" "))' 2>/dev/null)
-[[ $comptes == "admin:root@admin appli:readWrite@bd511" ]]; res $? "Comptes : $comptes"
-n=$("$HOME/bd511/ch06/mongosh-rs1" --compte appli --quiet --eval '
+comptes=$("$HOME/BD511/ch06/mongosh-rs1" --quiet --eval 'print(db.getSiblingDB("admin").getUsers().users.map(u => u.user + ":" + u.roles.map(r => r.role + "@" + r.db).join(",")).sort().join(" "))' 2>/dev/null)
+[[ $comptes == "admin:root@admin appli:readWrite@BD511" ]]; res $? "Comptes : $comptes"
+n=$("$HOME/BD511/ch06/mongosh-rs1" --compte appli --quiet --eval '
   db.getMongo().setReadPref("secondary");
   print(["formations", "inscriptions", "stagiaires"].map(c => db.getCollection(c).countDocuments()).join("/"))' 2>/dev/null)
 [[ $n == "24/1202/300" ]]; res $? "Données répliquées, lues sur le secondaire : $n"
@@ -1822,7 +1822,7 @@ echo
 echo "Bilan : ${ok} OK, ${ko} KO"
 exit $(( ko > 0 ))
 EOF
-bash ~/bd511/ch06/verifier-ch06.sh
+bash ~/BD511/ch06/verifier-ch06.sh
 ```
 
 Résultat attendu :
@@ -1832,12 +1832,12 @@ Résultat attendu :
   [OK] Conteneurs RS1 en bonne santé : rs11:healthy rs12:healthy rs1arb:healthy 
   [OK] Démon Docker : live-restore actif
   [OK] Rotation des journaux Docker (max-size 50m)
-  [OK] Données sur volume XFS monté en noatime : /srv/bd511
+  [OK] Données sur volume XFS monté en noatime : /srv/BD511
   [OK] Fichier de clé : mode 400, propriétaire uid 999
 == Replica set RS1
   [OK] Membres et priorités : rs11:27011=PRIMARY/2 rs12:27012=SECONDARY/1 rs1arb:27013=ARBITER/0
   [OK] Accès anonyme refusé (contrôle d'accès actif)
-  [OK] Comptes : admin:root@admin appli:readWrite@bd511
+  [OK] Comptes : admin:root@admin appli:readWrite@BD511
   [OK] Données répliquées, lues sur le secondaire : 24/1202/300
 
 Bilan : 9 OK, 0 KO
@@ -1883,10 +1883,10 @@ Le replica set RS1 reste en place pour le chapitre 7, qui le transformera en sha
 | `docker compose up` : `Pool overlaps with other one on this address space` | idem | idem |
 | Un conteneur redémarre en boucle ; journal : `permissions on /etc/mongo/keyfile are too open` | fichier de clé lisible par le groupe ou les autres | `chmod 400 secrets/keyfile && sudo chown 999:999 secrets/keyfile`, puis `docker compose up -d` |
 | Journal : `Unable to acquire security key[s]` ou `Error reading file /etc/mongo/keyfile` | fichier de clé absent ou illisible par l'uid 999 | refaites la partie 2.4 |
-| Journal : `Unable to create/open the lock file` ou `Permission denied` sur `/data/db` | répertoire de données qui n'appartient pas à l'uid 999 | `sudo chown -R 999:999 /srv/bd511/<membre>` |
-| Les conteneurs ne démarrent pas après un redémarrage de la VM | volume `/srv/bd511` non monté (le démon Docker attend le montage) | `sudo mount /srv/bd511 && sudo systemctl start docker` ; vérifiez la ligne de `/etc/fstab` |
+| Journal : `Unable to create/open the lock file` ou `Permission denied` sur `/data/db` | répertoire de données qui n'appartient pas à l'uid 999 | `sudo chown -R 999:999 /srv/BD511/<membre>` |
+| Les conteneurs ne démarrent pas après un redémarrage de la VM | volume `/srv/BD511` non monté (le démon Docker attend le montage) | `sudo mount /srv/BD511 && sudo systemctl start docker` ; vérifiez la ligne de `/etc/fstab` |
 | mongosh : `getaddrinfo ENOTFOUND rs11` | noms des membres absents de `/etc/hosts` | relancez `03-hosts.sh` (partie 2.3) |
-| mongosh : `MongoServerSelectionError` | aucun membre joignable ou aucun primaire | `docker compose ps`, puis `bash ~/bd511/ch06/attendre-primaire.sh` |
+| mongosh : `MongoServerSelectionError` | aucun membre joignable ou aucun primaire | `docker compose ps`, puis `bash ~/BD511/ch06/attendre-primaire.sh` |
 | `init-rs1.js` : `already initialized` | replica set déjà initialisé | rien à faire ; vérifiez avec `rs.status()` |
 | Création des comptes : `command createUser requires authentication` | un utilisateur existe déjà : l'exception localhost est refermée | connectez-vous avec le compte `admin` (`mongosh-rs1`) |
 | `MongoServerError: Authentication failed` | mot de passe ou base d'authentification incorrects | les comptes sont dans la base `admin` (`authSource=admin`) ; comparez avec `secrets/*.pwd` |
@@ -1897,32 +1897,32 @@ Le replica set RS1 reste en place pour le chapitre 7, qui le transformera en sha
 
 | Fichier | Rôle | Partie |
 | --- | --- | --- |
-| `~/bd511/ch06/00-prerequis.sh` | Contrôle de la VM | 0.3 |
+| `~/BD511/ch06/00-prerequis.sh` | Contrôle de la VM | 0.3 |
 | `/etc/docker/daemon.json` | Réglages du démon Docker (journaux, `live-restore`) | 1.2 |
 | `/etc/apt/sources.list.d/docker.sources`, `/etc/apt/keyrings/docker.asc` | Dépôt officiel de Docker | 1.1 |
-| `~/bd511/cluster/architecture.tsv` | Architecture du cluster (14 processus) | 2.1 |
-| `~/bd511/ch06/02-volume-cluster.sh` | Volume XFS `/srv/bd511` et répertoires de données | 2.2 |
-| `/var/lib/bd511-cluster-xfs.img`, ligne de `/etc/fstab` | Image du volume XFS et son montage | 2.2 |
-| `/etc/systemd/system/docker.service.d/bd511-volume.conf` | Démarrage de Docker conditionné au montage du volume | 2.2 |
-| `~/bd511/ch06/03-hosts.sh`, bloc de `/etc/hosts` | Noms des membres pour la VM | 2.3 |
-| `~/bd511/cluster/secrets/keyfile` | Fichier de clé du cluster (mode 400, uid 999) | 2.4 |
-| `~/bd511/cluster/secrets/admin.pwd`, `appli.pwd` | Mots de passe des comptes (mode 600) | 2.4 |
-| `~/bd511/cluster/conf/mongod.conf` | Configuration commune des `mongod` | 2.5 |
-| `~/bd511/cluster/docker-compose.yml` | Description des 14 services (RS1 sans profil, le reste en profil `sharding`) | 2.6 |
-| `/srv/bd511/<membre>` | Données de chaque `mongod` | 2.7 |
-| `~/bd511/ch06/init-rs1.js` | Initialisation du replica set RS1 | 3.2 |
-| `~/bd511/ch06/mongosh-rs1` | Connexion au replica set avec le compte `admin` ou `appli` | 3.4 |
-| `~/bd511/ch06/donnees/` | Jeu de données du chapitre 3 et `SHA256SUMS` | 3.5 |
-| `~/bd511/ch06/importer-rs1.sh` | Import dans RS1 avec le compte `appli` | 3.5 |
-| `~/bd511/ch06/surveiller-rs.js` | Surveillance de l'état des membres | 4.1 |
-| `~/bd511/ch06/ecrivain.js` | Application qui écrit en continu | 4.1 |
-| `~/bd511/ch06/attendre-primaire.sh` | Attente de l'élection d'un primaire (quelconque ou désigné) | 4.4 |
-| `~/bd511/ch06/tester-wc.js` | Test des write concerns | 5.2 |
-| `~/bd511/ch06/verifier-ch06.sh` | Contrôle final | 6.1 |
+| `~/BD511/cluster/architecture.tsv` | Architecture du cluster (14 processus) | 2.1 |
+| `~/BD511/ch06/02-volume-cluster.sh` | Volume XFS `/srv/BD511` et répertoires de données | 2.2 |
+| `/var/lib/BD511-cluster-xfs.img`, ligne de `/etc/fstab` | Image du volume XFS et son montage | 2.2 |
+| `/etc/systemd/system/docker.service.d/BD511-volume.conf` | Démarrage de Docker conditionné au montage du volume | 2.2 |
+| `~/BD511/ch06/03-hosts.sh`, bloc de `/etc/hosts` | Noms des membres pour la VM | 2.3 |
+| `~/BD511/cluster/secrets/keyfile` | Fichier de clé du cluster (mode 400, uid 999) | 2.4 |
+| `~/BD511/cluster/secrets/admin.pwd`, `appli.pwd` | Mots de passe des comptes (mode 600) | 2.4 |
+| `~/BD511/cluster/conf/mongod.conf` | Configuration commune des `mongod` | 2.5 |
+| `~/BD511/cluster/docker-compose.yml` | Description des 14 services (RS1 sans profil, le reste en profil `sharding`) | 2.6 |
+| `/srv/BD511/<membre>` | Données de chaque `mongod` | 2.7 |
+| `~/BD511/ch06/init-rs1.js` | Initialisation du replica set RS1 | 3.2 |
+| `~/BD511/ch06/mongosh-rs1` | Connexion au replica set avec le compte `admin` ou `appli` | 3.4 |
+| `~/BD511/ch06/donnees/` | Jeu de données du chapitre 3 et `SHA256SUMS` | 3.5 |
+| `~/BD511/ch06/importer-rs1.sh` | Import dans RS1 avec le compte `appli` | 3.5 |
+| `~/BD511/ch06/surveiller-rs.js` | Surveillance de l'état des membres | 4.1 |
+| `~/BD511/ch06/ecrivain.js` | Application qui écrit en continu | 4.1 |
+| `~/BD511/ch06/attendre-primaire.sh` | Attente de l'élection d'un primaire (quelconque ou désigné) | 4.4 |
+| `~/BD511/ch06/tester-wc.js` | Test des write concerns | 5.2 |
+| `~/BD511/ch06/verifier-ch06.sh` | Contrôle final | 6.1 |
 
 ## Annexe C – Exploiter le cluster Docker
 
-Toutes ces commandes s'exécutent dans `~/bd511/cluster`.
+Toutes ces commandes s'exécutent dans `~/BD511/cluster`.
 
 | Action | Commande |
 | --- | --- |
@@ -1930,15 +1930,15 @@ Toutes ces commandes s'exécutent dans `~/bd511/cluster`.
 | Journal d'un membre (JSON) | `docker compose logs --no-log-prefix rs11 \| jq -c '{t: .t["$date"], msg}'` |
 | Arrêter RS1 proprement | `docker compose stop` |
 | Redémarrer RS1 | `docker compose start` |
-| Supprimer les conteneurs (les données restent dans `/srv/bd511`) | `docker compose down` |
+| Supprimer les conteneurs (les données restent dans `/srv/BD511`) | `docker compose down` |
 | Recréer les conteneurs après une modification du fichier Compose | `docker compose up -d --wait` |
 
 **Remettre RS1 à zéro** (conteneurs et données supprimés, fichiers et comptes de la partie 2 conservés), puis reprendre à la partie 3.2 :
 
 ```bash
-cd ~/bd511/cluster
+cd ~/BD511/cluster
 docker compose down
-sudo find /srv/bd511/rs11 /srv/bd511/rs12 /srv/bd511/rs1arb -mindepth 1 -delete
+sudo find /srv/BD511/rs11 /srv/BD511/rs12 /srv/BD511/rs1arb -mindepth 1 -delete
 docker compose up -d --wait
 ```
 
