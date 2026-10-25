@@ -974,6 +974,8 @@ Le premier lot s'est arrêté au doublon (`5` n'a pas été inséré) ; le secon
 
 ```javascript
 db.dropDatabase()
+```
+```javascript
 use BD511
 ```
 
