@@ -973,6 +973,10 @@ Result: BulkWriteResult {
 Le premier lot s'est arrêté au doublon (`5` n'a pas été inséré) ; le second, non ordonné, a inséré `5` et `6` malgré l'erreur. Supprimez la base de test et revenez sur `BD511` :
 
 ```javascript
+db.essais.drop()
+```
+
+```javascript
 db.dropDatabase()
 ```
 ```javascript
