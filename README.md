@@ -5,6 +5,10 @@
 On récupère le projet en local :
 
 ```bash
+su - user
+```
+
+```bash
 cd ~
 sudo rm -Rf BD511
 git clone https://github.com/crystalloide/BD511
