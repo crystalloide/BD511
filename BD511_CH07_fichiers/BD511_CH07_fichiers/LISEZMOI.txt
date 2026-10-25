@@ -1,0 +1,33 @@
+BD511 - Chapitre 7 - Fichiers du handlab « Cluster shardé sous Docker, balancer et méthodes de sharding »
+Versions : MongoDB 8.3.13 (image Docker officielle mongo:8.3.13), mongosh 2.13.0, Database Tools 100.19.1,
+Docker Engine 29.9.2, Docker Compose v5.6.1, Python 3.12, Ubuntu 24.04 LTS.
+
+Prérequis : le cluster Docker du chapitre 6 (projet ~/bd511/cluster, replica set RS1 initialisé avec ses comptes).
+Le fichier docker-compose.yml du chapitre 6 est utilisé sans modification ; il n'est donc pas repris ici.
+
+Tous ces fichiers sont aussi générés pas à pas par le handlab (blocs « cat > ... <<'EOF' »).
+L'archive sert de secours ou de référence ; leur contenu est identique à celui du handlab.
+
+Contenu (à copier dans ~/bd511/ch07 de la VM du TP) :
+  home/bd511/ch07/00-prerequis.sh           contrôle de la VM et du cluster du chapitre 6 (partie 0.2)
+  home/bd511/ch07/init-rscfg.js             initialisation du replica set des serveurs de configuration RSCFG (partie 1.2)
+  home/bd511/ch07/init-rs2.js               initialisation du replica set RS2 (partie 1.3)
+  home/bd511/ch07/mongosh-cluster           connexion par le routeur mongos1, ou directe à RSCFG, RS1, RS2 (partie 1.5)
+  home/bd511/ch07/generer_ventes.py         générateur déterministe des 200 000 ventes (partie 2.1)
+  home/bd511/ch07/donnees/SHA256SUMS        empreinte de référence de ventes.json (partie 2.1)
+  home/bd511/ch07/donnees/ventes.json.gz    jeu de données fourni, compressé (identique à la sortie du générateur)
+  home/bd511/ch07/importer-ventes.sh        import des ventes par le routeur, compte appli (partie 2.2)
+  home/bd511/ch07/repartition.js            répartition d'une collection shardée (partie 2.4)
+  home/bd511/ch07/suivre-balancer.js        suivi des migrations du balancer (partie 2.6)
+  home/bd511/ch07/routage.js                requêtes ciblées ou diffusées (partie 2.8)
+  home/bd511/ch07/inserer-ventes.js         10 000 nouvelles ventes et leur répartition (partie 3.1)
+  home/bd511/ch07/chunks.js                 chunks et zones d'une collection (partie 3.1)
+  home/bd511/ch07/cluster.sh                arrêt, démarrage et état du cluster dans l'ordre (partie 4.1)
+  home/bd511/ch07/verifier-ch07.sh          contrôle final (partie 4.2)
+
+Installation rapide :
+  unzip BD511_CH07_fichiers.zip
+  mkdir -p ~/bd511
+  cp -r BD511_CH07_fichiers/home/bd511/ch07 ~/bd511/
+  chmod +x ~/bd511/ch07/mongosh-cluster
+  cd ~/bd511/ch07/donnees && gunzip -k ventes.json.gz && sha256sum -c SHA256SUMS
