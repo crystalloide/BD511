@@ -1,0 +1,38 @@
+BD511 - Chapitre 9 - Fichiers du handlab « Sauvegarde cohérente d'un replica set (mongodump --oplog) et restauration (mongorestore --oplogReplay) »
+Versions : MongoDB 8.3.13 (image Docker officielle mongo:8.3.13), mongosh 2.13.0, Database Tools 100.19.1,
+Docker Engine 29.9.2, Docker Compose v5.6.1, Python 3.12, Ubuntu 24.04 LTS.
+
+Prérequis : Docker Engine et l'image mongo:8.3.13 (chapitre 6), mongosh et les Database Tools (chapitre 2).
+
+Tous ces fichiers sont aussi générés pas à pas par le handlab (blocs « cat > ... <<'EOF' »).
+L'archive sert de secours ou de référence ; leur contenu est identique à celui du handlab.
+Aucun secret n'est fourni : le fichier de clé et les mots de passe sont générés pendant le TP (partie 1.3).
+
+Contenu :
+  home/BD511/ch09/00-prerequis.sh              contrôle de la VM (partie 0.2)
+  home/BD511/ch09/volume-rs9.sh                volume XFS dédié aux données de RS9 (partie 1.1)
+  home/BD511/ch09/hosts-rs9.sh                 noms des membres dans /etc/hosts (partie 1.2)
+  home/BD511/rs9/conf/mongod.conf              configuration des membres de RS9 (partie 1.4)
+  home/BD511/rs9/conf/restau.conf              configuration de l'instance de test des restaurations (partie 1.4)
+  home/BD511/rs9/docker-compose.yml            projet Compose : RS9 (rs91, rs92, rs93) et restau (profil test) (partie 1.5)
+  home/BD511/ch09/init-rs9.sh                  initialisation de RS9 et comptes admin, appli, sauvegarde, restauration (partie 1.6)
+  home/BD511/ch09/mongosh-rs9                  connexion à RS9, à un membre ou à restau (partie 1.7)
+  home/BD511/ch09/generer_donnees.py           générateur déterministe du catalogue et des commandes (partie 2.1)
+  home/BD511/ch09/donnees/SHA256SUMS           empreintes de référence (partie 2.1)
+  home/BD511/ch09/donnees/articles.json.gz     jeu de données fourni, compressé (identique à la sortie du générateur)
+  home/BD511/ch09/donnees/commandes.json.gz    jeu de données fourni, compressé (identique à la sortie du générateur)
+  home/BD511/ch09/importer-donnees.sh          import dans RS9 (partie 2.2)
+  home/BD511/ch09/coherence.js                 contrôle de la règle de la boutique (partie 2.3)
+  home/BD511/ch09/boutique.js, boutique.sh     application : commandes transactionnelles en continu (partie 2.4)
+  home/BD511/ch09/init-restau.sh               instance de test des restaurations (partie 4.1)
+  home/BD511/ch09/incident.js                  suppression accidentelle de bd511.commandes (partie 5.1)
+  home/BD511/ch09/sauvegarder-oplog.sh         sauvegarde incrémentale de l'oplog (partie 5.3)
+  home/BD511/ch09/verifier-ch09.sh             contrôle final (partie 6.1)
+
+Installation rapide :
+  unzip BD511_CH09_fichiers.zip
+  mkdir -p ~/BD511
+  cp -r BD511_CH09_fichiers/home/BD511/ch09 BD511_CH09_fichiers/home/BD511/rs9 ~/BD511/
+  chmod +x ~/BD511/ch09/mongosh-rs9
+  cd ~/BD511/ch09/donnees && gunzip -k articles.json.gz commandes.json.gz && sha256sum -c SHA256SUMS
+Puis créez les secrets (partie 1.3) : ils ne sont pas dans l'archive.
