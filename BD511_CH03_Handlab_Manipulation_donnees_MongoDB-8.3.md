@@ -764,7 +764,12 @@ BD511
 mongodb://127.0.0.1:27017/BD511?appName=BD511-tp3&directConnection=true&serverSelectionTimeoutMS=2000
 ```
 
+```bash
+exit
+```
+
 L'option `appName` est précieuse en exploitation : le nom de l'application apparaît dans le journal du serveur et dans les opérations en cours. Dans un **second terminal** (`Ctrl` + `Maj` + `T`), retrouvez votre connexion dans le journal JSON de `mongod` :
+
 
 ```bash
 sudo jq -c 'select(.msg == "client metadata" and .attr.doc.application.name == "BD511-tp3")
