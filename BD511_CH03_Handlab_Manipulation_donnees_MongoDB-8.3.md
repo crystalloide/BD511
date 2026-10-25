@@ -602,14 +602,12 @@ Résultat attendu :
 mongosh --quiet "mongodb://127.0.0.1:27017/BD511" --eval 'db.stagiaires_brut.findOne({ _id: "STG0001" })'
 ```
 
-L'import « fonctionne », mais les données sont dégradées. Sans indication, `mongoimport` convertit en nombre tout ce qui ressemble à un nombre, et laisse le reste en texte :
+L'import « fonctionne » donc apparemment, mais les données sont dégradées. Sans indication, `mongoimport` convertit en nombre tout ce qui ressemble à un nombre, et laisse le reste en texte :
 
 - le code postal `01000` est devenu l'**entier** `1000` : le zéro initial est perdu ;
 - les numéros de téléphone saisis sans espace (`0688172857`) sont aussi devenus des entiers sans zéro initial ;
 - `actif` et `inscrit_le` sont restés des **chaînes** : une requête sur `actif: true` ou sur une plage de dates ne les trouvera pas ;
 - les cellules vides sont devenues des chaînes vides `""`.
-
-mongosh --quiet "mongodb://127.0.0.1:27017/BD511" --eval 'db.stagiaires_brut.findOne({ _id: "STG0002" })'
 
 Vous mesurerez l'effet de ces erreurs de type dans la partie 2.8.
 
