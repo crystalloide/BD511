@@ -785,6 +785,10 @@ Résultat attendu (date et port client variables) :
 
 ### 2.2 Naviguer et utiliser l'aide intégrée
 
+```bash
+mongosh "mongodb://127.0.0.1:27017/BD511?appName=BD511-tp3"
+```
+
 ```javascript
 show dbs
 show collections
