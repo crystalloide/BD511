@@ -1,0 +1,15 @@
+# /etc/logrotate.d/mongod - BD511 ch.8 : rotation du journal de l'instance mongod du chapitre 2
+# logrotate (lancé chaque jour par logrotate.timer) renomme mongod.log en mongod.log.1, puis demande à mongod
+# de rouvrir son journal par le signal SIGUSR1 (systemLog.logRotate: reopen dans /etc/mongod.conf).
+/var/log/mongodb/mongod.log {
+    daily
+    rotate 14
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0600 mongodb mongodb
+    postrotate
+        /usr/bin/systemctl kill --signal=SIGUSR1 --kill-whom=main mongod.service
+    endscript
+}

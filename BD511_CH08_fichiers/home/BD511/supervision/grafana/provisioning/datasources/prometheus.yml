@@ -1,0 +1,13 @@
+# Source de données Prometheus, créée au démarrage de Grafana (provisioning)
+apiVersion: 1
+datasources:
+  - name: Prometheus
+    type: prometheus
+    uid: prometheus              # identifiant fixe, référencé par le tableau de bord
+    access: proxy                # requêtes envoyées par le serveur Grafana, pas par le navigateur
+    url: http://127.0.0.1:9090
+    isDefault: true
+    editable: false
+    jsonData:
+      timeInterval: 15s          # intervalle de collecte de Prometheus (calcul de $__rate_interval)
+      httpMethod: POST
