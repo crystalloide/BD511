@@ -903,10 +903,18 @@ Les bases et les collections sont créées **implicitement**, à la première é
 
 ```javascript
 use bac_a_sable
+```
+```javascript
+show collections;
+```
+```javascript
+db.essais.insertOne({ nom: "premier essai", cree_le: new Date(), tags: ["test", "mongosh"] });
+```
+```javascript
 show collections
-db.essais.insertOne({ nom: "premier essai", cree_le: new Date(), tags: ["test", "mongosh"] })
-show collections
-db.essais.insertMany([{ _id: 1, nom: "un" }, { _id: 2, nom: "deux" }, { _id: 3, nom: "trois" }])
+```
+```javascript
+db.essais.insertMany([{ _id: 1, nom: "un" }, { _id: 2, nom: "deux" }, { _id: 3, nom: "trois" }]);
 ```
 
 Résultat attendu :
