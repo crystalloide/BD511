@@ -1119,7 +1119,7 @@ Compass est distribué **séparément** du serveur, sous forme de paquet `.deb` 
 
 **IMPORTANT : Si vous êtes sur WSL2, allez à l'étape 4.3 pour installaer compass sur windows**
 
-### 4.1 ** Sur une VM Linux** Télécharger le package compass : 
+### 4.1 Sur une VM Linux : Télécharger le package compass : 
 
 ```bash
 cd ~/BD511/ch02
@@ -1135,7 +1135,7 @@ Package: mongodb-compass
 Version: 1.53.0
 ```
 
-### 4.2 ** Sur une VM Linux** : Installer compass 
+### 4.2 Sur une VM Linux : Installer compass :
 
 L'installation avec `apt-get` (et non `dpkg -i`) résout automatiquement les dépendances (bibliothèques GTK, NSS, trousseau GNOME…) :
 
