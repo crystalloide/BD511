@@ -1,0 +1,2 @@
+# BD511 - Ordonnanceur d'E/S « none » pour les disques d'une VM (recommandation MongoDB)
+ACTION=="add|change", SUBSYSTEM=="block", ENV{DEVTYPE}=="disk", KERNEL=="sd[a-z]|vd[a-z]|xvd[a-z]|nvme[0-9]*n[0-9]*", ATTR{queue/scheduler}="none"
