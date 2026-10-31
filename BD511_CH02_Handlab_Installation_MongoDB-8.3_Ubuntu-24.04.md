@@ -376,8 +376,8 @@ Build Info: {
         "target_arch": "x86_64"
     }
 }
-2.13.0
-mongoimport version: 100.19.1
+2.14.1
+mongoimport version: 100.20.0
 ```
 
 Notez l'allocateur `tcmalloc-google` : c'est la version de TCMalloc introduite en 8.0, qui explique les nouvelles recommandations sur les Transparent Huge Pages (partie 2.2).
