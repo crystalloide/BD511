@@ -1220,7 +1220,15 @@ Le volet de gauche affiche la connexion `BD511 - local` et, sous elle, les bases
 
 #### Sur la VM Ubuntu : 
 
-Relancer mongoDB en le faisant écouter sur toutes les adresses IP (dont celle de la VM sur Windows)
+**!Uniquement sur environnement de formation!** 
+```bash
+sudo systemctl ufw stop
+sudo systemctl ufw disable
+sudo systemctl apparmor stop
+sudo systemctl apparmor disable
+```
+
+**Relancer mongoDB en le faisant écouter sur toutes les adresses IP (dont celle de la VM sur Windows)**
 
 ```bash
 sudo sed -i 's/^\(\s*bindIp:\).*/\1 0.0.0.0/' /etc/mongod.conf
