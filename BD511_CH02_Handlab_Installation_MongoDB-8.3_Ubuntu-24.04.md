@@ -1179,6 +1179,7 @@ Compass est une application Electron (moteur Chromium). Ubuntu 24.04 restreint p
 #### 4.3 Pour windows (si on a installé le serveur sur WSL2 par exemple) :
 
 **Récupérer et dézipper à l'endroit de votre choix le package Compass :**
+
 ```bash
 https://downloads.mongodb.com/compass/mongodb-compass-1.53.0-win32-x64.zip
 ```
@@ -1194,7 +1195,6 @@ nohup mongodb-compass > /dev/null 2>&1 &
 ```
 
 **5.1.2 Sur Windows,** lancer **MongoDBCompass.exe** dans le répertoire décompressé.  
-
 
 Au premier lancement, la fenêtre **Welcome to Compass** s'affiche : cliquez sur **Start**. Le texte en bas de cette fenêtre indique que Compass envoie des données d'usage anonymes à MongoDB ; ce comportement se règle dans les paramètres de Compass (icône d'engrenage à côté du titre **Compass**, en haut du volet de gauche).
 
@@ -1214,6 +1214,44 @@ Au premier lancement, la fenêtre **Welcome to Compass** s'affiche : cliquez sur
 Le volet de gauche affiche la connexion `BD511 - local` et, sous elle, les bases `admin`, `BD511`, `config` et `local`. Comme pour mongosh, aucun identifiant n'est demandé : l'authentification sera activée au chapitre 5.
 
 > **Variante.** Compass accepte aussi la chaîne de connexion en argument : `mongodb-compass 'mongodb://127.0.0.1:27017/?directConnection=true'`.
+
+
+### !!! Dans le cas d'une VM Ubuntu sous Hyper-V !!! On va utiliser Mongodb Compass sur windows  :
+
+#### Sur la VM Ubuntu : 
+
+Relancer mongoDB en le faisant écouter sur toutes les adresses IP (dont celle de la VM sur Windows)
+
+```bash
+sudo sed -i 's/^\(\s*bindIp:\).*/\1 0.0.0.0/' /etc/mongod.conf
+sudo systemctl restart mongod
+hostname -I
+```
+
+#### Sous Windows : Installer Compass pour Windows : 
+
+**Récupérer et dézipper à l'endroit de votre choix le package Compass :**
+
+```bash
+https://downloads.mongodb.com/compass/mongodb-compass-1.53.0-win32-x64.zip
+```
+
+**Avec le Default Switch, ce lien fonctionne généralement : dans le navigateur web, ceci va lancer l'application compass :** 
+
+```bash
+mongodb://formation.mshome.net:27017 
+```
+
+**Alternative : Quand Compass se lance : indiquer le lien de connexion suivant :** 
+IP_VM étant l'IP de la VM récupérée avec :
+
+```bash
+hostname -I
+```
+
+```bash
+mongodb://<IP_VM>:27017
+```
 
 ### 5.3 Parcourir les données importées
 
