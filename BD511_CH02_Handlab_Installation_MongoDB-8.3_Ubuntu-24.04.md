@@ -1442,7 +1442,7 @@ sudo rm -f /etc/systemd/system/enable-transparent-huge-pages.service /etc/sysctl
   /etc/udev/rules.d/60-mongodb-io-scheduler.rules /etc/apt/sources.list.d/mongodb-org-8.3.list \
   /usr/share/keyrings/mongodb-server-8.0.gpg
 sudo systemctl daemon-reload
-rm -rf ~/BD511/ch02
+# rm -rf ~/BD511/ch02
 ```
 
 Redémarrez ensuite la VM pour revenir aux réglages noyau par défaut d'Ubuntu.
