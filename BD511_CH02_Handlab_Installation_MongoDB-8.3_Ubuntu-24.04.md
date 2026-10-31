@@ -1035,6 +1035,17 @@ Le document `BD511` affiché par `findOne` montre les types BSON restitués par 
 ...
 ```
 
+Question test : comment faire pour ne pas afficher _id dans le résultat de :
+```javascript
+db.formations.find({ domaine: "Bases de données" }, { titre: 1, duree_jours: 1 }).sort({ _id: 1 })
+```
+
+Réponse : 
+
+```javascript
+db.formations.find({ domaine: "Bases de données" }, { _id: 0, titre: 1, duree_jours: 1 }).sort({ _id: 1 })
+```
+
 Quittez avec `exit`.
 
 ### 3.4 Utiliser mongosh de façon non interactive
