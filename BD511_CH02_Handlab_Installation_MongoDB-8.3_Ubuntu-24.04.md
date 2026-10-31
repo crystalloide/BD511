@@ -1221,6 +1221,8 @@ Le volet de gauche affiche la connexion `BD511 - local` et, sous elle, les bases
 ### Option 1 (conseillée ici) :
 
 ```bash
+pkill -f mongodb-compass
+rm -rf ~/.config/"MongoDB Compass"/GPUCache
 LIBGL_ALWAYS_SOFTWARE=1 mongodb-compass --ignore-additional-command-line-flags --disable-gpu --ozone-platform=x11
 ```
 
