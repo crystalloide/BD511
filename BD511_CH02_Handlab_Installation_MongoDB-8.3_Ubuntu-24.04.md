@@ -1216,7 +1216,15 @@ Le volet de gauche affiche la connexion `BD511 - local` et, sous elle, les bases
 > **Variante.** Compass accepte aussi la chaîne de connexion en argument : `mongodb-compass 'mongodb://127.0.0.1:27017/?directConnection=true'`.
 
 
-### !!! Dans le cas d'une VM Ubuntu sous Hyper-V !!! On va utiliser Mongodb Compass sur windows  :
+### !!! Dans le cas d'une VM Ubuntu sous Hyper-V !!! C'est notre cas :
+
+### Option 1 (conseillée ici) :
+
+```bash
+LIBGL_ALWAYS_SOFTWARE=1 mongodb-compass --ignore-additional-command-line-flags --disable-gpu --ozone-platform=x11
+```
+
+### Option 2 : On va utiliser Mongodb Compass sur windows  :
 
 #### Sur la VM Ubuntu : 
 
