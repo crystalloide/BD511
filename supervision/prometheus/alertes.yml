@@ -1,0 +1,54 @@
+# alertes.yml - BD511 ch.8 : règles d'alerte sur l'instance mongod
+# Seuils adaptés au TP ; en production, on les ajuste après quelques semaines d'observation.
+groups:
+  - name: mongodb
+    rules:
+      - alert: MongoDBInjoignable
+        expr: up{job="mongodb"} == 0 or mongodb_up == 0
+        for: 1m
+        labels:
+          severite: critique
+        annotations:
+          summary: "Instance {{ $labels.instance }} : mongod ou son exporteur ne répond plus"
+
+      - alert: MongoDBBalayagesExcessifs
+        expr: |
+          sum by (instance) (rate(mongodb_ss_metrics_queryExecutor_scannedObjects[1m]))
+            / clamp_min(sum by (instance) (rate(mongodb_ss_metrics_document{doc_op_type="returned"}[1m])), 1)
+            > 1000
+        for: 1m
+        labels:
+          severite: avertissement
+        annotations:
+          summary: "Instance {{ $labels.instance }} : {{ $value | humanize }} documents examinés par document renvoyé"
+          description: "Des requêtes parcourent des collections entières : index manquant, masqué ou inadapté."
+
+      - alert: MongoDBLecturesLentes
+        expr: |
+          sum by (instance) (rate(mongodb_ss_opLatencies_latency{op_type="reads"}[1m]))
+            / clamp_min(sum by (instance) (rate(mongodb_ss_opLatencies_ops{op_type="reads"}[1m])), 1)
+            / 1000 > 100
+        for: 1m
+        labels:
+          severite: avertissement
+        annotations:
+          summary: "Instance {{ $labels.instance }} : lectures à {{ $value | humanize }} ms en moyenne"
+
+      - alert: MongoDBConnexionsSaturees
+        expr: |
+          mongodb_ss_connections{conn_type="current"}
+            / (mongodb_ss_connections{conn_type="current"} + ignoring(conn_type) mongodb_ss_connections{conn_type="available"})
+            > 0.8
+        for: 5m
+        labels:
+          severite: avertissement
+        annotations:
+          summary: "Instance {{ $labels.instance }} : plus de 80 % des connexions possibles sont ouvertes"
+
+      - alert: MongoDBCacheSature
+        expr: mongodb_ss_wt_cache_bytes_currently_in_the_cache / mongodb_ss_wt_cache_maximum_bytes_configured > 0.95
+        for: 10m
+        labels:
+          severite: avertissement
+        annotations:
+          summary: "Instance {{ $labels.instance }} : cache WiredTiger rempli à plus de 95 %"

@@ -1,0 +1,86 @@
+# docker-compose.yml - BD511 ch.8 : chaîne de supervision exporteur -> Prometheus -> Grafana
+# Les trois services utilisent le réseau de la VM (network_mode: host) : l'exporteur joint mongod sur
+# 127.0.0.1:27017 sans que mongod soit ouvert au réseau, et chaque service n'écoute que sur 127.0.0.1.
+# Usage : cd ~/BD511/supervision && sudo docker compose up -d --wait
+name: supervision                   # nom du projet Compose (minuscules imposées par Docker)
+
+services:
+  mongodb-exporter:
+    image: percona/mongodb_exporter:0.54.0
+    container_name: mongodb-exporter
+    restart: unless-stopped
+    network_mode: host
+    env_file: ./secrets/exporteur.env   # MONGODB_URI, MONGODB_USER, MONGODB_PASSWORD (fichier en mode 600)
+    command:
+      - --web.listen-address=127.0.0.1:9216
+      - --collector.diagnosticdata      # serverStatus et métriques système (getDiagnosticData)
+      - --collector.topmetrics          # temps passé par collection (commande top)
+      - --collector.indexstats          # utilisation des index ($indexStats)...
+      - --mongodb.indexstats-colls=bd511.ventes   # ... de cette collection
+      - --log.level=warn
+    mem_limit: 128m
+
+  prometheus:
+    image: prom/prometheus:v3.15.1-busybox
+    container_name: prometheus
+    restart: unless-stopped
+    network_mode: host
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=15d   # conservation des métriques : 15 jours...
+      - --storage.tsdb.retention.size=2GB   # ... dans la limite de 2 Go
+      - --web.listen-address=127.0.0.1:9090
+    volumes:
+      - ./prometheus:/etc/prometheus:ro
+      - prometheus-donnees:/prometheus
+    depends_on:
+      - mongodb-exporter
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:9090/-/ready"]
+      interval: 15s
+      start_period: 1m
+      start_interval: 2s
+    mem_limit: 512m
+
+  grafana:
+    image: grafana/grafana:13.2.4
+    container_name: grafana
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      GF_SERVER_HTTP_ADDR: 127.0.0.1
+      GF_SERVER_HTTP_PORT: "3000"
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD__FILE: /run/secrets/grafana_admin   # mot de passe lu dans un fichier secret
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_USERS_DEFAULT_LANGUAGE: fr-FR
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES: "false"
+      GF_NEWS_NEWS_FEED_ENABLED: "false"
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/dashboards/bd511-mongodb.json
+    secrets:
+      - grafana_admin
+    volumes:
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/dashboards:/etc/grafana/dashboards:ro
+      - grafana-donnees:/var/lib/grafana
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://127.0.0.1:3000/api/health"]
+      interval: 15s
+      start_period: 2m
+      start_interval: 2s
+    mem_limit: 512m
+
+secrets:
+  grafana_admin:
+    file: ./secrets/grafana_admin.pwd   # appartient à l'utilisateur grafana du conteneur (uid 472)
+
+volumes:
+  prometheus-donnees:
+  grafana-donnees:

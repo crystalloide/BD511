@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# mongosh-cluster - BD511 ch.7 : ouvre mongosh sur le cluster shardé, base bd511
+#   - par défaut, par le routeur mongos1 : c'est l'accès normal des applications ;
+#   - avec --cible RSCFG, RS1 ou RS2 : directement sur ce replica set, pour l'administration et l'observation.
+# Le mot de passe est lu dans ~/bd511/cluster/secrets/<compte>.pwd ; mongosh le masque ensuite
+# dans la liste des processus (« mongodb://<credentials>@... »). Compte par défaut : admin.
+# Usage : ~/bd511/ch07/mongosh-cluster [--compte appli] [--cible RSCFG|RS1|RS2] [options et scripts mongosh...]
+set -euo pipefail
+compte=admin; cible=mongos
+while [[ ${1:-} == --compte || ${1:-} == --cible ]]; do
+  if [[ $1 == --compte ]]; then compte=$2; else cible=$2; fi
+  shift 2
+done
+case $cible in
+  mongos) hotes="mongos1:27017"; rs="" ;;
+  RSCFG)  hotes="config1:27041,config2:27042,config3:27043"; rs="replicaSet=RSCFG&" ;;
+  RS1)    hotes="rs11:27011,rs12:27012"; rs="replicaSet=RS1&" ;;
+  RS2)    hotes="rs21:27021,rs22:27022"; rs="replicaSet=RS2&" ;;
+  *) echo "Cible inconnue : $cible (RSCFG, RS1 ou RS2)" >&2; exit 1 ;;
+esac
+mdp=$(< "$HOME/bd511/cluster/secrets/$compte.pwd")
+exec mongosh "mongodb://$compte:$mdp@$hotes/bd511?${rs}authSource=admin&appName=bd511-tp7-$compte" "$@"
