@@ -1181,7 +1181,7 @@ Compass est une application Electron (moteur Chromium). Ubuntu 24.04 restreint p
 **Récupérer et dézipper à l'endroit de votre choix le package Compass :**
 
 ```bash
-https://downloads.mongodb.com/compass/mongodb-compass-1.53.0-win32-x64.zip
+https://downloads.mongodb.com/compass/mongodb-compass-1.53.2-win32-x64.zip
 ```
 
 ## Partie 5 – Premiers tests de connexion avec Compass
