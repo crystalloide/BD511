@@ -823,7 +823,23 @@ val=$(stat -c '%U:%G %a' "$DBPATH"); [[ $val == mongodb:mongodb* ]];          re
 
 echo "== Système"
 val=$(lscpu -p=NODE 2>/dev/null | grep -v '^#' | sort -u | wc -l); (( val <= 1 )); res $? "Nœuds NUMA (1 attendu sur une VM)" "$val"
-val=$(timedatectl show -p NTPSynchronized --value 2>/dev/null); [[ $val == yes ]]; res $? "Horloge synchronisée (NTP)" "${val:-inconnu}"
+# Démon de synchronisation actif (timedatectl affiche "NTP service: n/a" pour ntpd, d'où ce repérage direct)
+ntp_unit=""
+for u in chrony chronyd ntpsec ntp systemd-timesyncd; do
+  systemctl is-active --quiet "$u" 2>/dev/null && { ntp_unit=$u; break; }
+done
+val=$(timedatectl show -p NTPSynchronized --value 2>/dev/null)
+if [[ $val != yes && -n $ntp_unit ]]; then  # démon actif mais pas encore calé (VM fraîchement démarrée)
+  [[ -t 1 ]] && printf '  ...  %s actif, attente de la synchronisation (60 s max)' "$ntp_unit"
+  for _ in $(seq 1 60); do
+    sleep 1
+    val=$(timedatectl show -p NTPSynchronized --value 2>/dev/null)
+    [[ $val == yes ]] && break
+  done
+  [[ -t 1 ]] && printf '\r\033[K'
+fi
+[[ $val == yes ]]; res $? "Horloge synchronisée (NTP)" "${val:-inconnu} (${ntp_unit:-aucun service NTP actif})"
+[[ $val != yes && -n $ntp_unit ]] && echo "         - synchro en cours : relancer le script dans quelques minutes (contrôle : ntpq -pn ou chronyc sources)"
 
 echo "== Service mongod"
 val=$(systemctl is-enabled mongod 2>/dev/null); [[ $val == enabled ]];         res $? "mongod activé au démarrage" "$val"
@@ -851,7 +867,7 @@ if [[ -n $json ]]; then
   val=$(jq -r .perCpu <<< "$json"); [[ $val == true ]]; res $? "Caches TCMalloc par CPU actifs" "$val"
   autres=$(jq -r '.warnings[] | select(startswith("Access control is not enabled") | not)' <<< "$json")
   [[ -z $autres ]]; res $? "Aucun autre avertissement que l'accès libre" "$(jq '.warnings | length' <<< "$json") avertissement(s)"
-  [[ -n $autres ]] && printf '         - %s\n' "$autres"
+  [[ -n $autres ]] && sed 's/^/         - /' <<< "$autres"
 else
   res 1 "Connexion à mongodb://127.0.0.1:27017" "échec"
 fi
