@@ -5,19 +5,21 @@ Sur une VM en Ubuntu 22.4, installer un Python récent à côté de celui du sys
 
 1. Installer Python 3.12 (dépôt deadsnakes)
 
-bash
+```bash
 sudo apt-get install -y software-properties-common
 sudo add-apt-repository -y ppa:deadsnakes/ppa
 sudo apt-get update
 sudo apt-get install -y python3.12 python3.12-venv
+```
 
 2. Créer et activer un venv
 
-bash
+```bash
 python3.12 -m venv ~/BD511/.venv
 source ~/BD511/.venv/bin/activate
 python3 --version        # doit afficher 3.12.x
 pip install --upgrade pip
+```
 
 3. Relancer le script de vérification
 
