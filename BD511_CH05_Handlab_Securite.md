@@ -118,12 +118,12 @@ rm -f mongodb-compass_1.53.0_amd64.deb
 
 ### 0.3 Créer les fichiers du TP
 
-Tous les fichiers sont générés dans `~~/BD511/ch05` : `conf/` (configurations `mongod`), `donnees/` (jeu de données) et `scripts/`. Collez les blocs suivants dans l'ordre.
+Tous les fichiers sont générés dans `~/BD511/ch05` : `conf/` (configurations `mongod`), `donnees/` (jeu de données) et `scripts/`. Collez les blocs suivants dans l'ordre.
 
 **Arborescence :**
 
 ```bash
-mkdir -p ~~/BD511/ch05/conf ~~/BD511/ch05/donnees ~~/BD511/ch05/scripts
+mkdir -p ~/BD511/ch05/conf ~/BD511/ch05/donnees ~/BD511/ch05/scripts
 ```
 
 **Configurations `mongod`** — trois étapes successives du durcissement, étudiées au TP1 :
@@ -268,7 +268,7 @@ cat > ~~/BD511/ch05/scripts/00_prepa_systeme.sh <<'FIN_FICHIER'
 # BD511 – TP chapitre 5 – Étape 0.4 : contrôle et application des réglages système de production
 # Cible : Ubuntu 24.04 LTS + MongoDB 8.3 Community installé depuis le dépôt officiel (chapitre 2).
 # Idempotent : peut être relancé sans risque.
-# Usage : sudo bash ~~/BD511/ch05/scripts/00_prepa_systeme.sh
+# Usage : sudo bash ~/BD511/ch05/scripts/00_prepa_systeme.sh
 set -euo pipefail
 
 if [[ $EUID -ne 0 ]]; then echo "Lancer ce script avec sudo." >&2; exit 1; fi
@@ -634,7 +634,7 @@ Créez le script :
 ```bash
 cat > ~~/BD511/ch05/scripts/tp1_premier_admin.js <<'FIN_FICHIER'
 // BD511 – TP chapitre 5 – Étape 1.4 : premier administrateur créé grâce à l'exception localhost
-// Lancement : mongosh --quiet "mongodb://127.0.0.1:27017/admin" --file ~~/BD511/ch05/scripts/tp1_premier_admin.js
+// Lancement : mongosh --quiet "mongodb://127.0.0.1:27017/admin" --file ~/BD511/ch05/scripts/tp1_premier_admin.js
 // Rôle userAdminAnyDatabase : gère utilisateurs et rôles de toutes les bases, sans accès aux données.
 
 const admin = db.getSiblingDB("admin");
@@ -655,7 +655,7 @@ FIN_FICHIER
 Exécutez-le **sans vous authentifier**, depuis la VM :
 
 ```bash
-mongosh --quiet "mongodb://127.0.0.1:27017/admin" --file ~~/BD511/ch05/scripts/tp1_premier_admin.js
+mongosh --quiet "mongodb://127.0.0.1:27017/admin" --file ~/BD511/ch05/scripts/tp1_premier_admin.js
 ```
 
 ```text
@@ -702,9 +702,9 @@ exit
 L'exception se referme dès qu'un utilisateur existe, mais elle se rouvrirait si tous les comptes étaient supprimés. En production, on la désactive explicitement :
 
 ```bash
-diff ~~/BD511/ch05/conf/mongod.conf.1-authentification ~~/BD511/ch05/conf/mongod.conf.2-production
-sudo install -o root -g root -m 644 ~~/BD511/ch05/conf/mongod.conf.2-production /etc/mongod.conf
-sudo systemctl restart mongod && bash ~~/BD511/ch05/scripts/attendre_mongod.sh
+diff ~~/BD511/ch05/conf/mongod.conf.1-authentification ~/BD511/ch05/conf/mongod.conf.2-production
+sudo install -o root -g root -m 644 ~/BD511/ch05/conf/mongod.conf.2-production /etc/mongod.conf
+sudo systemctl restart mongod && bash ~/BD511/ch05/scripts/attendre_mongod.sh
 sudo grep -o '"setParameter":{[^}]*}' /var/log/mongodb/mongod.log | tail -n 1
 ```
 
@@ -805,7 +805,7 @@ Créez le script :
 cat > ~~/BD511/ch05/scripts/tp2_roles.js <<'FIN_FICHIER'
 // BD511 – TP chapitre 5 – Étape 2.3 : rôles personnalisés (principe du moindre privilège)
 // Lancement (en tant qu'admin_secu) :
-//   mongosh --quiet "mongodb://127.0.0.1:27017/admin" -u admin_secu --file ~~/BD511/ch05/scripts/tp2_roles.js
+//   mongosh --quiet "mongodb://127.0.0.1:27017/admin" -u admin_secu --file ~/BD511/ch05/scripts/tp2_roles.js
 // Script rejouable : un rôle existant est mis à jour au lieu d'être recréé.
 
 function definirRole(base, nom, privileges, rolesHerites) {
@@ -904,7 +904,7 @@ Créez le script :
 cat > ~~/BD511/ch05/scripts/tp2_utilisateurs.js <<'FIN_FICHIER'
 // BD511 – TP chapitre 5 – Étape 2.4 : comptes applicatifs et métiers
 // Lancement (en tant qu'admin_secu) :
-//   mongosh --quiet "mongodb://127.0.0.1:27017/admin" -u admin_secu --file ~~/BD511/ch05/scripts/tp2_utilisateurs.js
+//   mongosh --quiet "mongodb://127.0.0.1:27017/admin" -u admin_secu --file ~/BD511/ch05/scripts/tp2_utilisateurs.js
 // Script rejouable : un compte existant est mis à jour (mot de passe et rôles).
 // Mots de passe de LABORATOIRE uniquement ; en production : pwd: passwordPrompt() ou coffre-fort de secrets.
 
@@ -947,7 +947,7 @@ FIN_FICHIER
 ```
 
 ```bash
-mongosh --quiet "mongodb://127.0.0.1:27017/admin" -u admin_secu --file ~~/BD511/ch05/scripts/tp2_utilisateurs.js
+mongosh --quiet "mongodb://127.0.0.1:27017/admin" -u admin_secu --file ~/BD511/ch05/scripts/tp2_utilisateurs.js
 ```
 
 ```text
@@ -1226,7 +1226,7 @@ FIN_FICHIER
 ```
 
 ```bash
-mongosh --quiet --nodb --file ~~/BD511/ch05/scripts/tp3_matrice_droits.js
+mongosh --quiet --nodb --file ~/BD511/ch05/scripts/tp3_matrice_droits.js
 ```
 
 ```text
@@ -1304,7 +1304,7 @@ FIN_FICHIER
 ```
 
 ```bash
-sudo python3 ~~/BD511/ch05/scripts/tp3_journal_auth.py --echecs
+sudo python3 ~/BD511/ch05/scripts/tp3_journal_auth.py --echecs
 ```
 
 ```text
@@ -1486,7 +1486,7 @@ FIN_FICHIER
 ```
 
 ```bash
-bash ~~/BD511/ch05/scripts/zz_reinitialiser_tp05.sh
+bash ~/BD511/ch05/scripts/zz_reinitialiser_tp05.sh
 ```
 
 ```text
