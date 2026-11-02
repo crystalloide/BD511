@@ -441,7 +441,9 @@ exit
 
 ### 2.1 Reproduire le symptôme
 
-Le script suivant exécute la requête de la page, exactement comme le fait l'application, et affiche la page trois fois de suite pour mesurer la durée de chaque requête. Dans le terminal 1 :
+Le script suivant exécute la requête de la page, exactement comme le fait l'application, et affiche la page trois fois de suite pour mesurer la durée de chaque requête. 
+
+Dans le 1er terminal linux, nommé **Terminal 1** :
 
 ```bash
 cat > ~/BD511/ch04/requete-lente.js <<'EOF'
