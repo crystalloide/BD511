@@ -499,8 +499,8 @@ La configuration d'origine est sauvegardée une seule fois, puis remplacée par 
 
 ```bash
 [ -f /etc/mongod.conf.avant-tp05 ] || sudo cp /etc/mongod.conf /etc/mongod.conf.avant-tp05
-sudo install -o root -g root -m 644 ~~/BD511/ch05/conf/mongod.conf.0-reference /etc/mongod.conf
-sudo systemctl restart mongod && bash ~~/BD511/ch05/scripts/attendre_mongod.sh
+sudo install -o root -g root -m 644 ~/BD511/ch05/conf/mongod.conf.0-reference /etc/mongod.conf
+sudo systemctl restart mongod && bash ~/BD511/ch05/scripts/attendre_mongod.sh
 ```
 
 Import des trois collections (l'option `--drop` rend l'import rejouable) :
