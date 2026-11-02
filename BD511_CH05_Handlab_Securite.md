@@ -426,7 +426,7 @@ FIN_FICHIER
 **Contrôle :** comparez le nombre de lignes de chaque fichier avec le tableau ; un écart signale un copier-coller incomplet (recréez alors le fichier concerné).
 
 ```bash
-cd ~~/BD511/ch05 && wc -l conf/* donnees/* scripts/*
+cd ~/BD511/ch05 && wc -l conf/* donnees/* scripts/*
 ```
 
 | Fichier | Lignes attendues |
@@ -446,7 +446,7 @@ cd ~~/BD511/ch05 && wc -l conf/* donnees/* scripts/*
 Le script `00_prepa_systeme.sh` contrôle et, si besoin, corrige les réglages recommandés par les *Production Notes* de MongoDB 8.3. Il est rejouable sans risque.
 
 ```bash
-sudo bash ~~/BD511/ch05/scripts/00_prepa_systeme.sh
+sudo bash ~/BD511/ch05/scripts/00_prepa_systeme.sh
 ```
 
 | Réglage | Valeur appliquée | Pourquoi |
