@@ -497,7 +497,7 @@ Près d'une demi-seconde pour afficher dix lignes, à chaque affichage : la rép
 
 Toute opération qui dure plus de **`slowms` = 100 ms** (valeur par défaut) est écrite dans le journal JSON du serveur, avec le message `Slow query`, même lorsque le profiler est désactivé. C'est souvent ainsi qu'un administrateur découvre une requête lente. 
 
-Vérifiez le réglage dans le terminal 2 (session mongoshell) :
+Vérifiez le réglage dans un nouveau terminal nommé **terminal 2** (terminal Linux transformé en session mongoshell) :
 
 ```javascript
 mongosh --quiet "mongodb://127.0.0.1:27017/BD511?appName=BD511-appli"
@@ -523,7 +523,7 @@ Résultat attendu :
 
 
 
-Dans le terminal 1 (Linux) , on va extraire du journal les requêtes lentes de l'application, grâce à son `appName` :
+Dans le 1er terminal **terminal 1** (Linux) , on va extraire du journal les requêtes lentes de l'application, grâce à son `appName` :
 
 ```bash
 sudo jq -c 'select(.msg == "Slow query" and .attr.appName == "BD511-appli")
@@ -555,7 +555,7 @@ Le journal pose déjà le diagnostic :
 
 ### 2.3 Le plan choisi : `explain("queryPlanner")`
 
-Dans le terminal 2, définissez le filtre et le tri de la requête, puis demandez au planificateur **quel plan il choisirait**, sans exécuter la requête :
+De retour dans le **terminal 2** mongosh, définissez le filtre et le tri de la requête, puis demandez au planificateur **quel plan il choisirait**, sans exécuter la requête :
 
 ```javascript
 const filtre = { formation_id: "BD511", type: "quiz", score: { $gte: 80 } }
