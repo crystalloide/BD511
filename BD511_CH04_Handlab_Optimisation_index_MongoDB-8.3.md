@@ -521,7 +521,12 @@ Résultat attendu :
 
 `was: 0` : le profiler est désactivé ; `sampleRate: 1` : toutes les opérations lentes sont journalisées. Le profiler, la collection `system.profile` et l'analyse des journaux en volume sont traités au chapitre 8.
 
-Dans le terminal 1, extrayez du journal les requêtes lentes de l'application, grâce à son `appName` :
+On ressort du shell 
+```javascript
+exit
+```
+
+Dans le terminal 1, on va extraire du journal les requêtes lentes de l'application, grâce à son `appName` :
 
 ```bash
 sudo jq -c 'select(.msg == "Slow query" and .attr.appName == "BD511-appli")
