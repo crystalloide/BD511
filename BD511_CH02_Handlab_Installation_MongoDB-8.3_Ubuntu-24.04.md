@@ -1237,10 +1237,10 @@ LIBGL_ALWAYS_SOFTWARE=1 mongodb-compass --ignore-additional-command-line-flags -
 
 **!Uniquement sur environnement de formation!** 
 ```bash
-sudo systemctl ufw stop
-sudo systemctl ufw disable
-sudo systemctl apparmor stop
-sudo systemctl apparmor disable
+sudo systemctl stop ufw
+sudo systemctl disable ufw
+sudo systemctl stop apparmor
+sudo systemctl disable apparmor
 ```
 
 **Relancer mongoDB en le faisant écouter sur toutes les adresses IP (dont celle de la VM sur Windows)**
