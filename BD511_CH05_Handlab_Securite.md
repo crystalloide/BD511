@@ -506,7 +506,7 @@ sudo systemctl restart mongod && bash ~/BD511/ch05/scripts/attendre_mongod.sh
 Import des trois collections (l'option `--drop` rend l'import rejouable) :
 
 ```bash
-cd ~~/BD511/ch05/donnees
+cd ~/BD511/ch05/donnees
 for c in produits clients commandes; do
   mongoimport --uri "mongodb://127.0.0.1:27017/boutique" --collection "$c" --drop --file "$c.json"
 done
@@ -571,7 +571,7 @@ LISTEN 0      4096       127.0.0.1:27017      0.0.0.0:*    users:(("mongod",pid=
 ### 1.1 Lire la configuration cible
 
 ```bash
-diff ~~/BD511/ch05/conf/mongod.conf.0-reference ~~/BD511/ch05/conf/mongod.conf.1-authentification
+diff ~/BD511/ch05/conf/mongod.conf.0-reference ~/BD511/ch05/conf/mongod.conf.1-authentification
 ```
 
 ```text
@@ -598,8 +598,8 @@ diff ~~/BD511/ch05/conf/mongod.conf.0-reference ~~/BD511/ch05/conf/mongod.conf.1
 ### 1.2 Activer l'authentification
 
 ```bash
-sudo install -o root -g root -m 644 ~~/BD511/ch05/conf/mongod.conf.1-authentification /etc/mongod.conf
-sudo systemctl restart mongod && bash ~~/BD511/ch05/scripts/attendre_mongod.sh
+sudo install -o root -g root -m 644 ~/BD511/ch05/conf/mongod.conf.1-authentification /etc/mongod.conf
+sudo systemctl restart mongod && bash ~/BD511/ch05/scripts/attendre_mongod.sh
 sudo grep -o '"security":{[^}]*}' /var/log/mongodb/mongod.log | tail -n 1
 ```
 
