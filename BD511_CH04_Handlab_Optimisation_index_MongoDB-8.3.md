@@ -428,6 +428,13 @@ Résultat attendu :
 
 La page n'a besoin que de **10 documents sur un million**. Gardez ces chiffres en tête : ils permettent de juger chaque plan d'exécution.
 
+
+On ressort du shell 
+
+```javascript
+exit
+```
+
 ---
 
 ## Partie 2 – Diagnostic de la requête lente dans mongosh
