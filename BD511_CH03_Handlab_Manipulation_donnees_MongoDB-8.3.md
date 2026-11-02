@@ -2070,6 +2070,22 @@ BD511.stagiaires      : 300 documents
 BD511.stagiaires_brut : 300 documents
 ```
 
+### Si erreur : 
+
+```Text
+Traceback (most recent call last):
+  File "/home/user/BD511/ch03/python/p1_connexion.py", line 4, in <module>
+    import pymongo
+ModuleNotFoundError: No module named 'pymongo'
+```
+
+#### Forcer la réinstallation et relancer: 
+
+```bash
+python -m pip install --force-reinstall pymongo
+python p1_connexion.py
+```
+
 ### 4.5 Créer et manipuler des documents (CRUD)
 
 Le script suivant enregistre une nouvelle stagiaire et ses inscriptions, les lit, les modifie, puis les supprime. Il commence par effacer les données d'une exécution précédente : il peut être relancé autant de fois que nécessaire.
