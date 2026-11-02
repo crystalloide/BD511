@@ -497,7 +497,7 @@ Près d'une demi-seconde pour afficher dix lignes, à chaque affichage : la rép
 
 Toute opération qui dure plus de **`slowms` = 100 ms** (valeur par défaut) est écrite dans le journal JSON du serveur, avec le message `Slow query`, même lorsque le profiler est désactivé. C'est souvent ainsi qu'un administrateur découvre une requête lente. 
 
-Vérifiez le réglage dans le terminal 2 :
+Vérifiez le réglage dans le terminal 2 (session mongoshell) :
 
 ```javascript
 mongosh --quiet "mongodb://127.0.0.1:27017/BD511?appName=BD511-appli"
@@ -521,12 +521,9 @@ Résultat attendu :
 
 `was: 0` : le profiler est désactivé ; `sampleRate: 1` : toutes les opérations lentes sont journalisées. Le profiler, la collection `system.profile` et l'analyse des journaux en volume sont traités au chapitre 8.
 
-On ressort du shell 
-```javascript
-exit
-```
 
-Dans le terminal 1, on va extraire du journal les requêtes lentes de l'application, grâce à son `appName` :
+
+Dans le terminal 1 (Linux) , on va extraire du journal les requêtes lentes de l'application, grâce à son `appName` :
 
 ```bash
 sudo jq -c 'select(.msg == "Slow query" and .attr.appName == "BD511-appli")
