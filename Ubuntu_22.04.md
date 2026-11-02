@@ -54,3 +54,11 @@ echo ">> Installation terminée"
 EOF
 bash ~/install-mongodb-8.3.sh
 ```
+
+## Chapitre 5 : Pour adapter le TP sur Ubuntu 22.04 (jammy)
+
+```bash
+grep -rl repo.mongodb.org /etc/apt/sources.list.d/ | xargs -r sudo sed -i 's/noble/jammy/g'
+sudo apt-get update
+apt-cache policy mongodb-org-server   # la candidate doit maintenant venir de jammy
+```
