@@ -1,5 +1,6 @@
-## Pour adapter le TP sur Ubuntu 
-'''bash
+## Pour adapter le TP sur Ubuntu 22.04  
+```bash
+
 cat > ~/install-mongodb-8.3.sh << 'EOF'
 #!/usr/bin/env bash
 # Installation MongoDB Community 8.3 – Ubuntu 22.04 (Jammy) / 24.04 (Noble)
@@ -52,4 +53,4 @@ mongosh --quiet --eval 'db.runCommand({ ping: 1 })'
 echo ">> Installation terminée"
 EOF
 bash ~/install-mongodb-8.3.sh
-'''bash
+```
