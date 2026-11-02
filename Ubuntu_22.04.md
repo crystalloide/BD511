@@ -1,4 +1,4 @@
-## Pour adapter le TP sur Ubuntu 22.04  
+## Pour adapter le TP sur Ubuntu 22.04  / Ubuntu 24.04
 ```bash
 
 cat > ~/install-mongodb-8.3.sh << 'EOF'
