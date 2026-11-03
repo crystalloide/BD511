@@ -1446,8 +1446,14 @@ Même plan ; l'index masqué ne figure même plus parmi les plans rejetés.
 
 ```javascript
 db.activites.hideIndex("formation")
+```
+```javascript
 db.activites.getIndexes().filter(ix => ix.hidden).map(ix => ix.name)
+```
+```javascript
 const comptage = db.activites.explain().count({ formation_id: "IA101" }).queryPlanner.winningPlan.inputStage
+```
+```javascript
 ({ etape: comptage.stage, index: comptage.indexName })
 ```
 
