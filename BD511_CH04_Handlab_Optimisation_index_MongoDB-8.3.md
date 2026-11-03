@@ -563,15 +563,16 @@ De retour dans le **terminal 2** mongosh, définissez le filtre et le tri de la 
 const filtre = { formation_id: "BD511", type: "quiz", score: { $gte: 80 } }
 const tri = { date: -1 }
 const plan = db.activites.find(filtre).sort(tri).limit(10).explain("queryPlanner")
-Object.keys(plan)
-plan.queryPlanner.winningPlan
-plan.queryPlanner.rejectedPlans
+
+console.log("Keys:", Object.keys(plan));
+console.log("Winning Plan:", plan.queryPlanner.winningPlan);
+console.log("Rejected Plans:", plan.queryPlanner.rejectedPlans);
 ```
 
 Résultat attendu :
 
 ```text
-[
+Keys: [
   'explainVersion',
   'queryPlanner',
   'queryShapeHash',
@@ -580,7 +581,7 @@ Résultat attendu :
   'serverParameters',
   'ok'
 ]
-{
+Winning Plan: {
   isCached: false,
   stage: 'SORT',
   sortPattern: { date: -1 },
@@ -600,7 +601,8 @@ Résultat attendu :
     direction: 'forward'
   }
 }
-[]
+Rejected Plans: []
+
 ```
 
 Un plan est un **arbre d'étapes** (*stages*) : chaque étape reçoit les documents de son `inputStage` et transmet les siens à l'étape parente. Il se lit donc **de l'intérieur vers l'extérieur** :
