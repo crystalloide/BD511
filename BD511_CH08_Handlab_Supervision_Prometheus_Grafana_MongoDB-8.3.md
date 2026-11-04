@@ -275,7 +275,7 @@ chmod +x ~/BD511/ch08/mongosh-bd511
 Résultat attendu :
 
 ```text
-bd511 - diag
+BD511 - diag
 ```
 
 ### 0.4 Générer et importer le jeu de données
@@ -373,10 +373,10 @@ cd "$CH08/donnees"
 sha256sum --quiet --check SHA256SUMS || { echo "ventes.json différent de la référence (partie 0.4)." >&2; exit 1; }
 debut=$SECONDS
 mongoimport --uri "mongodb://charge@127.0.0.1:27017/?authSource=admin&appName=bd511-ch08-import" \
-  --config "$CH08/secrets/charge.yaml" --db bd511 --collection ventes --drop --file ventes.json \
+  --config "$CH08/secrets/charge.yaml" --db BD511 --collection ventes --drop --file ventes.json \
   --numInsertionWorkers 2 --quiet
 "$CH08/mongosh-bd511" --compte charge --quiet --eval '
-  print(`bd511.ventes : ${db.ventes.countDocuments()} documents, index : ${db.ventes.getIndexes().map(i => i.name).join(", ")}`)'
+  print(`BD511.ventes : ${db.ventes.countDocuments()} documents, index : ${db.ventes.getIndexes().map(i => i.name).join(", ")}`)'
 echo "Import terminé en $((SECONDS - debut)) s"
 EOF
 bash ~/BD511/ch08/importer-ventes.sh
@@ -409,7 +409,7 @@ cat > ~/BD511/ch08/client-charge.js <<'EOF'
 // Le client vise RYTHME opérations par seconde (10 par défaut) et s'arrête au bout de DUREE secondes (3600 par défaut).
 // Toutes les 10 s, il écrit une ligne de bilan : nombre d'opérations et durée moyenne par type.
 // Usage : lancé par charge.sh (RYTHME=10 DUREE=3600 ~/BD511/ch08/mongosh-bd511 --compte charge --quiet client-charge.js)
-const ventes = db.getSiblingDB("bd511").ventes;
+const ventes = db.getSiblingDB("BD511").ventes;
 const rythme = Number(process.env.RYTHME || 10), duree = Number(process.env.DUREE || 3600);
 const intervalle = 1000 / rythme, fin = Date.now() + duree * 1000;
 const heure = () => new Date().toTimeString().slice(0, 8);
