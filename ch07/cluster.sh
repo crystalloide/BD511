@@ -2,13 +2,13 @@
 # cluster.sh - BD511 ch.7 : démarre ou arrête le cluster shardé dans l'ordre recommandé, ou affiche son état
 #   demarrer : serveurs de configuration, puis shards, puis routeur ; réactive le balancer
 #   arreter  : désactive le balancer, puis arrête le routeur, les shards et enfin les serveurs de configuration
-# Usage : bash ~/bd511/ch07/cluster.sh demarrer|arreter|etat
+# Usage : bash ~/BD511/ch07/cluster.sh demarrer|arreter|etat
 set -euo pipefail
 CONFIG=(config1 config2 config3)
 SHARDS=(rs11 rs12 rs1arb rs21 rs22 rs2arb)
 ROUTEURS=(mongos1)
-MONGOSH="$HOME/bd511/ch07/mongosh-cluster"
-cd "$HOME/bd511/cluster"
+MONGOSH="$HOME/BD511/ch07/mongosh-cluster"
+cd "$HOME/BD511/cluster"
 
 case ${1:-} in
   demarrer)
