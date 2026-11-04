@@ -74,6 +74,8 @@ Le cluster Docker du chapitre 7, s'il tourne encore, occupe plus de 2 Go de mém
 
 ```bash
 [ -f ~/BD511/ch07/cluster.sh ] && bash ~/BD511/ch07/cluster.sh arreter
+```
+```bash
 mkdir -p ~/BD511/ch08/donnees ~/BD511/supervision
 ```
 
