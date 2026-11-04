@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| **Formation** | BD511 – NoSQL MongoDB : mise en œuvre et administration |
+| **Formation** | bd511 – NoSQL MongoDB : mise en œuvre et administration |
 | **Chapitre** | 8 – Supervision et performances |
 | **Durée indicative** | 2 h 45 |
 | **Environnement** | VM Ubuntu 24.04 LTS Desktop des chapitres précédents : instance `mongod` du chapitre 2 (service systemd, `/etc/mongod.conf`), mongosh et Database Tools, Docker Engine du chapitre 6, navigateur Firefox ; 1,5 Go de mémoire disponible, 3 Go libres sur `/` |
@@ -19,7 +19,7 @@
 
 ## Le scénario
 
-Une boutique en ligne enregistre ses ventes dans la collection `BD511.ventes` de l'instance du chapitre 2 : un million de ventes, passées par 50 000 clients. L'application sollicite cette collection en continu :
+Une boutique en ligne enregistre ses ventes dans la collection `bd511.ventes` de l'instance du chapitre 2 : un million de ventes, passées par 50 000 clients. L'application sollicite cette collection en continu :
 
 - 60 % de ses opérations affichent la **fiche d'un client** : ses 10 dernières ventes ;
 - 25 % enregistrent une **nouvelle vente** ;
@@ -41,7 +41,7 @@ Les fichiers du chapitre sont rangés dans le répertoire du projet, `~/BD511` :
   ┌──────────────────────────────┐   ┌──────────────────────────┐   ┌──────────────────────┐   ┌──────────────────────┐
   │ application simulée          │   │ mongod (chapitre 2)      │   │ mongodb-exporter     │   │ Prometheus           │
   │ 3 clients mongosh            ├──►│ 127.0.0.1:27017, systemd ├◄──┤ :9216, compte         │◄──┤ :9090, collecte      │
-  │ (compte charge)              │   │ base BD511, journal JSON │   │ exporteur            │   │ toutes les 15 s,     │
+  │ (compte charge)              │   │ base bd511, journal JSON │   │ exporteur            │   │ toutes les 15 s,     │
   └──────────────────────────────┘   └────────────▲─────────────┘   └──────────────────────┘   │ règles d'alerte      │
                                                   │                                            └──────────▲───────────┘
             mongostat, mongotop, mongosh ─────────┘ (compte diag)        Firefox ──► Grafana :3000 ───────┘
@@ -84,7 +84,7 @@ Le script suivant contrôle l'instance du chapitre 2, les outils, Docker, la mé
 ```bash
 cat > ~/BD511/ch08/00-prerequis.sh <<'EOF'
 #!/usr/bin/env bash
-# 00-prerequis.sh - BD511 ch.8 : vérifie la VM avant le TP de supervision
+# 00-prerequis.sh - bd511 ch.8 : vérifie la VM avant le TP de supervision
 # (instance mongod du chapitre 2, outils clients, Docker du chapitre 6, mémoire, disque et ports libres)
 # Usage : bash ~/BD511/ch08/00-prerequis.sh      (demande le mot de passe sudo pour interroger Docker)
 set -u
@@ -96,9 +96,9 @@ echo "== Instance mongod du chapitre 2"
 if systemctl is-active --quiet mongod; then ok "Service mongod actif"; else nok "Service mongod arrêté : sudo systemctl start mongod"; fi
 v=$(mongod --version 2>/dev/null | awk 'NR == 1 {print $3}')
 if [[ $v == v8.3.* ]]; then ok "mongod $v"; else nok "mongod 8.3 attendu (trouvé : ${v:-aucun})"; fi
-if mongosh --quiet "mongodb://127.0.0.1:27017/?appName=BD511-ch08-prerequis" --eval 'db.adminCommand({ ping: 1 }).ok' 2>/dev/null | grep -qx 1
+if mongosh --quiet "mongodb://127.0.0.1:27017/?appName=bd511-ch08-prerequis" --eval 'db.adminCommand({ ping: 1 }).ok' 2>/dev/null | grep -qx 1
 then ok "mongod répond sur 127.0.0.1:27017"; else nok "mongod ne répond pas sur 127.0.0.1:27017"; fi
-if mongosh --quiet "mongodb://127.0.0.1:27017/?appName=BD511-ch08-prerequis" --eval 'db.adminCommand({ listDatabases: 1 }).ok' >/dev/null 2>&1
+if mongosh --quiet "mongodb://127.0.0.1:27017/?appName=bd511-ch08-prerequis" --eval 'db.adminCommand({ listDatabases: 1 }).ok' >/dev/null 2>&1
 then ok "Contrôle d'accès désactivé (chapitre 2) : comptes du TP créés sans authentification"
 else ok "Contrôle d'accès activé (chapitre 5) : un compte administrateur sera demandé en partie 0.2"; fi
 libre=$(df -BM --output=avail /var/lib/mongodb | tail -n 1 | tr -dc '0-9')
@@ -166,7 +166,7 @@ Trois comptes sont créés dans la base `admin`, chacun avec le minimum de droit
 | Compte | Rôles | Usage |
 | --- | --- | --- |
 | `diag` | `clusterMonitor`, `hostManager`, `dbAdminAnyDatabase`, `readAnyDatabase` | exploitation : métriques, opérations en cours et `killOp`, profiler, index |
-| `charge` | `readWrite` sur `BD511` | application simulée, import du jeu de données |
+| `charge` | `readWrite` sur `bd511` | application simulée, import du jeu de données |
 | `exporteur` | `clusterMonitor`, `read` sur `local` | collecte des métriques par l'exporteur (rôles recommandés par Percona) |
 
 Le script génère les mots de passe dans `~/BD511/ch08/secrets` et s'adapte à l'état de l'instance : si le contrôle d'accès a été activé au chapitre 5, il vous demande un compte administrateur existant (rôle `root` ou `userAdminAnyDatabase`) et son mot de passe, qui transitent par l'entrée standard de mongosh, jamais par sa ligne de commande.
@@ -174,9 +174,9 @@ Le script génère les mots de passe dans `~/BD511/ch08/secrets` et s'adapte à 
 ```bash
 cat > ~/BD511/ch08/comptes.sh <<'EOF'
 #!/usr/bin/env bash
-# comptes.sh - BD511 ch.8 : crée ou met à jour les trois comptes du TP sur l'instance mongod du chapitre 2
+# comptes.sh - bd511 ch.8 : crée ou met à jour les trois comptes du TP sur l'instance mongod du chapitre 2
 #   diag      : exploitation (diagnostic, opérations en cours, profiler, index)
-#   charge    : application simulée (lecture et écriture dans la base BD511)
+#   charge    : application simulée (lecture et écriture dans la base bd511)
 #   exporteur : collecte des métriques pour Prometheus (clusterMonitor et lecture de la base local)
 # Les mots de passe sont générés dans ~/BD511/ch08/secrets (mode 600) et ne passent jamais en ligne de commande.
 # Le script s'adapte au contrôle d'accès de l'instance : désactivé (configuration du chapitre 2) ou activé
@@ -184,7 +184,7 @@ cat > ~/BD511/ch08/comptes.sh <<'EOF'
 # Usage : bash ~/BD511/ch08/comptes.sh
 set -euo pipefail
 SECRETS="$HOME/BD511/ch08/secrets"
-URI="mongodb://127.0.0.1:27017/admin?appName=BD511-ch08-comptes"
+URI="mongodb://127.0.0.1:27017/admin?appName=bd511-ch08-comptes"
 
 mkdir -p "$SECRETS" && chmod 700 "$SECRETS"
 for compte in diag charge exporteur; do
@@ -216,7 +216,7 @@ $connexion
 const admin = db.getSiblingDB("admin");
 const comptes = {
   diag:      { roles: ["clusterMonitor", "hostManager", "dbAdminAnyDatabase", "readAnyDatabase"], mdp: "$(< "$SECRETS/diag.pwd")" },
-  charge:    { roles: [{ role: "readWrite", db: "BD511" }], mdp: "$(< "$SECRETS/charge.pwd")" },
+  charge:    { roles: [{ role: "readWrite", db: "bd511" }], mdp: "$(< "$SECRETS/charge.pwd")" },
   exporteur: { roles: ["clusterMonitor", { role: "read", db: "local" }], mdp: "$(< "$SECRETS/exporteur.pwd")" },
 };
 for (const [nom, c] of Object.entries(comptes)) {
@@ -234,7 +234,7 @@ Résultat attendu, si le contrôle d'accès est désactivé (configuration du ch
 
 ```text
 Contrôle d'accès : désactivé (configuration du chapitre 2)
-charge     readWrite@BD511
+charge     readWrite@bd511
 diag       clusterMonitor@admin, dbAdminAnyDatabase@admin, hostManager@admin, readAnyDatabase@admin
 exporteur  clusterMonitor@admin, read@local
 ```
@@ -245,7 +245,7 @@ Si le contrôle d'accès est activé, le script pose deux questions (le mot de p
 Contrôle d'accès : activé (chapitre 5)
 Compte administrateur existant [admin] : admin
 Mot de passe de admin :
-charge     readWrite@BD511
+charge     readWrite@bd511
 diag       clusterMonitor@admin, dbAdminAnyDatabase@admin, hostManager@admin, readAnyDatabase@admin
 exporteur  clusterMonitor@admin, read@local
 ```
@@ -254,21 +254,21 @@ exporteur  clusterMonitor@admin, read@local
 
 ### 0.3 Se connecter avec un compte du TP
 
-Le script suivant ouvre mongosh sur la base `BD511` avec le compte `diag` (par défaut) ou un autre compte du TP. Le nom d'application transmis au serveur (`BD511-ch08-<compte>`) permettra de reconnaître chaque client dans les opérations en cours et dans le journal.
+Le script suivant ouvre mongosh sur la base `bd511` avec le compte `diag` (par défaut) ou un autre compte du TP. Le nom d'application transmis au serveur (`bd511-ch08-<compte>`) permettra de reconnaître chaque client dans les opérations en cours et dans le journal.
 
 ```bash
 cat > ~/BD511/ch08/mongosh-bd511 <<'EOF'
 #!/usr/bin/env bash
-# mongosh-BD511 - BD511 ch.8 : ouvre mongosh sur l'instance mongod du chapitre 2 (127.0.0.1:27017), base BD511
+# mongosh-bd511 - bd511 ch.8 : ouvre mongosh sur l'instance mongod du chapitre 2 (127.0.0.1:27017), base bd511
 # Le mot de passe est lu dans ~/BD511/ch08/secrets/<compte>.pwd ; mongosh le masque ensuite dans la
 # liste des processus (« mongodb://<credentials>@... »). Compte par défaut : diag.
-# Nom d'application (visible dans les opérations en cours et les journaux) : BD511-ch08-<compte>, ou $APPNAME.
-# Usage : ~/BD511/ch08/mongosh-BD511 [--compte charge] [options et scripts mongosh...]
+# Nom d'application (visible dans les opérations en cours et les journaux) : bd511-ch08-<compte>, ou $APPNAME.
+# Usage : ~/BD511/ch08/mongosh-bd511 [--compte charge] [options et scripts mongosh...]
 set -euo pipefail
 compte=diag
 if [[ ${1:-} == --compte ]]; then compte=$2; shift 2; fi
 mdp=$(< "$HOME/BD511/ch08/secrets/$compte.pwd")
-exec mongosh "mongodb://$compte:$mdp@127.0.0.1:27017/BD511?authSource=admin&appName=${APPNAME:-BD511-ch08-$compte}" "$@"
+exec mongosh "mongodb://$compte:$mdp@127.0.0.1:27017/bd511?authSource=admin&appName=${APPNAME:-bd511-ch08-$compte}" "$@"
 EOF
 chmod +x ~/BD511/ch08/mongosh-bd511
 ~/BD511/ch08/mongosh-bd511 --quiet --eval 'print(db.getName(), "-", db.runCommand({ connectionStatus: 1 }).authInfo.authenticatedUsers[0].user)'
@@ -277,7 +277,7 @@ chmod +x ~/BD511/ch08/mongosh-bd511
 Résultat attendu :
 
 ```text
-BD511 - diag
+bd511 - diag
 ```
 
 ### 0.4 Générer et importer le jeu de données
@@ -287,7 +287,7 @@ Le générateur est **déterministe** : il produit toujours exactement le même 
 ```bash
 cat > ~/BD511/ch08/generer_ventes.py <<'EOF'
 #!/usr/bin/env python3
-"""generer_ventes.py - BD511 ch.8 : génère le jeu de données des ventes, au format JSON (un document par ligne).
+"""generer_ventes.py - bd511 ch.8 : génère le jeu de données des ventes, au format JSON (un document par ligne).
 
 Le générateur est déterministe (graine fixe) : il produit toujours exactement le même fichier,
 dont la somme de contrôle figure dans donnees/SHA256SUMS.
@@ -365,7 +365,7 @@ Importez les ventes avec le compte `charge`. Le mot de passe passe par un fichie
 ```bash
 cat > ~/BD511/ch08/importer-ventes.sh <<'EOF'
 #!/usr/bin/env bash
-# importer-ventes.sh - BD511 ch.8 : (ré)importe le million de ventes dans BD511.ventes, avec le compte « charge »
+# importer-ventes.sh - bd511 ch.8 : (ré)importe le million de ventes dans bd511.ventes, avec le compte « charge »
 # La collection est recréée à chaque import (--drop) : elle ne porte alors que l'index obligatoire sur _id.
 # Le mot de passe passe par le fichier de configuration ~/BD511/ch08/secrets/charge.yaml (option --config).
 # Usage : bash ~/BD511/ch08/importer-ventes.sh
@@ -374,11 +374,11 @@ CH08="$HOME/BD511/ch08"
 cd "$CH08/donnees"
 sha256sum --quiet --check SHA256SUMS || { echo "ventes.json différent de la référence (partie 0.4)." >&2; exit 1; }
 debut=$SECONDS
-mongoimport --uri "mongodb://charge@127.0.0.1:27017/?authSource=admin&appName=BD511-ch08-import" \
-  --config "$CH08/secrets/charge.yaml" --db BD511 --collection ventes --drop --file ventes.json \
+mongoimport --uri "mongodb://charge@127.0.0.1:27017/?authSource=admin&appName=bd511-ch08-import" \
+  --config "$CH08/secrets/charge.yaml" --db bd511 --collection ventes --drop --file ventes.json \
   --numInsertionWorkers 2 --quiet
 "$CH08/mongosh-bd511" --compte charge --quiet --eval '
-  print(`BD511.ventes : ${db.ventes.countDocuments()} documents, index : ${db.ventes.getIndexes().map(i => i.name).join(", ")}`)'
+  print(`bd511.ventes : ${db.ventes.countDocuments()} documents, index : ${db.ventes.getIndexes().map(i => i.name).join(", ")}`)'
 echo "Import terminé en $((SECONDS - debut)) s"
 EOF
 bash ~/BD511/ch08/importer-ventes.sh
@@ -387,7 +387,7 @@ bash ~/BD511/ch08/importer-ventes.sh
 Résultat attendu (durée variable, une demi-minute environ) :
 
 ```text
-BD511.ventes : 1000000 documents, index : _id_
+bd511.ventes : 1000000 documents, index : _id_
 Import terminé en 26 s
 ```
 
@@ -403,15 +403,15 @@ L'application est simulée par trois clients mongosh, qui tournent en arrière-p
 
 ```bash
 cat > ~/BD511/ch08/client-charge.js <<'EOF'
-// client-charge.js - BD511 ch.8 : un client de l'application de vente en ligne, qui sollicite la collection BD511.ventes
+// client-charge.js - bd511 ch.8 : un client de l'application de vente en ligne, qui sollicite la collection bd511.ventes
 // À chaque opération, tirage au hasard :
 //   60 % « fiche client »  : les 10 dernières ventes d'un client (find sur client, tri par date décroissante)
 //   25 % « nouvelle vente » : insertion d'une vente
 //   15 % « mise à jour »    : changement du statut d'une vente, retrouvée par son numéro (_id)
 // Le client vise RYTHME opérations par seconde (10 par défaut) et s'arrête au bout de DUREE secondes (3600 par défaut).
 // Toutes les 10 s, il écrit une ligne de bilan : nombre d'opérations et durée moyenne par type.
-// Usage : lancé par charge.sh (RYTHME=10 DUREE=3600 ~/BD511/ch08/mongosh-BD511 --compte charge --quiet client-charge.js)
-const ventes = db.getSiblingDB("BD511").ventes;
+// Usage : lancé par charge.sh (RYTHME=10 DUREE=3600 ~/BD511/ch08/mongosh-bd511 --compte charge --quiet client-charge.js)
+const ventes = db.getSiblingDB("bd511").ventes;
 const rythme = Number(process.env.RYTHME || 10), duree = Number(process.env.DUREE || 3600);
 const intervalle = 1000 / rythme, fin = Date.now() + duree * 1000;
 const heure = () => new Date().toTimeString().slice(0, 8);
@@ -443,7 +443,7 @@ print(`${heure()}  fin`);
 EOF
 cat > ~/BD511/ch08/charge.sh <<'EOF'
 #!/usr/bin/env bash
-# charge.sh - BD511 ch.8 : démarre, arrête ou affiche la charge applicative simulée sur BD511.ventes
+# charge.sh - bd511 ch.8 : démarre, arrête ou affiche la charge applicative simulée sur bd511.ventes
 #   demarrer [N] : lance N clients (3 par défaut) en arrière-plan, compte « charge », journaux dans ~/BD511/ch08/charge
 #   etat         : dernière ligne de bilan de chaque client
 #   arreter      : arrête tous les clients
@@ -457,7 +457,7 @@ case ${1:-} in
   demarrer)
     if [[ -s $DOSSIER/pids ]]; then echo "Charge déjà démarrée : bash $0 arreter" >&2; exit 1; fi
     for i in $(seq 1 "${2:-3}"); do
-      RYTHME=${RYTHME:-10} DUREE=${DUREE:-3600} nohup "$CH08/mongosh-BD511" --compte charge --quiet "$CH08/client-charge.js" \
+      RYTHME=${RYTHME:-10} DUREE=${DUREE:-3600} nohup "$CH08/mongosh-bd511" --compte charge --quiet "$CH08/client-charge.js" \
         > "$DOSSIER/client$i.log" 2>&1 &
       echo $! >> "$DOSSIER/pids"
     done
@@ -521,7 +521,7 @@ MiB Éch:   4096,0 total,   4096,0 libr,      0,0 util.   3636,4 dispo Mem
 `mongostat` interroge `serverStatus` à intervalles réguliers et affiche une ligne par mesure. Lancez 5 mesures espacées de 2 secondes :
 
 ```bash
-mongostat --uri "mongodb://diag@127.0.0.1:27017/?authSource=admin&appName=BD511-ch08-mongostat" \
+mongostat --uri "mongodb://diag@127.0.0.1:27017/?authSource=admin&appName=bd511-ch08-mongostat" \
   --config ~/BD511/ch08/secrets/diag.yaml -n 5 2
 ```
 
@@ -553,24 +553,24 @@ Peu d'opérations, mais un processeur saturé : chaque opération coûte très c
 `mongotop` mesure le temps passé par le serveur sur chaque collection, en lecture et en écriture. Lancez un seul relevé sur 5 secondes :
 
 ```bash
-mongotop --uri "mongodb://diag@127.0.0.1:27017/?authSource=admin&appName=BD511-ch08-mongotop" \
+mongotop --uri "mongodb://diag@127.0.0.1:27017/?authSource=admin&appName=bd511-ch08-mongotop" \
   --config ~/BD511/ch08/secrets/diag.yaml -n 1 5
 ```
 
 Résultat attendu (valeurs variables ; la liste des espaces de noms à 0 ms varie) :
 
 ```text
-2026-10-25T14:21:31.611+0100	connected to: mongodb://[**REDACTED**]@127.0.0.1:27017/?authSource=admin&appName=BD511-ch08-mongotop
+2026-10-25T14:21:31.611+0100	connected to: mongodb://[**REDACTED**]@127.0.0.1:27017/?authSource=admin&appName=bd511-ch08-mongotop
 
                     ns      total       read    write    2026-10-25T14:21:36+01:00
-          BD511.ventes    14829ms    14710ms    119ms
+          bd511.ventes    14829ms    14710ms    119ms
         admin.atlascli        0ms        0ms      0ms
     admin.system.users        0ms        0ms      0ms
 config.system.sessions        0ms        0ms      0ms
    config.transactions        0ms        0ms      0ms
 ```
 
-En 5 secondes, le serveur a passé près de 15 secondes de travail sur `BD511.ventes`, presque uniquement en lecture : les 3 clients y sont occupés en permanence. Le problème est donc une lecture sur cette collection.
+En 5 secondes, le serveur a passé près de 15 secondes de travail sur `bd511.ventes`, presque uniquement en lecture : les 3 clients y sont occupés en permanence. Le problème est donc une lecture sur cette collection.
 
 ### 1.5 `serverStatus` : les indicateurs qui expliquent
 
@@ -578,9 +578,9 @@ En 5 secondes, le serveur a passé près de 15 secondes de travail sur `BD511.ve
 
 ```bash
 cat > ~/BD511/ch08/diagnostic.js <<'EOF'
-// diagnostic.js - BD511 ch.8 : photographie de la charge de mongod, d'après deux appels à serverStatus
+// diagnostic.js - bd511 ch.8 : photographie de la charge de mongod, d'après deux appels à serverStatus
 // espacés de INTERVALLE secondes (10 par défaut) : débits, efficacité des requêtes, concurrence, mémoire.
-// Usage : ~/BD511/ch08/mongosh-BD511 --quiet ~/BD511/ch08/diagnostic.js
+// Usage : ~/BD511/ch08/mongosh-bd511 --quiet ~/BD511/ch08/diagnostic.js
 const intervalle = Number(process.env.INTERVALLE || 10);
 const n = v => Number(v ?? 0);
 const fmt = (v, d = 0) => v.toLocaleString("fr-FR", { maximumFractionDigits: d, minimumFractionDigits: d });
@@ -613,13 +613,13 @@ print(`  Tickets de lecture  : ${tickets.out} utilisés sur ${tickets.totalTicke
 print(`  Connexions          : ${apres.connections.current} ouvertes, ${apres.connections.available} disponibles`);
 print(`  Cache WiredTiger    : ${fmt(utilise)} Mo sur ${fmt(maxi)} Mo (${fmt(100 * utilise / maxi)} %), mémoire résidente ${apres.mem.resident} Mo`);
 EOF
-~/BD511/ch08/mongosh-BD511 --quiet ~/BD511/ch08/diagnostic.js
+~/BD511/ch08/mongosh-bd511 --quiet ~/BD511/ch08/diagnostic.js
 ```
 
 Résultat attendu (valeurs variables) :
 
 ```text
-Diagnostic de vm-BD511 (MongoDB 8.3.13) sur 10 s, à 14:21:58
+Diagnostic de vm-bd511 (MongoDB 8.3.13) sur 10 s, à 14:21:58
   Opérations/s        : lectures 5,4, insertions 2,6, mises à jour 1,1, commandes 1,1
   Documents/s         : examinés 5 401 177, renvoyés 54 (100 022 examinés par document renvoyé)
   Clés d'index/s      : 1 ; tris en mémoire/s : 5,4
@@ -642,14 +642,14 @@ Pendant ce temps, un analyste lance son rapport de fidélité des clients :
 
 ```bash
 cat > ~/BD511/ch08/rapport-lent.js <<'EOF'
-// rapport-lent.js - BD511 ch.8 : rapport « fidélité des clients », écrit sans précaution par un analyste
+// rapport-lent.js - bd511 ch.8 : rapport « fidélité des clients », écrit sans précaution par un analyste
 // Pour chaque client, compte les ventes réalisées plus d'un an après sa première commande. Sans index sur
 // le champ client, chaque recherche ($lookup) parcourt toute la collection : le rapport ne se termine jamais.
-// Usage : APPNAME=rapport-fidelite ~/BD511/ch08/mongosh-BD511 --compte charge --quiet ~/BD511/ch08/rapport-lent.js
+// Usage : APPNAME=rapport-fidelite ~/BD511/ch08/mongosh-bd511 --compte charge --quiet ~/BD511/ch08/rapport-lent.js
 const debut = Date.now();
 print(`${new Date().toTimeString().slice(0, 8)}  rapport de fidélité : début`);
 try {
-  const resultat = db.getSiblingDB("BD511").ventes.aggregate([
+  const resultat = db.getSiblingDB("bd511").ventes.aggregate([
     { $group: { _id: "$client", premiere: { $min: "$date" } } },
     { $lookup: {
         from: "ventes", let: { client: "$_id", premiere: "$premiere" },
@@ -669,7 +669,7 @@ try {
   print(`${new Date().toTimeString().slice(0, 8)}  rapport interrompu au bout de ${Math.round((Date.now() - debut) / 1000)} s : ${e.codeName ?? ""} ${e.message}`);
 }
 EOF
-APPNAME=rapport-fidelite nohup ~/BD511/ch08/mongosh-BD511 --compte charge --quiet ~/BD511/ch08/rapport-lent.js \
+APPNAME=rapport-fidelite nohup ~/BD511/ch08/mongosh-bd511 --compte charge --quiet ~/BD511/ch08/rapport-lent.js \
   > ~/BD511/ch08/charge/rapport.log 2>&1 &
 ```
 
@@ -677,9 +677,9 @@ Vingt secondes plus tard, listez les opérations actives depuis plus d'une demi-
 
 ```bash
 cat > ~/BD511/ch08/operations-longues.js <<'EOF'
-// operations-longues.js - BD511 ch.8 : opérations actives depuis plus de SEUIL_MS millisecondes (500 par défaut),
+// operations-longues.js - bd511 ch.8 : opérations actives depuis plus de SEUIL_MS millisecondes (500 par défaut),
 // les plus longues d'abord, avec leur identifiant (opid), leur durée, leur plan et l'application qui les a lancées.
-// Usage : ~/BD511/ch08/mongosh-BD511 --quiet ~/BD511/ch08/operations-longues.js
+// Usage : ~/BD511/ch08/mongosh-bd511 --quiet ~/BD511/ch08/operations-longues.js
 const seuil = Number(process.env.SEUIL_MS || 500);
 const operations = db.getSiblingDB("admin").aggregate([
   { $currentOp: { allUsers: true, idleConnections: false } },
@@ -694,24 +694,24 @@ for (const o of operations) {
 }
 EOF
 sleep 20
-~/BD511/ch08/mongosh-BD511 --quiet ~/BD511/ch08/operations-longues.js
+~/BD511/ch08/mongosh-bd511 --quiet ~/BD511/ch08/operations-longues.js
 ```
 
 Résultat attendu (identifiants, durées et nombre de fiches client en cours variables) :
 
 ```text
 3 opération(s) active(s) depuis plus de 500 ms
-  opid 95237    20.3 s  command  BD511.ventes  COLLSCAN  rapport-fidelite
-  opid 60891     0.7 s  query    BD511.ventes  COLLSCAN  BD511-ch08-charge
-  opid 67072     0.5 s  query    BD511.ventes  COLLSCAN  BD511-ch08-charge
+  opid 95237    20.3 s  command  bd511.ventes  COLLSCAN  rapport-fidelite
+  opid 60891     0.7 s  query    bd511.ventes  COLLSCAN  bd511-ch08-charge
+  opid 67072     0.5 s  query    bd511.ventes  COLLSCAN  bd511-ch08-charge
 ```
 
 Le rapport tourne depuis 20 secondes. Pour chacun des 50 000 clients, son étape `$lookup` relit toute la collection : il lui faudrait des jours. Il occupe un processeur à lui seul et ralentit l'application : on l'interrompt avec `killOp`, après avoir vérifié de qui il vient.
 
 ```bash
-~/BD511/ch08/mongosh-BD511 --quiet --eval '
+~/BD511/ch08/mongosh-bd511 --quiet --eval '
   const op = db.getSiblingDB("admin").aggregate([{ $currentOp: { allUsers: true } },
-    { $match: { appName: "rapport-fidelite", ns: "BD511.ventes" } }]).next();
+    { $match: { appName: "rapport-fidelite", ns: "bd511.ventes" } }]).next();
   print("opid", op.opid, "-", Number(op.secs_running), "s -", op.planSummary, "- compte", op.effectiveUsers[0].user, "- client", op.client);
   printjson(db.killOp(op.opid));'
 sleep 2
@@ -727,7 +727,7 @@ opid 95237 - 24 s - COLLSCAN - compte charge - client 127.0.0.1:36082
   ok: 1
 }
 14:22:01  rapport de fidélité : début
-14:22:26  rapport interrompu au bout de 25 s : Interrupted Executor error during aggregate command on namespace: BD511.ventes :: caused by :: operation was interrupted
+14:22:26  rapport interrompu au bout de 25 s : Interrupted Executor error during aggregate command on namespace: bd511.ventes :: caused by :: operation was interrupted
 ```
 
 `killOp` demande à l'opération de s'arrêter : elle le fait au prochain point d'interruption, en annulant proprement son travail. On ne tue jamais le processus `mongod`. Une opération d'écriture interrompue ne laisse pas de modification partielle d'un document ; une écriture sur plusieurs documents peut en revanche avoir modifié une partie d'entre eux, d'où la prudence avant d'interrompre une écriture.
@@ -740,7 +740,7 @@ opid 95237 - 24 s - COLLSCAN - compte charge - client 127.0.0.1:36082
 | --- | --- | --- |
 | `mongod` à près de 200 % de CPU | `top` | le serveur calcule sans arrêt |
 | 5 lectures/s, 3 opérations en cours en permanence | `mongostat` | peu d'opérations, mais longues |
-| 15 s de travail en 5 s sur `BD511.ventes`, en lecture | `mongotop` | une lecture sur cette collection est en cause |
+| 15 s de travail en 5 s sur `bd511.ventes`, en lecture | `mongotop` | une lecture sur cette collection est en cause |
 | 100 000 documents examinés par document renvoyé, aucun index utilisé, tri en mémoire | `serverStatus` | des parcours complets de la collection |
 | rapport en cours depuis 20 s, en `COLLSCAN` | `$currentOp` | opération incontrôlée, interrompue avec `killOp` |
 
@@ -757,7 +757,7 @@ L'application tourne toujours : laissez les trois clients actifs jusqu'à la par
 L'option `-o` de `mongostat` affiche n'importe quel compteur de `serverStatus`. Le suffixe `.rate()` le convertit en débit par seconde, et `=` donne un titre à la colonne. Affichez les indicateurs repérés en partie 1.5 :
 
 ```bash
-mongostat --uri "mongodb://diag@127.0.0.1:27017/?authSource=admin&appName=BD511-ch08-mongostat" \
+mongostat --uri "mongodb://diag@127.0.0.1:27017/?authSource=admin&appName=bd511-ch08-mongostat" \
   --config ~/BD511/ch08/secrets/diag.yaml \
   -o 'opcounters.query.rate()=lectures/s,metrics.queryExecutor.scannedObjects.rate()=examinés/s,metrics.document.returned.rate()=renvoyés/s,metrics.queryExecutor.scanned.rate()=clés/s,metrics.operation.scanAndOrder.rate()=tris/s,time' \
   -n 5 2
@@ -778,13 +778,13 @@ Chaque lecture examine un million de documents (toute la collection), n'utilise 
 
 ### 2.2 Le profiler : enregistrer les opérations lentes d'une base
 
-Le **profiler** enregistre les opérations d'une base dans sa collection `system.profile`, avec leur durée, leur plan et le nombre de documents examinés. Le niveau 1 enregistre les opérations qui dépassent le seuil `slowms` (100 ms par défaut), le niveau 2 toutes les opérations. Activez le niveau 1 sur la base `BD511` pendant 30 secondes :
+Le **profiler** enregistre les opérations d'une base dans sa collection `system.profile`, avec leur durée, leur plan et le nombre de documents examinés. Le niveau 1 enregistre les opérations qui dépassent le seuil `slowms` (100 ms par défaut), le niveau 2 toutes les opérations. Activez le niveau 1 sur la base `bd511` pendant 30 secondes :
 
 ```bash
-~/BD511/ch08/mongosh-BD511 --quiet --eval 'print(EJSON.stringify(db.setProfilingLevel(1, { slowms: 100 })))'
+~/BD511/ch08/mongosh-bd511 --quiet --eval 'print(EJSON.stringify(db.setProfilingLevel(1, { slowms: 100 })))'
 sleep 30
-~/BD511/ch08/mongosh-BD511 --quiet --eval 'print(EJSON.stringify(db.setProfilingLevel(0)))
-  print(db.system.profile.countDocuments(), "entrées dans BD511.system.profile")'
+~/BD511/ch08/mongosh-bd511 --quiet --eval 'print(EJSON.stringify(db.setProfilingLevel(0)))
+  print(db.system.profile.countDocuments(), "entrées dans bd511.system.profile")'
 ```
 
 Résultat attendu (chaque appel renvoie les réglages **précédents** ; nombre d'entrées variable) :
@@ -792,19 +792,19 @@ Résultat attendu (chaque appel renvoie les réglages **précédents** ; nombre 
 ```text
 {"was":0,"slowms":100,"slowinprogms":5000,"sampleRate":1,"ok":1}
 {"was":1,"slowms":100,"slowinprogms":5000,"sampleRate":1,"ok":1}
-138 entrées dans BD511.system.profile
+138 entrées dans bd511.system.profile
 ```
 
 Le script suivant regroupe les entrées par **forme de requête** (*query shape* : la requête sans ses valeurs, identifiée par `queryShapeHash`) et les trie par durée cumulée :
 
 ```bash
 cat > ~/BD511/ch08/analyse-profil.js <<'EOF'
-// analyse-profil.js - BD511 ch.8 : synthèse des opérations lentes enregistrées par le profiler de la base BD511
+// analyse-profil.js - bd511 ch.8 : synthèse des opérations lentes enregistrées par le profiler de la base bd511
 // Regroupe les entrées de system.profile par forme de requête (queryShapeHash) : nombre, durée moyenne,
 // documents examinés et renvoyés, plan d'exécution, puis affiche un exemple de la forme la plus coûteuse.
-// Usage : ~/BD511/ch08/mongosh-BD511 --quiet ~/BD511/ch08/analyse-profil.js
+// Usage : ~/BD511/ch08/mongosh-bd511 --quiet ~/BD511/ch08/analyse-profil.js
 const formes = db.system.profile.aggregate([
-  { $match: { ns: { $ne: "BD511.system.profile" } } },
+  { $match: { ns: { $ne: "bd511.system.profile" } } },
   { $group: {
       _id: { $ifNull: ["$queryShapeHash", "$op"] },
       op: { $first: "$op" }, ns: { $first: "$ns" }, plan: { $first: "$planSummary" },
@@ -812,7 +812,7 @@ const formes = db.system.profile.aggregate([
       examines: { $avg: "$docsExamined" }, renvoyes: { $avg: "$nreturned" }, exemple: { $first: "$command" } } },
   { $sort: { dureeTotale: -1 } },
 ]).toArray();
-const total = db.system.profile.countDocuments({ ns: { $ne: "BD511.system.profile" } });
+const total = db.system.profile.countDocuments({ ns: { $ne: "bd511.system.profile" } });
 print(`${total} opérations lentes profilées (seuil ${db.getProfilingStatus().slowms} ms), ${formes.length} forme(s) de requête`);
 for (const f of formes) {
   print(`  ${String(f.nombre).padStart(4)} × ${f.op.padEnd(8)} ${f.ns.padEnd(13)} ${(f.plan ?? "-").padEnd(9)} ` +
@@ -824,14 +824,14 @@ if (formes.length) {
   print("  " + EJSON.stringify(commande));
 }
 EOF
-~/BD511/ch08/mongosh-BD511 --quiet ~/BD511/ch08/analyse-profil.js
+~/BD511/ch08/mongosh-bd511 --quiet ~/BD511/ch08/analyse-profil.js
 ```
 
 Résultat attendu (valeurs variables) :
 
 ```text
 138 opérations lentes profilées (seuil 100 ms), 1 forme(s) de requête
-   138 × query    BD511.ventes  COLLSCAN  durée moy. 619 ms, documents examinés 1 000 285, renvoyés 10
+   138 × query    bd511.ventes  COLLSCAN  durée moy. 619 ms, documents examinés 1 000 285, renvoyés 10
 Forme la plus coûteuse, exemple :
   {"find":"ventes","filter":{"client":"C31977"},"sort":{"date":-1},"limit":10}
 ```
@@ -844,10 +844,10 @@ La coupable est identifiée : la **fiche client**, `find({ client }).sort({ date
 
 Même profiler désactivé, `mongod` écrit dans son journal toute opération qui dépasse `slowms` (message `Slow query`). Le journal est au format JSON : une ligne par événement, que `jq` filtre et met en forme. Le fichier appartient à l'utilisateur `mongodb` (mode 600), d'où `sudo`.
 
-Les trois dernières requêtes lentes sur `BD511.ventes` :
+Les trois dernières requêtes lentes sur `bd511.ventes` :
 
 ```bash
-sudo jq -c 'select(.msg == "Slow query" and .attr.ns == "BD511.ventes")
+sudo jq -c 'select(.msg == "Slow query" and .attr.ns == "bd511.ventes")
   | {heure: .t["$date"][11:19], app: .attr.appName, ms: .attr.durationMillis, plan: .attr.planSummary,
      examines: .attr.docsExamined, renvoyes: .attr.nreturned, filtre: .attr.command.filter}' \
   /var/log/mongodb/mongod.log | tail -n 3
@@ -856,15 +856,15 @@ sudo jq -c 'select(.msg == "Slow query" and .attr.ns == "BD511.ventes")
 Résultat attendu (valeurs variables) :
 
 ```text
-{"heure":"14:24:05","app":"BD511-ch08-charge","ms":541,"plan":"COLLSCAN","examines":1004530,"renvoyes":10,"filtre":{"client":"C20617"}}
-{"heure":"14:24:05","app":"BD511-ch08-charge","ms":527,"plan":"COLLSCAN","examines":1004531,"renvoyes":10,"filtre":{"client":"C47360"}}
-{"heure":"14:24:06","app":"BD511-ch08-charge","ms":536,"plan":"COLLSCAN","examines":1004533,"renvoyes":10,"filtre":{"client":"C08245"}}
+{"heure":"14:24:05","app":"bd511-ch08-charge","ms":541,"plan":"COLLSCAN","examines":1004530,"renvoyes":10,"filtre":{"client":"C20617"}}
+{"heure":"14:24:05","app":"bd511-ch08-charge","ms":527,"plan":"COLLSCAN","examines":1004531,"renvoyes":10,"filtre":{"client":"C47360"}}
+{"heure":"14:24:06","app":"bd511-ch08-charge","ms":536,"plan":"COLLSCAN","examines":1004533,"renvoyes":10,"filtre":{"client":"C08245"}}
 ```
 
 Le même regroupement par forme de requête que pour le profiler, sur tout le journal :
 
 ```bash
-sudo jq -n -r '[inputs | select(.msg == "Slow query" and .attr.ns == "BD511.ventes")]
+sudo jq -n -r '[inputs | select(.msg == "Slow query" and .attr.ns == "bd511.ventes")]
   | group_by(.attr.queryShapeHash) | sort_by(-length)[]
   | "\(length) × \(.[0].attr.planSummary), \(map(.attr.durationMillis) | add / length | round) ms en moyenne, \(.[0].attr.appName) : \(.[0].attr.command | del(.lsid, ."$db") | tojson | .[0:100])"' \
   /var/log/mongodb/mongod.log
@@ -873,9 +873,9 @@ sudo jq -n -r '[inputs | select(.msg == "Slow query" and .attr.ns == "BD511.vent
 Résultat attendu (valeurs variables) :
 
 ```text
-622 × COLLSCAN, 591 ms en moyenne, BD511-ch08-charge : {"find":"ventes","filter":{"client":"C08069"},"sort":{"date":-1},"limit":10}
+622 × COLLSCAN, 591 ms en moyenne, bd511-ch08-charge : {"find":"ventes","filter":{"client":"C08069"},"sort":{"date":-1},"limit":10}
 1 × null, 121 ms en moyenne, mongoimport : {"insert":"ventes","ordered":false,"rawData":false,"bypassEmptyTsReplacement":true,"writeConcern":{"
-1 × COLLSCAN, 282 ms en moyenne, BD511-ch08-charge : {"aggregate":"ventes","pipeline":[{"$match":{}},{"$group":{"_id":1,"n":{"$sum":1}}}],"cursor":{}}
+1 × COLLSCAN, 282 ms en moyenne, bd511-ch08-charge : {"aggregate":"ventes","pipeline":[{"$match":{}},{"$group":{"_id":1,"n":{"$sum":1}}}],"cursor":{}}
 1 × COLLSCAN, 21362 ms en moyenne, rapport-fidelite : {"aggregate":"ventes","pipeline":[{"$group":{"_id":"$client","premiere":{"$min":"$date"}}},{"$lookup
 ```
 
@@ -910,9 +910,9 @@ Résultat attendu :
 
 ```bash
 cat > ~/BD511/ch08/plan-fiche-client.js <<'EOF'
-// plan-fiche-client.js - BD511 ch.8 : plan d'exécution résumé de la « fiche client » de l'application
+// plan-fiche-client.js - bd511 ch.8 : plan d'exécution résumé de la « fiche client » de l'application
 // (les 10 dernières ventes du client C01234) : étapes du plan gagnant, documents et clés examinés, durée.
-// Usage : ~/BD511/ch08/mongosh-BD511 --quiet ~/BD511/ch08/plan-fiche-client.js
+// Usage : ~/BD511/ch08/mongosh-bd511 --quiet ~/BD511/ch08/plan-fiche-client.js
 const e = db.ventes.find({ client: "C01234" }).sort({ date: -1 }).limit(10).explain("executionStats");
 const etapes = [];
 for (let s = e.queryPlanner.winningPlan.queryPlan ?? e.queryPlanner.winningPlan; s; s = s.inputStage) etapes.push(s.stage + (s.indexName ? ` (${s.indexName})` : ""));
@@ -920,7 +920,7 @@ const x = e.executionStats;
 print(`plan : ${etapes.join(" <- ")}`);
 print(`renvoyés : ${x.nReturned}, documents examinés : ${x.totalDocsExamined}, clés examinées : ${x.totalKeysExamined}, durée : ${x.executionTimeMillis} ms`);
 EOF
-~/BD511/ch08/mongosh-BD511 --quiet ~/BD511/ch08/plan-fiche-client.js
+~/BD511/ch08/mongosh-bd511 --quiet ~/BD511/ch08/plan-fiche-client.js
 ```
 
 Résultat attendu (durée variable) :
@@ -939,11 +939,11 @@ La requête filtre sur une **égalité** (`client`), puis **trie** sur `date` en
 Créez l'index sans arrêter l'application : la construction ne bloque la collection qu'un court instant, au début et à la fin.
 
 ```bash
-~/BD511/ch08/mongosh-BD511 --quiet --eval '
+~/BD511/ch08/mongosh-bd511 --quiet --eval '
   const debut = Date.now();
   const nom = db.ventes.createIndex({ client: 1, date: -1 });
   print(`index ${nom} créé en ${((Date.now() - debut) / 1000).toFixed(1)} s`)'
-~/BD511/ch08/mongosh-BD511 --quiet ~/BD511/ch08/plan-fiche-client.js
+~/BD511/ch08/mongosh-bd511 --quiet ~/BD511/ch08/plan-fiche-client.js
 ```
 
 Résultat attendu (durées variables) :
@@ -963,7 +963,7 @@ Laissez l'application tourner 30 secondes avec l'index, puis refaites les mesure
 ```bash
 sleep 30
 bash ~/BD511/ch08/charge.sh etat
-~/BD511/ch08/mongosh-BD511 --quiet ~/BD511/ch08/diagnostic.js
+~/BD511/ch08/mongosh-bd511 --quiet ~/BD511/ch08/diagnostic.js
 ```
 
 Résultat attendu (valeurs variables) :
@@ -972,7 +972,7 @@ Résultat attendu (valeurs variables) :
 client1 : 14:25:41  fiches client 62 (moy. 2 ms) ; mises à jour 13 (moy. 2 ms) ; nouvelles ventes 25 (moy. 2 ms)
 client2 : 14:25:41  fiches client 57 (moy. 3 ms) ; mises à jour 14 (moy. 2 ms) ; nouvelles ventes 29 (moy. 2 ms)
 client3 : 14:25:42  fiches client 61 (moy. 2 ms) ; mises à jour 15 (moy. 2 ms) ; nouvelles ventes 24 (moy. 2 ms)
-Diagnostic de vm-BD511 (MongoDB 8.3.13) sur 10 s, à 14:25:52
+Diagnostic de vm-bd511 (MongoDB 8.3.13) sur 10 s, à 14:25:52
   Opérations/s        : lectures 18,1, insertions 7,6, mises à jour 4,5, commandes 1,1
   Documents/s         : examinés 187, renvoyés 181 (1 examinés par document renvoyé)
   Clés d'index/s      : 187 ; tris en mémoire/s : 0,0
@@ -1014,7 +1014,7 @@ Le même script prépare la rotation du journal (partie 2.8) : `systemLog.logRot
 ```bash
 cat > ~/BD511/ch08/config-mongod.sh <<'EOF'
 #!/usr/bin/env bash
-# config-mongod.sh - BD511 ch.8 : réglages de production du chapitre 8 dans /etc/mongod.conf
+# config-mongod.sh - bd511 ch.8 : réglages de production du chapitre 8 dans /etc/mongod.conf
 #   systemLog.logRotate: reopen   -> la rotation du journal est confiée à logrotate (mongod rouvre son fichier)
 #   operationProfiling            -> profiler désactivé, seuil des opérations lentes explicite (100 ms)
 # Le fichier d'origine est sauvegardé une fois sous /etc/mongod.conf.avant-ch08. Le script peut être relancé.
@@ -1084,7 +1084,7 @@ Redémarrez `mongod` et vérifiez les réglages pris en compte :
 sudo systemctl restart mongod
 ```
 ```bash
-~/BD511/ch08/mongosh-BD511 --quiet --eval '
+~/BD511/ch08/mongosh-bd511 --quiet --eval '
   const p = db.adminCommand({ getCmdLineOpts: 1 }).parsed;
   print(EJSON.stringify({ logRotate: p.systemLog.logRotate, operationProfiling: p.operationProfiling,
                          profiler: db.getProfilingStatus() }, null, 2))'
@@ -1115,7 +1115,7 @@ Le journal de `mongod` grossit sans limite. La rotation recommandée sous Linux 
 
 ```bash
 sudo tee /etc/logrotate.d/mongod > /dev/null <<'EOF'
-# /etc/logrotate.d/mongod - BD511 ch.8 : rotation du journal de l'instance mongod du chapitre 2
+# /etc/logrotate.d/mongod - bd511 ch.8 : rotation du journal de l'instance mongod du chapitre 2
 # logrotate (lancé chaque jour par logrotate.timer) renomme mongod.log en mongod.log.1, puis demande à mongod
 # de rouvrir son journal par le signal SIGUSR1 (systemLog.logRotate: reopen dans /etc/mongod.conf).
 /var/log/mongodb/mongod.log {
@@ -1149,7 +1149,7 @@ Forcez une rotation pour la tester, puis vérifiez que `mongod` écrit bien dans
 sudo logrotate --force /etc/logrotate.d/mongod
 sudo ls -l /var/log/mongodb
 sudo tail -n 1 /var/log/mongodb/mongod.log.1 | jq -c '{t: .t["$date"], msg}'
-~/BD511/ch08/mongosh-BD511 --quiet --eval 'db.adminCommand({ ping: 1 })'
+~/BD511/ch08/mongosh-bd511 --quiet --eval 'db.adminCommand({ ping: 1 })'
 sudo jq -c '{t: .t["$date"], msg}' /var/log/mongodb/mongod.log | head -n 3
 ```
 
@@ -1222,13 +1222,13 @@ Le fichier `prometheus.yml` déclare les cibles à collecter et les règles d'al
 ```bash
 mkdir -p ~/BD511/supervision/prometheus
 cat > ~/BD511/supervision/prometheus/prometheus.yml <<'EOF'
-# prometheus.yml - BD511 ch.8 : collecte des métriques de l'instance mongod du chapitre 2
+# prometheus.yml - bd511 ch.8 : collecte des métriques de l'instance mongod du chapitre 2
 global:
   scrape_interval: 15s        # fréquence de collecte des métriques
   scrape_timeout: 10s
   evaluation_interval: 15s    # fréquence d'évaluation des règles d'alerte
   external_labels:
-    projet: BD511
+    projet: bd511
 
 rule_files:
   - /etc/prometheus/alertes.yml
@@ -1239,7 +1239,7 @@ scrape_configs:
     static_configs:
       - targets: ["127.0.0.1:9216"]
         labels:
-          instance: mongod-BD511      # nom lisible, à la place de l'adresse de l'exporteur
+          instance: mongod-bd511      # nom lisible, à la place de l'adresse de l'exporteur
   # Prometheus se surveille lui-même
   - job_name: prometheus
     static_configs:
@@ -1251,7 +1251,7 @@ Les règles d'alerte portent sur les symptômes observés en parties 1 et 2. Cha
 
 ```bash
 cat > ~/BD511/supervision/prometheus/alertes.yml <<'EOF'
-# alertes.yml - BD511 ch.8 : règles d'alerte sur l'instance mongod
+# alertes.yml - bd511 ch.8 : règles d'alerte sur l'instance mongod
 # Seuils adaptés au TP ; en production, on les ajuste après quelques semaines d'observation.
 groups:
   - name: mongodb
@@ -1342,15 +1342,15 @@ datasources:
 EOF
 ```
 
-Le fournisseur de tableaux de bord : Grafana charge les fichiers JSON du répertoire `/etc/grafana/dashboards` dans le dossier `BD511`, et les protège contre les modifications faites dans l'interface :
+Le fournisseur de tableaux de bord : Grafana charge les fichiers JSON du répertoire `/etc/grafana/dashboards` dans le dossier `bd511`, et les protège contre les modifications faites dans l'interface :
 
 ```bash
-cat > ~/BD511/supervision/grafana/provisioning/dashboards/BD511.yml <<'EOF'
+cat > ~/BD511/supervision/grafana/provisioning/dashboards/bd511.yml <<'EOF'
 # Tableaux de bord chargés depuis des fichiers JSON au démarrage de Grafana (provisioning)
 apiVersion: 1
 providers:
-  - name: BD511
-    folder: BD511                # dossier Grafana qui reçoit les tableaux de bord
+  - name: bd511
+    folder: bd511                # dossier Grafana qui reçoit les tableaux de bord
     type: file
     disableDeletion: true
     allowUiUpdates: false        # le fichier JSON reste la référence
@@ -1365,10 +1365,10 @@ Le tableau de bord lui-même est un fichier JSON de plusieurs centaines de ligne
 ```bash
 cat > ~/BD511/supervision/generer-tableau-de-bord.py <<'EOF'
 #!/usr/bin/env python3
-"""generer-tableau-de-bord.py - BD511 ch.8 : génère le tableau de bord Grafana « BD511 – Charge MongoDB ».
+"""generer-tableau-de-bord.py - bd511 ch.8 : génère le tableau de bord Grafana « bd511 – Charge MongoDB ».
 
 Le tableau de bord est décrit panneau par panneau (titre, requêtes PromQL, unité), puis écrit au format JSON
-de Grafana (modèle classique, schemaVersion 42) dans grafana/dashboards/BD511-mongodb.json.
+de Grafana (modèle classique, schemaVersion 42) dans grafana/dashboards/bd511-mongodb.json.
 Grafana le charge au démarrage (provisioning) et le relit toutes les 30 secondes.
 Usage : python3 ~/BD511/supervision/generer-tableau-de-bord.py
 """
@@ -1467,10 +1467,10 @@ courbes("Opérations en cours", "Opérations actives et en attente (globalLock),
 
 # --- Ligne 4 : collections, index et processeur ---------------------------------------------------------
 courbes("Temps serveur par collection",
-        "Commande top : secondes passées par seconde sur chaque collection de BD511 (comme mongotop)",
-        [(f'rate(mongodb_top_total_time{{database="BD511"}}[{INTERVALLE}]) / 1e6', "{{collection}}")], 8, 8, 0, 20, "s")
-courbes("Utilisation des index de BD511.ventes", "$indexStats : accès par seconde à chaque index",
-        [(f'rate(mongodb_indexstats_accesses_ops{{database="BD511", collection="ventes"}}[{INTERVALLE}])', "{{key_name}}")],
+        "Commande top : secondes passées par seconde sur chaque collection de bd511 (comme mongotop)",
+        [(f'rate(mongodb_top_total_time{{database="bd511"}}[{INTERVALLE}]) / 1e6', "{{collection}}")], 8, 8, 0, 20, "s")
+courbes("Utilisation des index de bd511.ventes", "$indexStats : accès par seconde à chaque index",
+        [(f'rate(mongodb_indexstats_accesses_ops{{database="bd511", collection="ventes"}}[{INTERVALLE}])', "{{key_name}}")],
         8, 8, 8, 20, "ops")
 courbes("Processeur", "Temps processeur de la VM hors inactivité, et part consommée par mongod",
         [(CPU_VM, "VM"),
@@ -1488,7 +1488,7 @@ courbes("Mémoire", "Mémoire résidente de mongod, mémoire utilisée et mémoi
          ("mongodb_sys_memory_MemTotal_kb * 1024", "VM (totale)")], 8, 12, 12, 28, "bytes")
 
 tableau = {
-    "uid": "BD511-mongodb", "title": "BD511 – Charge MongoDB", "tags": ["BD511", "MongoDB"],
+    "uid": "bd511-mongodb", "title": "bd511 – Charge MongoDB", "tags": ["bd511", "MongoDB"],
     "description": "Instance mongod du chapitre 2 : métriques de percona/mongodb_exporter collectées par Prometheus",
     "timezone": "browser", "editable": False, "graphTooltip": 1, "refresh": "10s", "schemaVersion": 42,
     "time": {"from": "now-15m", "to": "now"}, "timepicker": {}, "templating": {"list": []},
@@ -1497,7 +1497,7 @@ tableau = {
                               "type": "dashboard"}]},
     "links": [], "panels": panneaux, "version": 1, "fiscalYearStartMonth": 0, "liveNow": False, "weekStart": "",
 }
-fichier = pathlib.Path(__file__).resolve().parent / "grafana" / "dashboards" / "BD511-mongodb.json"
+fichier = pathlib.Path(__file__).resolve().parent / "grafana" / "dashboards" / "bd511-mongodb.json"
 fichier.write_text(json.dumps(tableau, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 print(f"{fichier.relative_to(fichier.parents[2])} : {len(panneaux)} panneaux")
 EOF
@@ -1507,7 +1507,7 @@ python3 ~/BD511/supervision/generer-tableau-de-bord.py
 Résultat attendu :
 
 ```text
-grafana/dashboards/BD511-mongodb.json : 15 panneaux
+grafana/dashboards/bd511-mongodb.json : 15 panneaux
 ```
 
 | Ligne du tableau de bord | Panneaux | Outil équivalent des parties 1 et 2 |
@@ -1515,14 +1515,14 @@ grafana/dashboards/BD511-mongodb.json : 15 panneaux
 | 1 – Indicateurs | MongoDB en service, opérations/s, examinés par renvoyé, latence des lectures, connexions, CPU de la VM | `diagnostic.js` |
 | 2 – Débit et efficacité | opérations par seconde et par type ; documents examinés, renvoyés, clés d'index (échelle logarithmique) | `mongostat` |
 | 3 – Latence et concurrence | latence moyenne par type ; opérations actives, en attente, tickets de lecture | `diagnostic.js`, `$currentOp` |
-| 4 – Collections, index, processeur | temps serveur par collection ; accès à chaque index de `BD511.ventes` ; CPU de la VM et de `mongod` | `mongotop`, `$indexStats`, `top` |
+| 4 – Collections, index, processeur | temps serveur par collection ; accès à chaque index de `bd511.ventes` ; CPU de la VM et de `mongod` | `mongotop`, `$indexStats`, `top` |
 | 5 – Mémoire | cache WiredTiger (utilisé, modifié, maximum) ; mémoire de `mongod` et de la VM | `diagnostic.js` |
 
 ### 3.5 Le projet Docker Compose
 
 ```bash
 cat > ~/BD511/supervision/docker-compose.yml <<'EOF'
-# docker-compose.yml - BD511 ch.8 : chaîne de supervision exporteur -> Prometheus -> Grafana
+# docker-compose.yml - bd511 ch.8 : chaîne de supervision exporteur -> Prometheus -> Grafana
 # Les trois services utilisent le réseau de la VM (network_mode: host) : l'exporteur joint mongod sur
 # 127.0.0.1:27017 sans que mongod soit ouvert au réseau, et chaque service n'écoute que sur 127.0.0.1.
 # Usage : cd ~/BD511/supervision && sudo docker compose up -d --wait
@@ -1540,7 +1540,7 @@ services:
       - --collector.diagnosticdata      # serverStatus et métriques système (getDiagnosticData)
       - --collector.topmetrics          # temps passé par collection (commande top)
       - --collector.indexstats          # utilisation des index ($indexStats)...
-      - --mongodb.indexstats-colls=BD511.ventes   # ... de cette collection
+      - --mongodb.indexstats-colls=bd511.ventes   # ... de cette collection
       - --log.level=warn
     mem_limit: 128m
 
@@ -1583,7 +1583,7 @@ services:
       GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
       GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES: "false"
       GF_NEWS_NEWS_FEED_ENABLED: "false"
-      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/dashboards/BD511-mongodb.json
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/dashboards/bd511-mongodb.json
     secrets:
       - grafana_admin
     volumes:
@@ -1619,7 +1619,7 @@ Résultat attendu :
 docker-compose.yml : OK
 ```
 
-L'exporteur est lancé avec trois collecteurs : `diagnosticdata` (`serverStatus` et métriques système), `topmetrics` (temps par collection, comme `mongotop`) et `indexstats` (utilisation des index, limitée à `BD511.ventes`). En production, on n'active que les collecteurs utiles : chacun ajoute des requêtes sur `mongod` et des séries dans Prometheus.
+L'exporteur est lancé avec trois collecteurs : `diagnosticdata` (`serverStatus` et métriques système), `topmetrics` (temps par collection, comme `mongotop`) et `indexstats` (utilisation des index, limitée à `bd511.ventes`). En production, on n'active que les collecteurs utiles : chacun ajoute des requêtes sur `mongod` et des séries dans Prometheus.
 
 Téléchargez les images, puis faites vérifier la configuration de Prometheus par son outil `promtool`, fourni dans l'image :
 
@@ -1705,17 +1705,17 @@ curl -s --data-urlencode 'query=mongodb_ss_connections{conn_type="current"}' htt
 Résultat attendu (ordre des cibles variable ; `lastError` vide) :
 
 ```text
-mongodb  mongod-BD511  up  
+mongodb  mongod-bd511  up  
 prometheus  127.0.0.1:9090  up  
 MongoDBInjoignable  ok  inactive
 MongoDBBalayagesExcessifs  ok  inactive
 MongoDBLecturesLentes  ok  inactive
 MongoDBConnexionsSaturees  ok  inactive
 MongoDBCacheSature  ok  inactive
-{"instance":"mongod-BD511","job":"mongodb","valeur":"3"}
+{"instance":"mongod-bd511","job":"mongodb","valeur":"3"}
 ```
 
-Chaque série porte les labels `job` et `instance` de sa cible : `instance` vaut `mongod-BD511`, le nom donné dans `prometheus.yml`. Le label `projet` (`external_labels`) n'apparaît pas ici : Prometheus ne l'ajoute qu'aux données qui en sortent (alertes envoyées, fédération, écriture à distance).
+Chaque série porte les labels `job` et `instance` de sa cible : `instance` vaut `mongod-bd511`, le nom donné dans `prometheus.yml`. Le label `projet` (`external_labels`) n'apparaît pas ici : Prometheus ne l'ajoute qu'aux données qui en sortent (alertes envoyées, fédération, écriture à distance).
 
 **Grafana.** Son état, l'état de la source de données vue par Grafana, puis le tableau de bord provisionné. L'API d'administration exige le compte `admin`, dont le mot de passe est transmis à `curl` par son entrée standard (`-K -`) pour ne pas apparaître dans la liste des processus :
 
@@ -1723,7 +1723,7 @@ Chaque série porte les labels `job` et `instance` de sa cible : `instance` vaut
 curl -s http://127.0.0.1:3000/api/health | jq -c '{database, version}'
 curl -s -K - http://127.0.0.1:3000/api/datasources/uid/prometheus/health \
   <<< "user = \"admin:$(< ~/BD511/supervision/secrets/grafana_admin.pwd)\"" | jq -r '.status + " : " + .message'
-curl -s -K - "http://127.0.0.1:3000/api/search?query=BD511" \
+curl -s -K - "http://127.0.0.1:3000/api/search?query=bd511" \
   <<< "user = \"admin:$(< ~/BD511/supervision/secrets/grafana_admin.pwd)\"" \
   | jq -r '.[] | select(.type == "dash-db") | "\(.folderTitle) / \(.title)  (uid \(.uid))"'
 ```
@@ -1733,7 +1733,7 @@ Résultat attendu :
 ```text
 {"database":"ok","version":"13.2.4"}
 OK : Successfully queried the Prometheus API.
-BD511 / BD511 – Charge MongoDB  (uid BD511-mongodb)
+bd511 / bd511 – Charge MongoDB  (uid bd511-mongodb)
 ```
 
 ### 3.7 Ouvrir le tableau de bord
@@ -1744,7 +1744,7 @@ Affichez le mot de passe de l'administrateur de Grafana :
 cat ~/BD511/supervision/secrets/grafana_admin.pwd; echo
 ```
 
-Dans Firefox, ouvrez **http://127.0.0.1:3000** et connectez-vous avec le compte `admin` et ce mot de passe. La page d'accueil affiche le tableau de bord **BD511 – Charge MongoDB** ; on le retrouve aussi dans le menu **Tableaux de bord**, dossier **BD511**. Il se rafraîchit toutes les 10 secondes et montre les 15 dernières minutes. Ouvrez aussi l'interface de Prometheus, **http://127.0.0.1:9090/alerts**, qui liste les règles d'alerte et leur état.
+Dans Firefox, ouvrez **http://127.0.0.1:3000** et connectez-vous avec le compte `admin` et ce mot de passe. La page d'accueil affiche le tableau de bord **bd511 – Charge MongoDB** ; on le retrouve aussi dans le menu **Tableaux de bord**, dossier **bd511**. Il se rafraîchit toutes les 10 secondes et montre les 15 dernières minutes. Ouvrez aussi l'interface de Prometheus, **http://127.0.0.1:9090/alerts**, qui liste les règles d'alerte et leur état.
 
 Pour l'instant, la base est au repos : peu d'opérations, aucune alerte.
 
@@ -1755,7 +1755,7 @@ Le script suivant affiche, depuis Prometheus, les indicateurs de la première li
 ```bash
 cat > ~/BD511/supervision/indicateurs.sh <<'EOF'
 #!/usr/bin/env bash
-# indicateurs.sh - BD511 ch.8 : indicateurs clés de l'instance mongod, lus dans Prometheus
+# indicateurs.sh - bd511 ch.8 : indicateurs clés de l'instance mongod, lus dans Prometheus
 # Mêmes calculs que la première ligne du tableau de bord Grafana, sur la dernière minute, puis les alertes en cours.
 # Usage : bash ~/BD511/supervision/indicateurs.sh
 set -euo pipefail
@@ -1766,7 +1766,7 @@ valeur() {   # résultat d'une requête PromQL, arrondi à $2 décimales (0 par 
         | if . == "NaN" then "-" else (tonumber * pow(10; $d) | round / pow(10; $d) | tostring) end'
 }
 OPS='legacy_op_type=~"query|insert|update|delete|getmore"'
-echo "$(date +%T)  instance mongod-BD511, moyennes sur la dernière minute"
+echo "$(date +%T)  instance mongod-bd511, moyennes sur la dernière minute"
 echo "  MongoDB joignable (mongodb_up)  : $(valeur 'mongodb_up{job="mongodb"}')"
 echo "  Opérations/s                    : $(valeur "sum(rate(mongodb_ss_opcounters{$OPS}[1m]))" 1)"
 echo "  Documents examinés par renvoyé  : $(valeur 'sum(rate(mongodb_ss_metrics_queryExecutor_scannedObjects[1m]))
@@ -1780,7 +1780,7 @@ echo "  Alertes                         : ${alertes:-aucune}"
 EOF
 cat > ~/BD511/supervision/suivre-alertes.sh <<'EOF'
 #!/usr/bin/env bash
-# suivre-alertes.sh - BD511 ch.8 : affiche les alertes de Prometheus toutes les 15 s, jusqu'à la situation attendue
+# suivre-alertes.sh - bd511 ch.8 : affiche les alertes de Prometheus toutes les 15 s, jusqu'à la situation attendue
 #   declenchee <alerte> : jusqu'à ce que cette alerte soit déclenchée (état firing)
 #   aucune              : jusqu'à ce qu'il n'y ait plus aucune alerte
 # Abandon au bout de 5 minutes.
@@ -1814,7 +1814,7 @@ Résultat attendu (valeurs variables) :
 
 ```text
 3 clients démarrés (journaux : ~/BD511/ch08/charge/client*.log)
-14:33:12  instance mongod-BD511, moyennes sur la dernière minute
+14:33:12  instance mongod-bd511, moyennes sur la dernière minute
   MongoDB joignable (mongodb_up)  : 1
   Opérations/s                    : 29.9
   Documents examinés par renvoyé  : 1
@@ -1827,7 +1827,7 @@ Sur le tableau de bord, observez :
 
 - **Opérations par seconde** : environ 18 lectures, 7 insertions et 4 mises à jour par seconde, les proportions de l'application ;
 - **Documents examinés et renvoyés** : les deux courbes se superposent ;
-- **Utilisation des index de BD511.ventes** : l'index `client_1_date_-1` sert toutes les fiches client, l'index `_id_` les mises à jour ;
+- **Utilisation des index de bd511.ventes** : l'index `client_1_date_-1` sert toutes les fiches client, l'index `_id_` les mises à jour ;
 - **Temps serveur par collection** : quelques millisecondes par seconde sur `ventes`.
 
 ### 3.9 Provoquer une régression et la voir arriver
@@ -1835,7 +1835,7 @@ Sur le tableau de bord, observez :
 Un administrateur, croyant l'index inutile, le **masque** (`hideIndex`) : l'index est toujours maintenu, mais le planificateur l'ignore. C'est d'ailleurs la bonne façon de tester la suppression d'un index en production, car `unhideIndex` le rétablit instantanément, sans reconstruction. Masquez-le, puis suivez les alertes :
 
 ```bash
-~/BD511/ch08/mongosh-BD511 --quiet --eval 'printjson(db.ventes.hideIndex("client_1_date_-1"))'
+~/BD511/ch08/mongosh-bd511 --quiet --eval 'printjson(db.ventes.hideIndex("client_1_date_-1"))'
 bash ~/BD511/supervision/suivre-alertes.sh declenchee MongoDBBalayagesExcessifs
 bash ~/BD511/supervision/indicateurs.sh
 ```
@@ -1856,7 +1856,7 @@ Résultat attendu, en 2 à 3 minutes (heures et valeurs variables ; `pending` : 
 14:34:43  MongoDBBalayagesExcessifs (pending), MongoDBLecturesLentes (pending)
 14:34:58  MongoDBBalayagesExcessifs (pending), MongoDBLecturesLentes (pending)
 14:35:13  MongoDBBalayagesExcessifs (firing), MongoDBLecturesLentes (pending)
-14:35:13  instance mongod-BD511, moyennes sur la dernière minute
+14:35:13  instance mongod-bd511, moyennes sur la dernière minute
   MongoDB joignable (mongodb_up)  : 1
   Opérations/s                    : 8.4
   Documents examinés par renvoyé  : 99877
@@ -1872,7 +1872,7 @@ Sur le tableau de bord, trois indicateurs de la première ligne passent au rouge
 Rétablissez l'index, puis attendez la fin des alertes :
 
 ```bash
-~/BD511/ch08/mongosh-BD511 --quiet --eval 'printjson(db.ventes.unhideIndex("client_1_date_-1"))'
+~/BD511/ch08/mongosh-bd511 --quiet --eval 'printjson(db.ventes.unhideIndex("client_1_date_-1"))'
 bash ~/BD511/supervision/suivre-alertes.sh aucune
 ```
 
@@ -1915,11 +1915,11 @@ La chaîne de supervision reste en service : elle redémarre avec la VM (`restar
 ```bash
 cat > ~/BD511/ch08/verifier-ch08.sh <<'EOF'
 #!/usr/bin/env bash
-# verifier-ch08.sh - BD511 ch.8 : contrôle final de l'instance mongod et de la chaîne de supervision
+# verifier-ch08.sh - bd511 ch.8 : contrôle final de l'instance mongod et de la chaîne de supervision
 # Usage : bash ~/BD511/ch08/verifier-ch08.sh      (demande le mot de passe sudo pour interroger Docker)
 set -u
-MONGOSH="$HOME/BD511/ch08/mongosh-BD511"
-SUP="$HOME/BD511/supervision"
+MONGOSH="$HOME/BD511/ch08/mongosh-bd511"
+SUP="$HOME/bd511/supervision"
 ok=0; ko=0
 res() { if [[ $1 == 0 ]]; then printf '  [OK] %s\n' "$2"; ok=$((ok + 1)); else printf '  [KO] %s\n' "$2"; ko=$((ko + 1)); fi; }
 
@@ -1941,7 +1941,7 @@ res $? "Comptes du TP : $comptes"
 index=$("$MONGOSH" --quiet --eval '
   const i = db.ventes.getIndexes().find(x => x.name === "client_1_date_-1");
   print(db.ventes.estimatedDocumentCount() >= 1000000, i ? (i.hidden ? "masqué" : "visible") : "absent")' 2>/dev/null)
-[[ $index == "true visible" ]]; res $? "BD511.ventes : au moins 1 000 000 ventes, index client_1_date_-1 $index"
+[[ $index == "true visible" ]]; res $? "bd511.ventes : au moins 1 000 000 ventes, index client_1_date_-1 $index"
 
 echo "== Chaîne de supervision"
 etats=$(cd "$SUP" && sudo docker compose ps --format '{{.Name}}:{{.State}}:{{.Health}}' | sort | tr '\n' ' ')
@@ -1953,9 +1953,9 @@ cibles=$(curl -s http://127.0.0.1:9090/api/v1/targets | jq -r '[.data.activeTarg
 regles=$(curl -s http://127.0.0.1:9090/api/v1/rules | jq '[.data.groups[].rules[]] | length')
 actives=$(curl -s http://127.0.0.1:9090/api/v1/alerts | jq '[.data.alerts[] | select(.state == "firing")] | length')
 [[ $regles == 5 && $actives == 0 ]]; res $? "Prometheus : $regles règles d'alerte chargées, $actives alerte(s) déclenchée(s)"
-grafana=$(curl -s -K - "http://127.0.0.1:3000/api/search?query=BD511" <<< "user = \"admin:$(< "$SUP/secrets/grafana_admin.pwd")\"" \
+grafana=$(curl -s -K - "http://127.0.0.1:3000/api/search?query=bd511" <<< "user = \"admin:$(< "$SUP/secrets/grafana_admin.pwd")\"" \
   | jq -r '.[] | select(.type == "dash-db") | .folderTitle + " / " + .title')
-[[ $grafana == "BD511 / BD511 – Charge MongoDB" ]]; res $? "Grafana, tableau de bord : $grafana"
+[[ $grafana == "bd511 / bd511 – Charge MongoDB" ]]; res $? "Grafana, tableau de bord : $grafana"
 
 echo
 echo "Bilan : ${ok} OK, ${ko} KO"
@@ -1972,13 +1972,13 @@ Résultat attendu :
   [OK] Réglages (logRotate, profiler, niveau, seuil) : reopen off 0 100
   [OK] Rotation du journal par logrotate : /etc/logrotate.d/mongod
   [OK] Comptes du TP : charge:readWrite diag:clusterMonitor+dbAdminAnyDatabase+hostManager+readAnyDatabase exporteur:clusterMonitor+read
-  [OK] BD511.ventes : au moins 1 000 000 ventes, index client_1_date_-1 true visible
+  [OK] bd511.ventes : au moins 1 000 000 ventes, index client_1_date_-1 true visible
 == Chaîne de supervision
   [OK] Conteneurs : grafana:running:healthy mongodb-exporter:running: prometheus:running:healthy 
   [OK] Exporteur : mongodb_up = 1
   [OK] Prometheus, cibles : mongodb:up prometheus:up
   [OK] Prometheus : 5 règles d'alerte chargées, 0 alerte(s) déclenchée(s)
-  [OK] Grafana, tableau de bord : BD511 / BD511 – Charge MongoDB
+  [OK] Grafana, tableau de bord : bd511 / bd511 – Charge MongoDB
 
 Bilan : 10 OK, 0 KO
 ```
@@ -2017,11 +2017,11 @@ Bilan : 10 OK, 0 KO
 | `00-prerequis.sh` : port 9216, 9090 ou 3000 déjà utilisé | autre service sur ce port, ou supervision déjà démarrée | `sudo ss -ltnp 'sport = :9090'` pour l'identifier ; `cd ~/BD511/supervision && sudo docker compose ps` |
 | `comptes.sh` : `Authentication failed` | contrôle d'accès activé, compte ou mot de passe administrateur erroné | relancez le script avec le compte du chapitre 5 |
 | `comptes.sh` : `not authorized on admin to execute command { createUser` | le compte administrateur n'a pas le rôle `userAdminAnyDatabase` | utilisez un compte `root` |
-| `mongosh-BD511` : `No such file … secrets/diag.pwd` | partie 0.2 non faite | `bash ~/BD511/ch08/comptes.sh` |
+| `mongosh-bd511` : `No such file … secrets/diag.pwd` | partie 0.2 non faite | `bash ~/BD511/ch08/comptes.sh` |
 | `sha256sum` : `ventes.json: FAILED` | fichier modifié ou incomplet | régénérez-le (partie 0.4) ou décompressez celui de l'archive : `gunzip -k ventes.json.gz` |
 | Clients de charge : `erreur (…) : Authentication failed` | mot de passe de `charge` modifié depuis le démarrage | `charge.sh arreter`, puis `demarrer` |
 | `charge.sh demarrer` : `Charge déjà démarrée` | clients encore actifs | `bash ~/BD511/ch08/charge.sh arreter` |
-| La fiche client reste rapide en partie 1 | index `client_1_date_-1` déjà créé (TP repris) | `~/BD511/ch08/mongosh-BD511 --eval 'db.ventes.dropIndex("client_1_date_-1")'` |
+| La fiche client reste rapide en partie 1 | index `client_1_date_-1` déjà créé (TP repris) | `~/BD511/ch08/mongosh-bd511 --eval 'db.ventes.dropIndex("client_1_date_-1")'` |
 | `jq: error … Cannot index string with string "msg"` | journal de `mongod` en texte, ou fichier compressé | utilisez `/var/log/mongodb/mongod.log` (JSON depuis MongoDB 4.4) |
 | `config-mongod.sh` : erreur de `mongod --outputConfig` | `/etc/mongod.conf` modifié à la main depuis le chapitre 2 | corrigez la ligne signalée ; l'original est dans `/etc/mongod.conf.avant-ch08` |
 | `mongod` ne redémarre pas après `config-mongod.sh` | fichier de configuration invalide | `sudo journalctl -u mongod -n 20` ; `sudo cp /etc/mongod.conf.avant-ch08 /etc/mongod.conf` |
@@ -2041,7 +2041,7 @@ Bilan : 10 OK, 0 KO
 | `~/BD511/ch08/00-prerequis.sh` | Contrôle de la VM | 0.1 |
 | `~/BD511/ch08/comptes.sh` | Création des comptes `diag`, `charge`, `exporteur` | 0.2 |
 | `~/BD511/ch08/secrets/` | Mots de passe (`*.pwd`) et fichiers `--config` des Database Tools (`*.yaml`) | 0.2 |
-| `~/BD511/ch08/mongosh-BD511` | Connexion à `BD511` avec un compte du TP | 0.3 |
+| `~/BD511/ch08/mongosh-bd511` | Connexion à `bd511` avec un compte du TP | 0.3 |
 | `~/BD511/ch08/generer_ventes.py` | Générateur déterministe du million de ventes | 0.4 |
 | `~/BD511/ch08/donnees/SHA256SUMS`, `ventes.json` | Empreinte de référence et jeu de données | 0.4 |
 | `~/BD511/ch08/importer-ventes.sh` | Import des ventes, compte `charge` | 0.4 |
@@ -2056,7 +2056,7 @@ Bilan : 10 OK, 0 KO
 | `~/BD511/supervision/secrets/` | `exporteur.env`, `grafana_admin.pwd` | 3.2 |
 | `~/BD511/supervision/prometheus/prometheus.yml`, `alertes.yml` | Collecte et règles d'alerte | 3.3 |
 | `~/BD511/supervision/grafana/provisioning/` | Source de données et fournisseur de tableaux de bord | 3.4 |
-| `~/BD511/supervision/generer-tableau-de-bord.py` | Générateur du tableau de bord `grafana/dashboards/BD511-mongodb.json` | 3.4 |
+| `~/BD511/supervision/generer-tableau-de-bord.py` | Générateur du tableau de bord `grafana/dashboards/bd511-mongodb.json` | 3.4 |
 | `~/BD511/supervision/docker-compose.yml` | Projet Compose de la supervision | 3.5 |
 | `~/BD511/supervision/indicateurs.sh`, `suivre-alertes.sh` | Indicateurs et alertes lus dans Prometheus | 3.8 |
 | `~/BD511/ch08/verifier-ch08.sh` | Contrôle final | 4.1 |
@@ -2078,7 +2078,7 @@ Bilan : 10 OK, 0 KO
 ```bash
 cd ~/BD511/supervision && sudo docker compose down -v
 bash ~/BD511/ch08/charge.sh arreter
-~/BD511/ch08/mongosh-BD511 --quiet --eval 'db.ventes.drop(); db.system.profile.drop()'
+~/BD511/ch08/mongosh-bd511 --quiet --eval 'db.ventes.drop(); db.system.profile.drop()'
 mongosh --quiet "mongodb://127.0.0.1:27017/admin" --eval '["diag", "charge", "exporteur"].forEach(u => db.dropUser(u))'
 sudo cp /etc/mongod.conf.avant-ch08 /etc/mongod.conf && sudo rm /etc/mongod.conf.avant-ch08 /etc/logrotate.d/mongod
 sudo systemctl restart mongod
