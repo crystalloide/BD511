@@ -271,7 +271,7 @@ mdp=$(< "$HOME/BD511/ch08/secrets/$compte.pwd")
 exec mongosh "mongodb://$compte:$mdp@127.0.0.1:27017/BD511?authSource=admin&appName=${APPNAME:-BD511-ch08-$compte}" "$@"
 EOF
 chmod +x ~/BD511/ch08/mongosh-bd511
-~/BD511/ch08/mongosh-BD511 --quiet --eval 'print(db.getName(), "-", db.runCommand({ connectionStatus: 1 }).authInfo.authenticatedUsers[0].user)'
+~/BD511/ch08/mongosh-bd511 --quiet --eval 'print(db.getName(), "-", db.runCommand({ connectionStatus: 1 }).authInfo.authenticatedUsers[0].user)'
 ```
 
 Résultat attendu :
