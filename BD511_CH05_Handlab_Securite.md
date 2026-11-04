@@ -691,9 +691,18 @@ mongosh "mongodb://127.0.0.1:27017/admin" -u admin_secu
 
 Mot de passe : `Secu-Lab-2026`. Dans la session mongosh :
 
+#### Commande pratique utilisable par n'importe quel utilisateur même sans droits admin :
 ```javascript
 db.runCommand({ connectionStatus: 1 }).authInfo
+```
+
+#### Reprenons : 
+
+```javascript
 show users
+```
+
+```javascript
 db.getSiblingDB("boutique").produits.findOne()
 exit
 ```
