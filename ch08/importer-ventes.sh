@@ -9,7 +9,7 @@ cd "$CH08/donnees"
 sha256sum --quiet --check SHA256SUMS || { echo "ventes.json différent de la référence (partie 0.4)." >&2; exit 1; }
 debut=$SECONDS
 mongoimport --uri "mongodb://charge@127.0.0.1:27017/?authSource=admin&appName=bd511-ch08-import" \
-  --config "$CH08/secrets/charge.yaml" --db BD511 --collection ventes --drop --file ventes.json \
+  --config "$CH08/secrets/charge.yaml" --db bd511 --collection ventes --drop --file ventes.json \
   --numInsertionWorkers 2 --quiet
 "$CH08/mongosh-bd511" --compte charge --quiet --eval '
   print(`bd511.ventes : ${db.ventes.countDocuments()} documents, index : ${db.ventes.getIndexes().map(i => i.name).join(", ")}`)'
