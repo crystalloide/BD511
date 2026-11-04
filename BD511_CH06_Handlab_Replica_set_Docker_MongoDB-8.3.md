@@ -1022,10 +1022,20 @@ L'invite indique le replica set et le rôle du membre courant : `RS1 [primary] B
 
 ```javascript
 db.hello().hosts
+```
+```javascript
 db.hello().arbiters
+```
+```javascript
 db.hello().primary
+```
+```javascript
 rs.conf().members.map(m => ({ membre: m.host, arbitre: m.arbiterOnly, priorite: m.priority, votes: m.votes }))
+```
+```javascript
 rs.conf().settings.heartbeatIntervalMillis
+```
+```javascript
 rs.conf().settings.electionTimeoutMillis
 ```
 
