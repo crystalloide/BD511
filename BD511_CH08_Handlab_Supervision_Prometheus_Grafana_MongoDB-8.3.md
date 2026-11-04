@@ -257,7 +257,7 @@ exporteur  clusterMonitor@admin, read@local
 Le script suivant ouvre mongosh sur la base `BD511` avec le compte `diag` (par défaut) ou un autre compte du TP. Le nom d'application transmis au serveur (`BD511-ch08-<compte>`) permettra de reconnaître chaque client dans les opérations en cours et dans le journal.
 
 ```bash
-cat > ~/BD511/ch08/mongosh-BD511 <<'EOF'
+cat > ~/BD511/ch08/mongosh-bd511 <<'EOF'
 #!/usr/bin/env bash
 # mongosh-BD511 - BD511 ch.8 : ouvre mongosh sur l'instance mongod du chapitre 2 (127.0.0.1:27017), base BD511
 # Le mot de passe est lu dans ~/BD511/ch08/secrets/<compte>.pwd ; mongosh le masque ensuite dans la
@@ -270,7 +270,7 @@ if [[ ${1:-} == --compte ]]; then compte=$2; shift 2; fi
 mdp=$(< "$HOME/BD511/ch08/secrets/$compte.pwd")
 exec mongosh "mongodb://$compte:$mdp@127.0.0.1:27017/BD511?authSource=admin&appName=${APPNAME:-BD511-ch08-$compte}" "$@"
 EOF
-chmod +x ~/BD511/ch08/mongosh-BD511
+chmod +x ~/BD511/ch08/mongosh-bd511
 ~/BD511/ch08/mongosh-BD511 --quiet --eval 'print(db.getName(), "-", db.runCommand({ connectionStatus: 1 }).authInfo.authenticatedUsers[0].user)'
 ```
 
