@@ -214,7 +214,7 @@ $connexion
 const admin = db.getSiblingDB("admin");
 const comptes = {
   diag:      { roles: ["clusterMonitor", "hostManager", "dbAdminAnyDatabase", "readAnyDatabase"], mdp: "$(< "$SECRETS/diag.pwd")" },
-  charge:    { roles: [{ role: "readWrite", db: "bd511" }], mdp: "$(< "$SECRETS/charge.pwd")" },
+  charge:    { roles: [{ role: "readWrite", db: "BD511" }], mdp: "$(< "$SECRETS/charge.pwd")" },
   exporteur: { roles: ["clusterMonitor", { role: "read", db: "local" }], mdp: "$(< "$SECRETS/exporteur.pwd")" },
 };
 for (const [nom, c] of Object.entries(comptes)) {
