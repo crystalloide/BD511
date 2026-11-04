@@ -377,7 +377,7 @@ debut=$SECONDS
 mongoimport --uri "mongodb://charge@127.0.0.1:27017/?authSource=admin&appName=BD511-ch08-import" \
   --config "$CH08/secrets/charge.yaml" --db BD511 --collection ventes --drop --file ventes.json \
   --numInsertionWorkers 2 --quiet
-"$CH08/mongosh-BD511" --compte charge --quiet --eval '
+"$CH08/mongosh-bd511" --compte charge --quiet --eval '
   print(`BD511.ventes : ${db.ventes.countDocuments()} documents, index : ${db.ventes.getIndexes().map(i => i.name).join(", ")}`)'
 echo "Import terminé en $((SECONDS - debut)) s"
 EOF
