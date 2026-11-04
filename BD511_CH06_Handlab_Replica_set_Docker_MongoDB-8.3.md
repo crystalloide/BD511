@@ -1131,10 +1131,20 @@ Reconnectez-vous avec le compte `admin` et observez l'oplog et la réplication :
 
 ```javascript
 rs.printReplicationInfo()
+```
+```javascript
 rs.printSecondaryReplicationInfo()
+```
+```javascript
 db.inscriptions.find().readPref("secondary").explain().serverInfo.host
+```
+```javascript
 db.getMongo().setReadPref("secondary")
+```
+```javascript
 db.inscriptions.countDocuments()
+```
+```javascript
 db.getMongo().setReadPref("primary")
 ```
 
