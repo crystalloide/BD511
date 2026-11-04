@@ -1082,6 +1082,8 @@ Redémarrez `mongod` et vérifiez les réglages pris en compte :
 
 ```bash
 sudo systemctl restart mongod
+```
+```bash
 ~/BD511/ch08/mongosh-BD511 --quiet --eval '
   const p = db.adminCommand({ getCmdLineOpts: 1 }).parsed;
   print(EJSON.stringify({ logRotate: p.systemLog.logRotate, operationProfiling: p.operationProfiling,
