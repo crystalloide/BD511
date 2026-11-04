@@ -439,7 +439,14 @@ cd ~/BD511/ch05 && wc -l conf/* donnees/* scripts/*
 | `donnees/produits.json` | 12 |
 | `scripts/00_prepa_systeme.sh` | 140 |
 | `scripts/attendre_mongod.sh` | 13 |
-| **total** | **261** |
+| `scripts/tp1_premier_admin.js` | 16 |
+| `scripts/tp2_roles.js` | 51 |
+| `scripts/tp2_utilisateurs.js` | 41 |
+| `scripts/tp3_journal_auth.py` | 41 |
+| `scripts/tp3_matrice_droits.js` | 98 |
+| `scripts/zz_reinitialiser_tp05.sh` | 33 |
+| **total** | **541** |
+
 
 ### 0.4 Appliquer les réglages système de production
 
